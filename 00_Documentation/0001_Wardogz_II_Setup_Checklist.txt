@@ -1,0 +1,146 @@
+# WARDOGZ II - SETUP CHECKLIST
+
+Last Updated:
+2026-08-03
+
+==================================================
+
+1. CHECK KUNG INSTALLED ANG VS CODE
+   ==================================================
+
+Command:
+
+code --version
+
+Expected Output:
+
+1.130.0
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+x64
+
+Kapag lumabas ang version, ibig sabihin:
+[OK] VS Code is installed.
+
+==================================================
+2. CHECK KUNG INSTALLED ANG GIT
+===============================
+
+Command:
+
+git --version
+
+Expected Output:
+
+git version 2.55.0.windows.3
+
+Kapag lumabas ang version, ibig sabihin:
+[OK] Git is installed.
+
+==================================================
+3. CHECK KUNG INSTALLED ANG GCC / W64DEVKIT
+===========================================
+
+Command:
+
+gcc --version
+
+Expected Output:
+
+gcc.exe (GCC) 16.1.0
+
+Para makita ang location ng GCC:
+
+Get-Command gcc
+
+Expected Output:
+
+C:\w64devkit\bin\gcc.exe
+
+Kapag lumabas ito:
+
+[OK] w64devkit is installed.
+
+==================================================
+4. CHECK KUNG INSTALLED ANG RAYLIB
+==================================
+
+Command:
+
+dir C:\raylib
+
+Kapag lumabas:
+
+Cannot find path 'C:\raylib'
+
+Ibig sabihin:
+
+[NOT INSTALLED]
+
+Pwede ring hanapin ang raylib.h:
+
+Get-ChildItem C:\ -Filter "raylib.h" -Recurse -ErrorAction SilentlyContinue
+
+Kapag walang lumabas:
+
+[NOT INSTALLED]
+
+==================================================
+CURRENT STATUS (MOUSE LAPTOP)
+=============================
+
+[OK] VS Code
+Version:
+1.130.0
+
+[OK] Git
+Version:
+2.55.0.windows.3
+
+[OK] GCC
+Version:
+16.1.0
+
+[OK] w64devkit
+Location:
+C:\w64devkit
+
+[NOT INSTALLED]
+Raylib
+
+==================================================
+NEXT STEP
+=========
+
+1. Download Raylib.
+2. Install Raylib.
+3. Siguraduhing may C:\raylib folder.
+4. Test ang sample project.
+5. Build at i-run ang Wardogz II.
+
+==================================================
+QUICK COMMANDS
+==============
+
+VS Code
+
+code --version
+
+Git
+
+git --version
+
+GCC
+
+gcc --version
+
+GCC Location
+
+Get-Command gcc
+
+Check Raylib Folder
+
+dir C:\raylib
+
+Search raylib.h
+
+Get-ChildItem C:\ -Filter "raylib.h" -Recurse -ErrorAction SilentlyContinue
