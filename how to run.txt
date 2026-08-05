@@ -1,6 +1,116 @@
-gcc main.c -o Wardogz_II.exe -IC:/raylib/raylib/src -LC:/raylib/raylib/src -lraylib -lopengl32 -lgdi32 -lwinmm
+===========================================================
+            HOW TO RUN - WARDOGZ II
+===========================================================
 
+Project:
+Wardogz II
 
+Language:
+C
 
+Graphics Library:
+raylib
 
-./Wardogz_II.exe
+===========================================================
+STEP 1 - OPEN THE PROJECT
+===========================================================
+
+1. Open Visual Studio Code.
+
+2. Click:
+
+    File
+        Open Folder...
+
+3. Select:
+
+    Wardogz_II
+
+===========================================================
+STEP 2 - OPEN THE TERMINAL
+===========================================================
+
+Click:
+
+    Terminal
+        New Terminal
+
+or press
+
+    Ctrl + `
+
+===========================================================
+STEP 3 - COMPILE THE PROJECT
+===========================================================
+
+Run the following command:
+
+gcc src/main.c src/player.c -o build/Wardogz_II.exe ^
+-Iinclude ^
+-IC:\raylib\raylib\src ^
+-LC:\raylib\raylib\src ^
+-lraylib ^
+-lopengl32 ^
+-lgdi32 ^
+-lwinmm
+
+If there are no errors, the executable will be created inside:
+
+build/
+
+===========================================================
+STEP 4 - RUN THE GAME
+===========================================================
+
+Run:
+
+.\build\Wardogz_II.exe
+
+===========================================================
+PROJECT STRUCTURE
+===========================================================
+
+Wardogz_II
+│
+├── assets
+├── build
+├── include
+├── src
+│   └── main.c
+│
+├── README.md
+└── how to run.txt
+
+===========================================================
+NOTES
+===========================================================
+
+- All source (.c) files belong inside the "src" folder.
+
+- All header (.h) files belong inside the "include" folder.
+
+- Compiled executable files are stored inside the "build" folder.
+
+- Assets such as images, music, sound effects, and fonts are stored inside the "assets" folder.
+
+===========================================================
+CURRENT STATUS
+===========================================================
+
+✔ Window Creation
+✔ Player Sprite
+✔ Player Movement
+✔ GitHub Repository
+✔ Project Folder Structure
+
+Next Goal:
+
+- Large World
+- Camera System
+- World Boundary
+- Animation
+- Enemy System
+
+===========================================================
+END OF DOCUMENT
+===========================================================
