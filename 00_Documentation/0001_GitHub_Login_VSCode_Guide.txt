@@ -1,0 +1,101 @@
+GitHub Login sa VS Code
+
+================================================== 1. CHECK KUNG
+NAKA-LOGIN KA ==================================================
+
+Buksan ang VS Code Terminal.
+
+Command:
+
+git config –global user.name
+
+git config –global user.email
+
+Kung lumabas ang pangalan at email mo, naka-configure ang Git.
+
+------------------------------------------------------------------------
+
+Kung nasa project folder ka (hal. Wardogz_II), gamitin:
+
+git remote -v
+
+Dapat may output na katulad nito:
+
+origin https://github.com/jednorbie1993/Wardogz_II.git (fetch) origin
+https://github.com/jednorbie1993/Wardogz_II.git (push)
+
+------------------------------------------------------------------------
+
+Para i-test ang connection:
+
+git pull
+
+Kung lumabas:
+
+Already up to date.
+
+o
+
+Fast-forward
+
+ibig sabihin maayos ang connection.
+
+================================================== 2. KUNG HINDI KA
+NAKA-LOGIN ==================================================
+
+Paraan 1 (Recommended)
+
+1.  Buksan ang VS Code.
+2.  I-click ang Accounts (icon ng profile sa upper-right).
+3.  Piliin ang “Sign in with GitHub”.
+4.  Magbubukas ang browser.
+5.  Mag-login gamit ang GitHub account mo.
+6.  I-click ang Authorize Visual Studio Code.
+7.  Bumalik sa VS Code.
+
+================================================== 3. LOGIN HABANG
+NAG-PUSH ==================================================
+
+Kung hindi ka pa authenticated, subukan:
+
+git push
+
+Magbubukas ang browser. Mag-login sa GitHub. I-authorize ang VS Code.
+
+================================================== 4. PAANO MALALAMAN
+KUNG OK NA ==================================================
+
+Subukan:
+
+git pull
+
+o
+
+git push
+
+Kung walang error tulad ng:
+
+Authentication failed
+
+o
+
+Permission denied
+
+ibig sabihin successful na ang login.
+
+================================================== 5. IMPORTANTENG
+TANDAAN ==================================================
+
+• Bawat laptop ay isang beses lang karaniwang nagla-login. • Sina-save
+ng Git Credential Manager ang authentication. • Hindi mo kailangang
+mag-login sa bawat paggamit ng VS Code. • Maaari kang gumamit ng
+maraming laptop basta naka-login ang bawat isa sa GitHub account mo.
+
+================================================== 6. QUICK CHECK
+==================================================
+
+git config –global user.name git config –global user.email git remote -v
+git status
+
+Kapag normal ang output ng mga ito, handa ka nang mag-pull, mag-commit,
+at mag-push.
