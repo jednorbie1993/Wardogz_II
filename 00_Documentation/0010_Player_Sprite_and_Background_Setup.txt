@@ -1,0 +1,504 @@
+============================================================
+WARDOGZ II
+0010 - PLAYER SPRITE AND BACKGROUND SETUP
+============================================================
+
+PURPOSE:
+Document the setup and adjustments made for:
+
+    - Player sprite image
+    - Player sprite size
+    - Player drawing
+    - Walkable area
+    - Back Alley background
+    - Background scaling
+    - Player placement inside the stage
+
+
+============================================================
+1. PLAYER SPRITE
+============================================================
+
+Player image location:
+
+    assets/sprites/player/player.png
+
+
+The original player image had a very large transparent canvas.
+
+Original image dimensions:
+
+    1408 x 768
+
+
+Because the actual character occupied only a small portion of the image,
+the player appeared very small when drawn inside the game.
+
+
+============================================================
+2. PLAYER IMAGE CROPPING
+============================================================
+
+The image was already a PNG with transparency.
+
+The unnecessary transparent space around the player was cropped.
+
+New cropped dimensions:
+
+    457 x 728
+
+
+IMPORTANT:
+
+The player image should remain:
+
+    PNG format
+    Transparent background
+
+
+PNG transparency allows the stage/background to remain visible around
+the character.
+
+
+============================================================
+3. PLAYER SIZE PROBLEM
+============================================================
+
+Inside player.c, the player rectangle originally used:
+
+    64.0f width
+    64.0f height
+
+
+Example:
+
+    player.rectangle = (Rectangle)
+    {
+        150.0f,
+        500.0f,
+        64.0f,
+        64.0f
+    };
+
+
+This caused the player image to look:
+
+    - Too small
+    - Too wide / fat
+    - Stretched
+
+
+CAUSE:
+
+The real player image ratio was approximately:
+
+    457 x 728
+
+but the game was forcing the image into:
+
+    64 x 64
+
+which is a square.
+
+
+============================================================
+4. PLAYER SIZE ADJUSTMENT
+============================================================
+
+The player rectangle was changed to approximately preserve
+the original image proportions.
+
+Initial corrected test size:
+
+    Width  = 113
+    Height = 180
+
+
+Example:
+
+    player.rectangle = (Rectangle)
+    {
+        150.0f,
+        500.0f,
+        113.0f,
+        180.0f
+    };
+
+
+This prevented the sprite from looking stretched.
+
+The size can still be adjusted later depending on the final
+arcade-style appearance.
+
+
+============================================================
+5. DrawTexturePro()
+============================================================
+
+The player is drawn using:
+
+    DrawTexturePro()
+
+
+Inside DrawPlayer():
+
+    Rectangle source
+
+represents the entire original player texture.
+
+
+    Rectangle destination
+
+represents:
+
+    - Player position
+    - Player width
+    - Player height
+
+
+The destination rectangle uses:
+
+    player->rectangle
+
+
+This allows the player sprite to be resized in the game without
+changing the actual PNG file.
+
+
+============================================================
+6. SCREEN RESOLUTION
+============================================================
+
+The current internal game resolution is:
+
+    1280 x 720
+
+
+Inside main.c:
+
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
+
+
+This is the logical game screen used by Wardogz II.
+
+
+============================================================
+7. WALKABLE AREA
+============================================================
+
+The player does not move freely across the entire screen.
+
+A specific vertical area is used as the stage's walkable zone.
+
+
+Current values:
+
+    const float walkAreaTop = 270.0f;
+    const float walkAreaBottom = 750.0f;
+
+
+Meaning:
+
+    walkAreaTop
+
+defines how far upward the player can move.
+
+
+    walkAreaBottom
+
+defines the lower movement boundary.
+
+
+The walkable area is an INVISIBLE gameplay boundary.
+
+It does NOT need to be visible in the final game.
+
+
+============================================================
+8. DEBUG FLOOR VS FINAL FLOOR
+============================================================
+
+During early development, colored rectangles were used to show:
+
+    - Background area
+    - Walkable floor
+    - Foreground
+
+
+Example colors included:
+
+    DARKBLUE
+    GRAY
+    DARKGRAY
+
+
+These rectangles were only used for debugging and testing.
+
+They are NOT intended to appear in the final game.
+
+
+FINAL IDEA:
+
+The actual stage artwork will visually represent:
+
+    Wall
+    Sidewalk
+    Street
+    Floor
+    Objects
+
+
+while the code still uses an invisible walkable area.
+
+
+============================================================
+9. BACK ALLEY BACKGROUND
+============================================================
+
+A Back Alley stage image was created for Wardogz II.
+
+Background location:
+
+    assets/background/back_alley.png
+
+
+The artwork includes:
+
+    - Brick wall
+    - Door
+    - Pipes
+    - Street light
+    - Trash cans
+    - Dumpster
+    - Graffiti
+    - Cracked pavement
+    - Alley floor
+
+
+This background visually replaces the temporary blue/gray
+debug rectangles.
+
+
+============================================================
+10. BACKGROUND LOADING
+============================================================
+
+Inside main.c:
+
+    Texture2D background =
+        LoadTexture("assets/background/back_alley.png");
+
+
+This loads the stage image into memory.
+
+
+============================================================
+11. BACKGROUND DRAW ORDER
+============================================================
+
+An important issue was discovered during setup.
+
+The background was originally drawn BEFORE:
+
+    ClearBackground()
+
+and before the debug rectangles.
+
+
+Example of the incorrect order:
+
+    DrawTexture(background, 0, 0, WHITE);
+
+    ClearBackground(SKYBLUE);
+
+    DrawRectangle(...);
+
+
+This caused the background image to be covered.
+
+
+CORRECT DRAW ORDER:
+
+    BeginDrawing();
+
+    ClearBackground(BLACK);
+
+    Draw background
+
+    Draw player
+
+    Draw UI
+
+    EndDrawing();
+
+
+IMPORTANT RULE:
+
+Objects drawn later appear ON TOP of objects drawn earlier.
+
+
+============================================================
+12. BACKGROUND SCALING
+============================================================
+
+The Back Alley image does not need to have exactly the same
+pixel dimensions as the game window.
+
+The background is scaled using:
+
+    DrawTexturePro()
+
+
+Source rectangle:
+
+    Rectangle source =
+    {
+        0.0f,
+        0.0f,
+        (float)background.width,
+        (float)background.height
+    };
+
+
+Destination rectangle:
+
+    Rectangle destination =
+    {
+        0.0f,
+        0.0f,
+        (float)screenWidth,
+        (float)screenHeight
+    };
+
+
+Then:
+
+    DrawTexturePro(
+        background,
+        source,
+        destination,
+        (Vector2){0.0f, 0.0f},
+        0.0f,
+        WHITE
+    );
+
+
+This makes the Back Alley artwork fill the game's:
+
+    1280 x 720
+
+screen.
+
+
+============================================================
+13. PLAYER DRAW ORDER
+============================================================
+
+The player must be drawn AFTER the background.
+
+
+Correct:
+
+    Draw background
+
+        ↓
+
+    DrawPlayer(&player);
+
+
+This makes the player appear in front of the stage.
+
+
+============================================================
+14. BACKGROUND MEMORY CLEANUP
+============================================================
+
+Before closing the game:
+
+    UnloadTexture(background);
+
+
+The player texture is also unloaded using:
+
+    UnloadPlayer(&player);
+
+
+Then:
+
+    CloseWindow();
+
+
+This prevents loaded textures from remaining in memory.
+
+
+============================================================
+15. CURRENT MAIN.C STAGE SETTINGS
+============================================================
+
+Current screen:
+
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
+
+
+Current walkable area:
+
+    const float walkAreaTop = 270.0f;
+    const float walkAreaBottom = 750.0f;
+
+
+Current player image:
+
+    assets/sprites/player/player.png
+
+
+Current background:
+
+    assets/background/back_alley.png
+
+
+============================================================
+16. IMPORTANT LESSONS
+============================================================
+
+PLAYER SPRITE:
+
+Do not automatically assume that a large PNG means the character
+will look large in the game.
+
+The actual character may occupy only a small portion of the canvas.
+
+
+SPRITE PROPORTION:
+
+Do not force a tall character image into a square rectangle.
+
+Example:
+
+    457 x 728 image
+
+should NOT normally be forced into:
+
+    64 x 64
+
+
+BACKGROUND:
+
+The visible floor and the actual gameplay walkable area are
+different concepts.
+
+
+Visible floor:
+    Part of the stage artwork.
+
+
+Walkable area:
+    Invisible boundaries controlled by code.
+
+
+DRAW ORDER:
+
+Raylib draws objects in sequence.
+
+Later drawing

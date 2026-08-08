@@ -1,0 +1,251 @@
+============================================================
+WARDOGZ II
+0009 - VS CODE INTELLISENSE RED INCLUDE FIX
+============================================================
+
+PURPOSE:
+Fix the red underline/error shown by VS Code on:
+
+    #include "raylib.h"
+    #include "player.h"
+
+IMPORTANT:
+If build.bat / build_and_run.bat successfully compiles the game,
+but VS Code still shows red underlines, the problem may only be
+VS Code IntelliSense configuration.
+
+This does NOT necessarily mean that the C code or Raylib is broken.
+
+
+============================================================
+PROBLEM ENCOUNTERED
+============================================================
+
+VS Code showed red underlines on:
+
+    #include "raylib.h"
+    #include "player.h"
+
+The game could still compile and run.
+
+VS Code showed errors because IntelliSense did not know where to
+find the Raylib header files and the Wardogz II header files.
+
+
+============================================================
+CAUSE
+============================================================
+
+A configuration was accidentally created as a FILE named:
+
+    .vscode
+
+This was incorrect.
+
+VS Code expects ".vscode" to be a FOLDER.
+
+Inside that folder, the C/C++ configuration should be stored as:
+
+    .vscode/c_cpp_properties.json
+
+
+INCORRECT:
+
+Wardogz_II
+│
+├── .vscode        <-- FILE (WRONG)
+├── include
+├── src
+└── ...
+
+
+CORRECT:
+
+Wardogz_II
+│
+├── .vscode
+│   └── c_cpp_properties.json
+│
+├── include
+│   └── player.h
+│
+├── src
+│   ├── main.c
+│   └── player.c
+│
+└── ...
+
+
+============================================================
+FIX
+============================================================
+
+STEP 1:
+Delete the incorrect ".vscode" FILE.
+
+IMPORTANT:
+Make sure it is the incorrect file and not an existing .vscode
+folder containing useful configuration files.
+
+
+STEP 2:
+Create a new FOLDER named:
+
+    .vscode
+
+
+STEP 3:
+Inside the .vscode folder, create:
+
+    c_cpp_properties.json
+
+
+STEP 4:
+Put the following configuration inside the file:
+
+
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/include",
+                "C:/raylib/raylib/src"
+            ],
+            "defines": [],
+            "compilerPath": "C:/raylib/w64devkit/bin/gcc.exe",
+            "cStandard": "c17",
+            "intelliSenseMode": "windows-gcc-x64"
+        }
+    ],
+    "version": 4
+}
+
+
+============================================================
+WHAT THE PATHS MEAN
+============================================================
+
+"${workspaceFolder}/**"
+
+    Allows IntelliSense to search inside the Wardogz II
+    project folders.
+
+
+"${workspaceFolder}/include"
+
+    Tells IntelliSense where Wardogz II header files are located.
+
+    Example:
+
+        include/player.h
+
+
+"C:/raylib/raylib/src"
+
+    Tells IntelliSense where Raylib headers are located.
+
+    Example:
+
+        raylib.h
+
+
+"compilerPath": "C:/raylib/w64devkit/bin/gcc.exe"
+
+    Tells VS Code which GCC compiler is being used.
+
+
+============================================================
+RESET INTELLISENSE
+============================================================
+
+After saving c_cpp_properties.json:
+
+Press:
+
+    Ctrl + Shift + P
+
+Search:
+
+    C/C++: Reset IntelliSense Database
+
+Press ENTER.
+
+Then reopen main.c if necessary.
+
+
+============================================================
+EXPECTED RESULT
+============================================================
+
+These should no longer have red underlines:
+
+    #include "raylib.h"
+    #include "player.h"
+
+
+The project should now have:
+
+    .vscode/
+        c_cpp_properties.json
+
+    include/
+        player.h
+
+    src/
+        main.c
+        player.c
+
+
+============================================================
+IMPORTANT NOTE
+============================================================
+
+INTELLISENSE and COMPILATION are different things.
+
+IntelliSense:
+    Used by VS Code for code completion, error highlighting,
+    header detection, suggestions, etc.
+
+Compiler:
+    Actually builds the C program.
+
+Therefore:
+
+    Red underline in VS Code
+        DOES NOT ALWAYS mean
+    the game cannot compile.
+
+Always test the real build using:
+
+    build.bat
+
+or:
+
+    build_and_run.bat
+
+
+============================================================
+WARDOGZ II - FIX STATUS
+============================================================
+
+Issue:
+    raylib.h red underline
+    player.h red underline
+
+Cause:
+    .vscode was accidentally created as a file instead of folder.
+
+Solution:
+    Created:
+
+        .vscode/
+            c_cpp_properties.json
+
+Result:
+    VS Code IntelliSense recognizes the include paths correctly.
+
+STATUS:
+    FIXED
+============================================================

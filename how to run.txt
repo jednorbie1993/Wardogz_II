@@ -111,6 +111,49 @@ Next Goal:
 - Animation
 - Enemy System
 
+
+===========================================================
+BATCH FILE COMMANDS
+===========================================================
+
+The project includes three batch files for easier compiling
+and running from the VS Code terminal.
+
+-----------------------------------------------------------
+BUILD ONLY - build.bat
+-----------------------------------------------------------
+
+Run:
+
+    .\build.bat
+
+This compiles the Wardogz II source files and creates:
+
+    build\Wardogz_II.exe
+
+-----------------------------------------------------------
+RUN ONLY - run.bat
+-----------------------------------------------------------
+
+Run:
+
+    .\run.bat
+
+This runs the already compiled game:
+
+    build\Wardogz_II.exe
+
+-----------------------------------------------------------
+BUILD AND RUN - build_and_run.bat
+-----------------------------------------------------------
+
+Run:
+
+    .\build_and_run.bat
+
+This first compiles the project and, if the build succeeds,
+automatically runs Wardogz II.
+
 ===========================================================
 END OF DOCUMENT
 ===========================================================
