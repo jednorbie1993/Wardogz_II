@@ -9,6 +9,15 @@ typedef struct Player
     Rectangle rectangle;
     Texture2D texture;
     float speed;
+
+    Texture2D idleTextures[3];
+
+    int idleFrame;
+    int idleDirection;
+
+    float idleTimer;
+    float idleFrameTime;
+
 } Player;
 
 // Gumawa ng player at mag-load ng texture
