@@ -1,0 +1,590 @@
+===========================================================
+        WARDOGZ II - BUILD SCRIPTS GUIDE
+===========================================================
+
+Document Number:
+0007
+
+Files Covered:
+
+build.bat
+run.bat
+build_and_run.bat
+
+Location:
+
+Wardogz_II project root
+
+Purpose:
+
+This document explains how the three Windows batch files work
+and why they are placed in the project root.
+
+===========================================================
+1. WHY BUILD SCRIPTS ARE USED
+===========================================================
+
+Without a build script, the complete GCC command must be typed
+manually whenever the project is compiled:
+
+gcc src/main.c src/player.c -o build/Wardogz_II.exe -Iinclude -I"C:\raylib\raylib\src" -L"C:\raylib\raylib\src" -lraylib -lopengl32 -lgdi32 -lwinmm
+
+This command is long and easy to mistype.
+
+Batch files save the commands so they can be reused.
+
+Current scripts:
+
+build.bat
+
+Compiles the game only.
+
+run.bat
+
+Runs the most recently compiled executable only.
+
+build_and_run.bat
+
+Compiles the game and runs it only when compilation succeeds.
+
+===========================================================
+2. WHY THE FILES ARE IN THE PROJECT ROOT
+===========================================================
+
+Current placement:
+
+Wardogz_II
+|
+|-- build.bat
+|-- run.bat
+|-- build_and_run.bat
+|-- src
+|-- include
+|-- assets
+`-- build
+
+The scripts use paths such as:
+
+src/main.c
+include
+build/Wardogz_II.exe
+
+These paths are easiest to use when the scripts are in the
+project root.
+
+If the scripts were placed in another folder, many paths would
+need ..\ to go back to the project root.
+
+Example:
+
+..\src\main.c
+
+Keeping them in the root is simpler for the current project.
+
+===========================================================
+3. build.bat
+===========================================================
+
+Complete file:
+
+@echo off
+cls
+
+echo ==========================================
+echo          Building Wardogz II
+echo ==========================================
+echo.
+
+gcc src/main.c src/player.c -o build/Wardogz_II.exe ^
+-Iinclude ^
+-I"C:\raylib\raylib\src" ^
+-L"C:\raylib\raylib\src" ^
+-lraylib ^
+-lopengl32 ^
+-lgdi32 ^
+-lwinmm
+
+echo.
+if %errorlevel%==0 (
+    echo ==========================================
+    echo Build Successful!
+    echo ==========================================
+) else (
+    echo ==========================================
+    echo Build Failed!
+    echo ==========================================
+)
+
+echo.
+pause
+
+===========================================================
+4. HOW build.bat WORKS
+===========================================================
+
+-----------------------------------------------------------
+4.1 @echo off
+-----------------------------------------------------------
+
+@echo off
+
+By default, Command Prompt displays each command before running
+it.
+
+echo off hides those command lines and keeps the output clean.
+
+The @ symbol also hides the echo off command itself.
+
+-----------------------------------------------------------
+4.2 cls
+-----------------------------------------------------------
+
+cls
+
+Clears the Command Prompt window before showing the build
+information.
+
+-----------------------------------------------------------
+4.3 echo
+-----------------------------------------------------------
+
+echo Building Wardogz II
+
+The echo command displays text.
+
+A line containing:
+
+echo.
+
+prints an empty line.
+
+-----------------------------------------------------------
+4.4 GCC Command
+-----------------------------------------------------------
+
+gcc src/main.c src/player.c -o build/Wardogz_II.exe ^
+-Iinclude ^
+-I"C:\raylib\raylib\src" ^
+-L"C:\raylib\raylib\src" ^
+-lraylib ^
+-lopengl32 ^
+-lgdi32 ^
+-lwinmm
+
+The caret symbol ^ continues one command onto the next line in
+a Windows batch file.
+
+All lines above form one GCC command.
+
+Important:
+
+The caret must remain at the end of each continued line.
+
+Do not place spaces after the caret.
+
+-----------------------------------------------------------
+4.5 Source Files
+-----------------------------------------------------------
+
+gcc src/main.c src/player.c
+
+These are the C source files currently compiled.
+
+Whenever another module is created, its .c file must be added.
+
+Example after stage.c is created:
+
+gcc src/main.c src/player.c src/stage.c ...
+
+Header files such as player.h are not listed as source files.
+They are found through #include and -Iinclude.
+
+-----------------------------------------------------------
+4.6 Output File
+-----------------------------------------------------------
+
+-o build/Wardogz_II.exe
+
+-o means output.
+
+It tells GCC to create:
+
+build/Wardogz_II.exe
+
+-----------------------------------------------------------
+4.7 Project Include Folder
+-----------------------------------------------------------
+
+-Iinclude
+
+-I adds a folder to the header search path.
+
+This allows GCC to find:
+
+include/player.h
+
+Without it, the compiler may show:
+
+fatal error: player.h: No such file or directory
+
+-----------------------------------------------------------
+4.8 raylib Include Folder
+-----------------------------------------------------------
+
+-I"C:\raylib\raylib\src"
+
+This allows GCC to find:
+
+C:\raylib\raylib\src\raylib.h
+
+The quotation marks safely protect the path, even though this
+particular path currently has no spaces.
+
+-----------------------------------------------------------
+4.9 raylib Library Folder
+-----------------------------------------------------------
+
+-L"C:\raylib\raylib\src"
+
+-L adds a folder to the linker library search path.
+
+This tells the linker where to search for the raylib library.
+
+-----------------------------------------------------------
+4.10 Linked Libraries
+-----------------------------------------------------------
+
+-lraylib
+
+Links raylib.
+
+-lopengl32
+
+Links the Windows OpenGL library used for graphics.
+
+-lgdi32
+
+Links the Windows Graphics Device Interface library.
+
+-lwinmm
+
+Links the Windows multimedia library.
+
+-----------------------------------------------------------
+4.11 errorlevel
+-----------------------------------------------------------
+
+if %errorlevel%==0 (
+    ...
+) else (
+    ...
+)
+
+After GCC finishes, Windows stores the command result in
+errorlevel.
+
+errorlevel 0 normally means success.
+
+A nonzero value normally means an error occurred.
+
+Therefore:
+
+if %errorlevel%==0
+
+means show Build Successful when compilation succeeds.
+
+Otherwise, show Build Failed.
+
+-----------------------------------------------------------
+4.12 pause
+-----------------------------------------------------------
+
+pause
+
+Keeps the Command Prompt window open and waits for a key press.
+
+This is useful when build.bat is opened by double-clicking.
+Without pause, the window may close before the user reads the
+result.
+
+===========================================================
+5. run.bat
+===========================================================
+
+Complete file:
+
+@echo off
+cls
+
+echo ==========================================
+echo          Running Wardogz II
+echo ==========================================
+echo.
+
+build\Wardogz_II.exe
+
+echo.
+pause
+
+===========================================================
+6. HOW run.bat WORKS
+===========================================================
+
+run.bat does not compile the source code.
+
+It only runs the existing executable:
+
+build\Wardogz_II.exe
+
+This means it runs the most recently successful build.
+
+Use run.bat when:
+
+- The source code has not changed.
+- The game only needs to be launched again.
+- The existing executable is already current.
+
+Possible problem:
+
+If build\Wardogz_II.exe does not exist, Windows will report
+that the file cannot be found.
+
+In that situation, use build.bat first or use
+build_and_run.bat.
+
+===========================================================
+7. build_and_run.bat
+===========================================================
+
+Complete file:
+
+@echo off
+cls
+
+echo ==========================================
+echo      Building Wardogz II
+echo ==========================================
+echo.
+
+gcc src/main.c src/player.c -o build/Wardogz_II.exe ^
+-Iinclude ^
+-I"C:\raylib\raylib\src" ^
+-L"C:\raylib\raylib\src" ^
+-lraylib ^
+-lopengl32 ^
+-lgdi32 ^
+-lwinmm
+
+if %errorlevel% neq 0 (
+    echo.
+    echo ==========================================
+    echo Build Failed!
+    echo ==========================================
+    echo.
+    pause
+    exit /b
+)
+
+cls
+
+echo ==========================================
+echo Build Successful!
+echo Starting Game...
+echo ==========================================
+echo.
+
+build\Wardogz_II.exe
+
+===========================================================
+8. HOW build_and_run.bat WORKS
+===========================================================
+
+This script first compiles the game.
+
+Then it checks:
+
+if %errorlevel% neq 0
+
+neq means not equal.
+
+Therefore the condition means:
+
+If the GCC result is not zero, compilation failed.
+
+When compilation fails, the script performs:
+
+pause
+exit /b
+
+pause allows the error to be read.
+
+exit /b stops the batch file without closing the entire
+Command Prompt session that called it.
+
+Because the script stops, an old executable is not launched
+by mistake after a failed build.
+
+If compilation succeeds, the script clears the screen and
+runs:
+
+build\Wardogz_II.exe
+
+===========================================================
+9. HOW TO USE THE THREE FILES
+===========================================================
+
+Method 1: Double-click
+
+Open the Wardogz_II folder in File Explorer and double-click:
+
+build.bat
+
+or:
+
+run.bat
+
+or:
+
+build_and_run.bat
+
+-----------------------------------------------------------
+
+Method 2: VS Code Terminal
+
+From the Wardogz_II project root, run:
+
+.\build.bat
+
+or:
+
+.\run.bat
+
+or:
+
+.\build_and_run.bat
+
+PowerShell uses .\ to run a file from the current folder.
+
+===========================================================
+10. WHICH SCRIPT SHOULD BE USED
+===========================================================
+
+Use build.bat when:
+
+- You only want to check whether the code compiles.
+- You do not want the game to open immediately.
+
+Use run.bat when:
+
+- The executable is already built.
+- You only want to launch the game.
+
+Use build_and_run.bat when:
+
+- You changed the source code.
+- You want one action to compile and run.
+
+For normal development, build_and_run.bat will usually be the
+most convenient.
+
+===========================================================
+11. UPDATING THE GCC COMMAND LATER
+===========================================================
+
+Current source files:
+
+src/main.c
+src/player.c
+
+Current beginning of the command:
+
+gcc src/main.c src/player.c ...
+
+After stage.c is created:
+
+gcc src/main.c src/player.c src/stage.c ...
+
+After camera.c is created:
+
+gcc src/main.c src/player.c src/stage.c src/camera.c ...
+
+The source file list must be updated in:
+
+- build.bat
+- build_and_run.bat
+
+run.bat does not need the GCC command because it only runs the
+executable.
+
+===========================================================
+12. COMMON ERRORS
+===========================================================
+
+Error:
+
+fatal error: raylib.h: No such file or directory
+
+Check this path:
+
+-I"C:\raylib\raylib\src"
+
+The older incorrect path was:
+
+C:\raylib\src
+
+-----------------------------------------------------------
+
+Error:
+
+fatal error: player.h: No such file or directory
+
+Check that:
+
+- player.h is inside include.
+- The command contains -Iinclude.
+
+-----------------------------------------------------------
+
+Error:
+
+cannot open output file build/Wardogz_II.exe
+
+Possible causes:
+
+- The build folder does not exist.
+- Wardogz_II.exe is still running.
+- Another program is locking the executable.
+
+Close the game window and compile again.
+
+-----------------------------------------------------------
+
+Problem:
+
+The batch file opens and closes immediately.
+
+Check that pause exists at the end of build.bat or inside the
+failure section of build_and_run.bat.
+
+===========================================================
+13. CURRENT PROJECT ROOT
+===========================================================
+
+Wardogz_II
+|
+|-- build.bat
+|-- run.bat
+|-- build_and_run.bat
+|
+|-- 00_Documentation
+|-- assets
+|-- build
+|-- include
+|-- src
+|-- .gitignore
+|-- README.md
+`-- how to run.txt
+
+===========================================================
+END OF DOCUMENT
+===========================================================

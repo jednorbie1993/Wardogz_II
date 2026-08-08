@@ -1,0 +1,241 @@
+===========================================================
+WARDOGZ II
+Clone Project to Another Computer
+(Mouse Laptop Setup)
+Date: August 3, 2026
+===========================================================
+
+Purpose
+
+Instead of copying the project using USB,
+download the latest version directly from GitHub.
+
+Requirements
+
+✔ Git Installed
+✔ GitHub Account
+✔ Internet Connection
+
+===========================================================
+STEP 1
+Open PowerShell or VS Code Terminal
+===========================================================
+
+Example:
+
+PS C:\Users\jedja>
+
+===========================================================
+STEP 2
+Go to the Project Folder
+===========================================================
+
+I keep all my C projects inside:
+
+C:\Users\jedja\OneDrive\Desktop\C_projects
+
+Command:
+
+cd "C:\Users\jedja\OneDrive\Desktop\C_projects"
+
+Explanation
+
+cd
+
+means
+
+Change Directory
+
+It tells PowerShell to move to another folder.
+
+===========================================================
+STEP 3
+Check Current Folder
+===========================================================
+
+Command:
+
+dir
+
+Explanation
+
+dir
+
+means
+
+Directory
+
+It shows all folders and files inside the current directory.
+
+Example Output
+
+Wardogz
+first-contributions
+Raylib
+etc.
+
+===========================================================
+STEP 4
+Clone the Repository
+===========================================================
+
+Command
+
+git clone https://github.com/jednorbie1993/Wardogz_II.git
+
+Explanation
+
+git clone
+
+downloads the repository from GitHub
+to your current folder.
+
+Result
+
+A new folder named
+
+Wardogz_II
+
+will be created automatically.
+
+Folder Structure
+
+C_projects
+
+    Wardogz
+
+    Wardogz_II
+
+===========================================================
+STEP 5
+Enter the Project Folder
+===========================================================
+
+Command
+
+cd Wardogz_II
+
+Explanation
+
+Move inside the cloned project.
+
+===========================================================
+STEP 6
+Verify Git
+===========================================================
+
+Command
+
+git status
+
+Expected Output
+
+On branch main
+
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+
+Meaning
+
+Everything downloaded successfully.
+
+===========================================================
+Common Commands
+===========================================================
+
+Change Folder
+
+cd folder_name
+
+Go Back One Folder
+
+cd ..
+
+Show Files
+
+dir
+
+Check Git Status
+
+git status
+
+Download Repository
+
+git clone URL
+
+===========================================================
+Difference
+===========================================================
+
+git clone
+
+Downloads a repository from GitHub.
+
+git pull
+
+Downloads NEW updates from GitHub
+to an EXISTING local repository.
+
+Example
+
+Already have Wardogz_II?
+
+Use:
+
+git pull
+
+New computer?
+
+Use:
+
+git clone
+
+===========================================================
+Workflow
+===========================================================
+
+First Computer
+
+Create Project
+
+↓
+
+git add .
+
+↓
+
+git commit
+
+↓
+
+git push
+
+↓
+
+GitHub
+
+
+Second Computer
+
+git clone
+
+↓
+
+Code
+
+↓
+
+git add
+
+↓
+
+git commit
+
+↓
+
+git push
+
+===========================================================
+END
+===========================================================

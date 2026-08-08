@@ -1,0 +1,591 @@
+===========================================================
+           WARDOGZ II - MAIN MODULE GUIDE
+===========================================================
+
+Document Number:
+0006
+
+File Covered:
+
+src/main.c
+
+Purpose:
+
+This document explains the current responsibility of main.c
+after the player code was moved into a separate module.
+
+===========================================================
+1. ROLE OF main.c
+===========================================================
+
+main.c is the main entry point of the Wardogz II program.
+
+The operating system starts the program by calling:
+
+int main(void)
+
+After modularization, main.c should coordinate the game. It
+should not contain every detail of every system.
+
+Current responsibilities:
+
+- Define the screen size.
+- Define the temporary walkable area.
+- Open the raylib window.
+- Set the target frame rate.
+- Create the player through InitPlayer.
+- Run the main game loop.
+- Get delta time.
+- Call UpdatePlayer.
+- Draw the temporary stage.
+- Call DrawPlayer.
+- Unload the player.
+- Close the window.
+
+===========================================================
+2. COMPLETE CURRENT main.c
+===========================================================
+
+#include "raylib.h"
+#include "player.h"
+
+int main(void)
+{
+    const int screenWidth = 1280;
+    const int screenHeight = 720;
+
+    const float walkAreaTop = 400.0f;
+    const float walkAreaBottom = 640.0f;
+
+    InitWindow(
+        screenWidth,
+        screenHeight,
+        "Wardogz II"
+    );
+
+    SetTargetFPS(60);
+
+    Player player = InitPlayer(
+        "assets/sprites/player/player.png"
+    );
+
+    while (!WindowShouldClose())
+    {
+        float deltaTime = GetFrameTime();
+
+        UpdatePlayer(
+            &player,
+            deltaTime,
+            (float)screenWidth,
+            walkAreaTop,
+            walkAreaBottom
+        );
+
+        BeginDrawing();
+
+        ClearBackground(SKYBLUE);
+
+        DrawRectangle(
+            0,
+            0,
+            screenWidth,
+            (int)walkAreaTop,
+            DARKBLUE
+        );
+
+        DrawText(
+            "BACKGROUND AREA",
+            500,
+            180,
+            30,
+            WHITE
+        );
+
+        DrawRectangle(
+            0,
+            (int)walkAreaTop,
+            screenWidth,
+            (int)(walkAreaBottom - walkAreaTop),
+            GRAY
+        );
+
+        DrawRectangle(
+            0,
+            (int)walkAreaBottom,
+            screenWidth,
+            screenHeight - (int)walkAreaBottom,
+            DARKGRAY
+        );
+
+        DrawPlayer(&player);
+
+        DrawText(
+            "Move: Arrow Keys or WASD",
+            30,
+            30,
+            25,
+            WHITE
+        );
+
+        EndDrawing();
+    }
+
+    UnloadPlayer(&player);
+
+    CloseWindow();
+
+    return 0;
+}
+
+===========================================================
+3. INCLUDE LINES
+===========================================================
+
+#include "raylib.h"
+
+This makes raylib functions and types available to main.c.
+
+Examples used in main.c:
+
+- InitWindow
+- SetTargetFPS
+- WindowShouldClose
+- GetFrameTime
+- BeginDrawing
+- ClearBackground
+- DrawRectangle
+- DrawText
+- EndDrawing
+- CloseWindow
+
+-----------------------------------------------------------
+
+#include "player.h"
+
+This makes the Player structure and player function
+declarations available to main.c.
+
+Examples:
+
+- Player
+- InitPlayer
+- UpdatePlayer
+- DrawPlayer
+- UnloadPlayer
+
+The actual code for those functions is inside src/player.c.
+
+===========================================================
+4. int main(void)
+===========================================================
+
+int main(void)
+
+This is the program's entry function.
+
+int means the function returns an integer when the program
+finishes.
+
+void means main does not receive command-line arguments in
+this version.
+
+At the end:
+
+return 0;
+
+Zero normally means the program ended successfully.
+
+===========================================================
+5. SCREEN CONSTANTS
+===========================================================
+
+const int screenWidth = 1280;
+const int screenHeight = 720;
+
+These values define the game window size.
+
+const means the values should not change after they are
+created.
+
+int is used because the width and height are whole numbers.
+
+===========================================================
+6. TEMPORARY WALKABLE AREA
+===========================================================
+
+const float walkAreaTop = 400.0f;
+const float walkAreaBottom = 640.0f;
+
+These values define the vertical section where the player is
+currently allowed to walk.
+
+The stage is temporarily divided into three parts:
+
+1. Background area
+
+Y = 0 to 400
+
+2. Walkable floor
+
+Y = 400 to 640
+
+3. Foreground area
+
+Y = 640 to 720
+
+These values are still in main.c because the stage module has
+not yet been created.
+
+Later they will move into:
+
+include/stage.h
+src/stage.c
+
+===========================================================
+7. InitWindow
+===========================================================
+
+InitWindow(
+    screenWidth,
+    screenHeight,
+    "Wardogz II"
+);
+
+This creates the game window.
+
+Arguments:
+
+1. Window width.
+2. Window height.
+3. Window title.
+
+InitWindow must be called before loading textures because the
+graphics system must exist first.
+
+===========================================================
+8. SetTargetFPS
+===========================================================
+
+SetTargetFPS(60);
+
+This asks raylib to target 60 frames per second.
+
+One frame means one update and one drawing cycle.
+
+The actual movement remains time-based because UpdatePlayer
+uses delta time.
+
+===========================================================
+9. PLAYER CREATION
+===========================================================
+
+Player player = InitPlayer(
+    "assets/sprites/player/player.png"
+);
+
+This line performs several steps:
+
+1. Declares a Player variable named player.
+2. Calls InitPlayer.
+3. Sends the player image path to InitPlayer.
+4. Receives the completed Player value.
+5. Stores that value in player.
+
+The path is relative to the project working directory.
+
+The program should normally be run while the terminal is in:
+
+Wardogz_II
+
+===========================================================
+10. MAIN GAME LOOP
+===========================================================
+
+while (!WindowShouldClose())
+{
+    ...
+}
+
+This loop repeats while the game is running.
+
+WindowShouldClose becomes true when the user:
+
+- Clicks the window close button.
+- Presses the default exit key, normally Escape.
+
+The exclamation mark means NOT.
+
+Therefore:
+
+!WindowShouldClose()
+
+means continue while the window should not close.
+
+===========================================================
+11. DELTA TIME
+===========================================================
+
+float deltaTime = GetFrameTime();
+
+GetFrameTime returns the amount of time used by the previous
+frame in seconds.
+
+This value is sent to UpdatePlayer so movement remains smooth
+and time-based.
+
+===========================================================
+12. UPDATE SECTION
+===========================================================
+
+UpdatePlayer(
+    &player,
+    deltaTime,
+    (float)screenWidth,
+    walkAreaTop,
+    walkAreaBottom
+);
+
+This updates the player before drawing the frame.
+
+Arguments:
+
+1. &player
+
+Address of the actual Player variable.
+
+2. deltaTime
+
+Time used by the previous frame.
+
+3. (float)screenWidth
+
+Screen width converted from int to float.
+
+4. walkAreaTop
+
+Upper movement boundary.
+
+5. walkAreaBottom
+
+Lower movement boundary.
+
+===========================================================
+13. DRAWING SECTION
+===========================================================
+
+BeginDrawing();
+
+All normal 2D drawing commands for the current frame go after
+this line.
+
+-----------------------------------------------------------
+
+ClearBackground(SKYBLUE);
+
+Clears the previous frame before drawing the new one.
+
+Without clearing, old drawings could remain visible.
+
+-----------------------------------------------------------
+
+EndDrawing();
+
+Finishes the frame and displays the completed drawing.
+
+Every BeginDrawing call must have a matching EndDrawing call.
+
+===========================================================
+14. TEMPORARY STAGE DRAWING
+===========================================================
+
+The stage code is still temporary and remains in main.c.
+
+Background:
+
+DrawRectangle(
+    0,
+    0,
+    screenWidth,
+    (int)walkAreaTop,
+    DARKBLUE
+);
+
+Walkable floor:
+
+DrawRectangle(
+    0,
+    (int)walkAreaTop,
+    screenWidth,
+    (int)(walkAreaBottom - walkAreaTop),
+    GRAY
+);
+
+Foreground:
+
+DrawRectangle(
+    0,
+    (int)walkAreaBottom,
+    screenWidth,
+    screenHeight - (int)walkAreaBottom,
+    DARKGRAY
+);
+
+The casts such as:
+
+(int)walkAreaTop
+
+convert float values into integers because DrawRectangle uses
+integer coordinates and sizes.
+
+===========================================================
+15. PLAYER DRAWING ORDER
+===========================================================
+
+DrawPlayer(&player);
+
+This is called after drawing the floor and background.
+
+Drawing order matters.
+
+Objects drawn later appear on top of objects drawn earlier.
+
+Therefore the stage is drawn first and the player is drawn
+after it.
+
+===========================================================
+16. CLEANUP SECTION
+===========================================================
+
+After the game loop ends:
+
+UnloadPlayer(&player);
+
+This releases the player texture.
+
+CloseWindow();
+
+This closes the raylib window and graphics system.
+
+The player texture is unloaded before the window is closed.
+
+===========================================================
+17. CURRENT FLOW OF main.c
+===========================================================
+
+The current program flow is:
+
+1. Start main.
+2. Set screen constants.
+3. Set temporary stage boundaries.
+4. Open the window.
+5. Set the target FPS.
+6. Initialize the player.
+7. Enter the game loop.
+8. Get delta time.
+9. Update the player.
+10. Begin drawing.
+11. Clear the screen.
+12. Draw the temporary stage.
+13. Draw the player.
+14. Draw instructions.
+15. End drawing.
+16. Repeat until the window closes.
+17. Unload the player.
+18. Close the window.
+19. Return 0.
+
+===========================================================
+18. WHY main.c IS NOW CLEANER
+===========================================================
+
+Before modularization, main.c needed to know exactly how to:
+
+- Load the player texture.
+- Change player coordinates.
+- Read every movement key.
+- Check all player boundaries.
+- Prepare DrawTexturePro rectangles.
+- Unload the player texture.
+
+Now main.c uses simple module calls:
+
+InitPlayer
+UpdatePlayer
+DrawPlayer
+UnloadPlayer
+
+This allows main.c to focus on game flow rather than player
+implementation details.
+
+===========================================================
+19. NEXT MODULARIZATION STEP
+===========================================================
+
+The next planned module is the stage module:
+
+include/stage.h
+src/stage.c
+
+The following code will eventually leave main.c:
+
+- walkAreaTop
+- walkAreaBottom
+- Background rectangle drawing
+- Walkable floor drawing
+- Foreground drawing
+- Stage-related boundaries
+
+After that, main.c will become even shorter.
+
+The camera module will be created only after the stage module
+is working.
+
+===========================================================
+20. COMMON ERRORS
+===========================================================
+
+Error:
+
+fatal error: player.h: No such file or directory
+
+Cause:
+
+The compiler does not know where the include folder is.
+
+Compile with:
+
+-Iinclude
+
+-----------------------------------------------------------
+
+Warning:
+
+Failed to open assets/player.png
+
+Cause:
+
+The old asset path is still being used.
+
+Correct line:
+
+Player player = InitPlayer(
+    "assets/sprites/player/player.png"
+);
+
+-----------------------------------------------------------
+
+Problem:
+
+The player appears behind the floor.
+
+Cause:
+
+DrawPlayer may have been called before the floor drawing.
+
+Solution:
+
+Draw the stage first, then call DrawPlayer.
+
+===========================================================
+END OF DOCUMENT
+===========================================================

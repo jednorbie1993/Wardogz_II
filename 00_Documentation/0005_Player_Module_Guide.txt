@@ -1,0 +1,836 @@
+===========================================================
+          WARDOGZ II - PLAYER MODULE GUIDE
+===========================================================
+
+Document Number:
+0005
+
+Files Covered:
+
+include/player.h
+src/player.c
+
+Purpose:
+
+This document explains how the Wardogz II player module is
+organized, why the player code was separated from main.c,
+and how every important structure and function works.
+
+===========================================================
+1. WHY THE PLAYER CODE WAS SEPARATED
+===========================================================
+
+Before modularization, main.c contained almost everything:
+
+- Window setup
+- Player texture loading
+- Player position
+- Player speed
+- Keyboard input
+- Movement boundaries
+- Player drawing
+- Texture unloading
+- Main game loop
+
+This works while the project is small, but main.c becomes
+harder to read and maintain as more features are added.
+
+The player code was therefore separated into two files:
+
+include/player.h
+src/player.c
+
+player.h tells the rest of the project what a Player is and
+which player functions are available.
+
+player.c contains the actual instructions performed by those
+functions.
+
+===========================================================
+2. CURRENT FILE LOCATIONS
+===========================================================
+
+Wardogz_II
+|
+|-- include
+|   `-- player.h
+|
+|-- src
+|   |-- main.c
+|   `-- player.c
+|
+`-- assets
+    `-- sprites
+        `-- player
+            `-- player.png
+
+===========================================================
+3. COMPLETE player.h
+===========================================================
+
+#ifndef PLAYER_H
+#define PLAYER_H
+
+#include "raylib.h"
+
+typedef struct Player
+{
+    Rectangle rectangle;
+    Texture2D texture;
+    float speed;
+} Player;
+
+Player InitPlayer(const char *texturePath);
+
+void UpdatePlayer(
+    Player *player,
+    float deltaTime,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+);
+
+void DrawPlayer(const Player *player);
+
+void UnloadPlayer(Player *player);
+
+#endif
+
+===========================================================
+4. HOW player.h WORKS
+===========================================================
+
+-----------------------------------------------------------
+4.1 Header Guard
+-----------------------------------------------------------
+
+#ifndef PLAYER_H
+#define PLAYER_H
+
+...
+
+#endif
+
+This is called a header guard.
+
+Its purpose is to prevent player.h from being included more
+than once during compilation.
+
+Without a header guard, the compiler may read the same Player
+structure and function declarations multiple times, causing
+redefinition errors.
+
+Meaning:
+
+#ifndef PLAYER_H
+
+If PLAYER_H has not yet been defined, continue reading.
+
+#define PLAYER_H
+
+Mark PLAYER_H as defined.
+
+#endif
+
+End the protected section.
+
+-----------------------------------------------------------
+4.2 Including raylib.h
+-----------------------------------------------------------
+
+#include "raylib.h"
+
+The player module uses raylib types and functions, including:
+
+- Rectangle
+- Texture2D
+- Vector2
+- LoadTexture
+- IsKeyDown
+- DrawTexturePro
+- UnloadTexture
+
+Because of this, player.h must include raylib.h.
+
+-----------------------------------------------------------
+4.3 The Player Structure
+-----------------------------------------------------------
+
+typedef struct Player
+{
+    Rectangle rectangle;
+    Texture2D texture;
+    float speed;
+} Player;
+
+A structure groups related variables into one custom data
+type.
+
+Instead of keeping separate variables such as:
+
+Rectangle playerRectangle;
+Texture2D playerTexture;
+float playerSpeed;
+
+we can now create one variable:
+
+Player player;
+
+Its members are accessed like this:
+
+player.rectangle
+player.texture
+player.speed
+
+-----------------------------------------------------------
+4.4 Rectangle rectangle
+-----------------------------------------------------------
+
+Rectangle rectangle;
+
+The Rectangle type contains four float values:
+
+- x
+- y
+- width
+- height
+
+For the player:
+
+rectangle.x
+
+Horizontal position.
+
+rectangle.y
+
+Vertical position.
+
+rectangle.width
+
+Displayed width of the player.
+
+rectangle.height
+
+Displayed height of the player.
+
+-----------------------------------------------------------
+4.5 Texture2D texture
+-----------------------------------------------------------
+
+Texture2D texture;
+
+This stores the player image after raylib loads it into
+memory.
+
+The original PNG file is stored on the disk, but Texture2D
+represents the loaded image that raylib can draw during the
+game.
+
+-----------------------------------------------------------
+4.6 float speed
+-----------------------------------------------------------
+
+float speed;
+
+This stores how fast the player moves.
+
+Current value:
+
+300.0f
+
+The letter f tells C that the number is a float.
+
+===========================================================
+5. COMPLETE player.c
+===========================================================
+
+#include "player.h"
+
+Player InitPlayer(const char *texturePath)
+{
+    Player player = {0};
+
+    player.texture = LoadTexture(texturePath);
+
+    player.rectangle = (Rectangle)
+    {
+        150.0f,
+        500.0f,
+        64.0f,
+        64.0f
+    };
+
+    player.speed = 300.0f;
+
+    return player;
+}
+
+void UpdatePlayer(
+    Player *player,
+    float deltaTime,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
+    {
+        player->rectangle.x -= player->speed * deltaTime;
+    }
+
+    if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D))
+    {
+        player->rectangle.x += player->speed * deltaTime;
+    }
+
+    if (IsKeyDown(KEY_UP) || IsKeyDown(KEY_W))
+    {
+        player->rectangle.y -= player->speed * deltaTime;
+    }
+
+    if (IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_S))
+    {
+        player->rectangle.y += player->speed * deltaTime;
+    }
+
+    if (player->rectangle.x < 0.0f)
+    {
+        player->rectangle.x = 0.0f;
+    }
+
+    if (player->rectangle.x + player->rectangle.width > screenWidth)
+    {
+        player->rectangle.x =
+            screenWidth - player->rectangle.width;
+    }
+
+    if (player->rectangle.y < walkAreaTop)
+    {
+        player->rectangle.y = walkAreaTop;
+    }
+
+    if (player->rectangle.y + player->rectangle.height > walkAreaBottom)
+    {
+        player->rectangle.y =
+            walkAreaBottom - player->rectangle.height;
+    }
+}
+
+void DrawPlayer(const Player *player)
+{
+    Rectangle source =
+    {
+        0.0f,
+        0.0f,
+        (float)player->texture.width,
+        (float)player->texture.height
+    };
+
+    Rectangle destination = player->rectangle;
+
+    Vector2 origin =
+    {
+        0.0f,
+        0.0f
+    };
+
+    DrawTexturePro(
+        player->texture,
+        source,
+        destination,
+        origin,
+        0.0f,
+        WHITE
+    );
+}
+
+void UnloadPlayer(Player *player)
+{
+    UnloadTexture(player->texture);
+    player->texture = (Texture2D){0};
+}
+
+===========================================================
+6. InitPlayer FUNCTION
+===========================================================
+
+Function declaration:
+
+Player InitPlayer(const char *texturePath);
+
+Function definition:
+
+Player InitPlayer(const char *texturePath)
+{
+    ...
+}
+
+Purpose:
+
+- Creates a Player value.
+- Loads the player image.
+- Sets the starting position.
+- Sets the displayed size.
+- Sets the movement speed.
+- Returns the completed Player value to main.c.
+
+-----------------------------------------------------------
+6.1 const char *texturePath
+-----------------------------------------------------------
+
+The function receives the image path as text.
+
+Example call:
+
+Player player = InitPlayer(
+    "assets/sprites/player/player.png"
+);
+
+The parameter texturePath points to that text.
+
+const means the function should not change the path text.
+
+-----------------------------------------------------------
+6.2 Player player = {0};
+-----------------------------------------------------------
+
+This creates a local Player variable and initializes all its
+members to zero before assigning their real values.
+
+This is safer than leaving members uninitialized.
+
+-----------------------------------------------------------
+6.3 LoadTexture
+-----------------------------------------------------------
+
+player.texture = LoadTexture(texturePath);
+
+LoadTexture reads the PNG file and creates a raylib texture.
+
+If the file path is wrong, raylib may show a warning such as:
+
+WARNING: FILEIO: Failed to open file
+
+Current correct asset path:
+
+assets/sprites/player/player.png
+
+-----------------------------------------------------------
+6.4 Player Rectangle
+-----------------------------------------------------------
+
+player.rectangle = (Rectangle)
+{
+    150.0f,
+    500.0f,
+    64.0f,
+    64.0f
+};
+
+The values are in this order:
+
+x, y, width, height
+
+Therefore:
+
+x = 150
+
+y = 500
+
+width = 64
+
+height = 64
+
+-----------------------------------------------------------
+6.5 Returning the Player
+-----------------------------------------------------------
+
+return player;
+
+The completed Player value is returned to main.c.
+
+main.c stores it here:
+
+Player player = InitPlayer(...);
+
+===========================================================
+7. UpdatePlayer FUNCTION
+===========================================================
+
+Purpose:
+
+- Reads keyboard input.
+- Moves the player.
+- Uses delta time for smooth movement.
+- Stops the player at the current boundaries.
+
+-----------------------------------------------------------
+7.1 Why Player *player Is a Pointer
+-----------------------------------------------------------
+
+void UpdatePlayer(Player *player, ...)
+
+UpdatePlayer must change the actual player stored in main.c.
+
+The asterisk means the function receives the address of the
+Player instead of receiving a separate copy.
+
+main.c calls it like this:
+
+UpdatePlayer(&player, ...);
+
+The ampersand gives the address of player.
+
+Inside UpdatePlayer, members are accessed using an arrow:
+
+player->rectangle.x
+
+For a normal non-pointer variable, the dot is used:
+
+player.rectangle.x
+
+-----------------------------------------------------------
+7.2 deltaTime
+-----------------------------------------------------------
+
+float deltaTime
+
+Delta time is the amount of time used by the previous frame.
+
+Movement uses:
+
+speed * deltaTime
+
+Example:
+
+player->rectangle.x += player->speed * deltaTime;
+
+This makes movement depend on time instead of depending only
+on how many frames the computer displays.
+
+Without delta time, faster computers could move the player
+faster than slower computers.
+
+-----------------------------------------------------------
+7.3 Keyboard Input
+-----------------------------------------------------------
+
+Left:
+
+KEY_LEFT or KEY_A
+
+Right:
+
+KEY_RIGHT or KEY_D
+
+Up:
+
+KEY_UP or KEY_W
+
+Down:
+
+KEY_DOWN or KEY_S
+
+IsKeyDown returns true while the key is being held.
+
+The operator || means OR.
+
+Example:
+
+IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)
+
+The condition is true when either Left Arrow or A is held.
+
+-----------------------------------------------------------
+7.4 Movement Operators
+-----------------------------------------------------------
+
+Move left:
+
+player->rectangle.x -= player->speed * deltaTime;
+
+Move right:
+
+player->rectangle.x += player->speed * deltaTime;
+
+Move up:
+
+player->rectangle.y -= player->speed * deltaTime;
+
+Move down:
+
+player->rectangle.y += player->speed * deltaTime;
+
+On a normal computer screen:
+
+- X increases toward the right.
+- X decreases toward the left.
+- Y increases downward.
+- Y decreases upward.
+
+-----------------------------------------------------------
+7.5 Left Boundary
+-----------------------------------------------------------
+
+if (player->rectangle.x < 0.0f)
+{
+    player->rectangle.x = 0.0f;
+}
+
+The player cannot move past the left edge of the screen.
+
+-----------------------------------------------------------
+7.6 Right Boundary
+-----------------------------------------------------------
+
+if (player->rectangle.x + player->rectangle.width > screenWidth)
+{
+    player->rectangle.x =
+        screenWidth - player->rectangle.width;
+}
+
+The right boundary uses both the player's X position and its
+width.
+
+Checking only X would allow part of the sprite to leave the
+screen.
+
+-----------------------------------------------------------
+7.7 Top Walkable Boundary
+-----------------------------------------------------------
+
+if (player->rectangle.y < walkAreaTop)
+{
+    player->rectangle.y = walkAreaTop;
+}
+
+The player cannot walk into the upper background area.
+
+-----------------------------------------------------------
+7.8 Bottom Walkable Boundary
+-----------------------------------------------------------
+
+if (player->rectangle.y + player->rectangle.height > walkAreaBottom)
+{
+    player->rectangle.y =
+        walkAreaBottom - player->rectangle.height;
+}
+
+This prevents the bottom of the player sprite from crossing
+the lower walkable boundary.
+
+===========================================================
+8. DrawPlayer FUNCTION
+===========================================================
+
+Purpose:
+
+Draws the loaded player texture at the player's current
+position and size.
+
+-----------------------------------------------------------
+8.1 const Player *player
+-----------------------------------------------------------
+
+void DrawPlayer(const Player *player)
+
+The function receives the player's address to avoid copying
+the entire Player structure.
+
+const means DrawPlayer is not allowed to change the Player.
+
+Drawing should read player data, not modify player data.
+
+-----------------------------------------------------------
+8.2 Source Rectangle
+-----------------------------------------------------------
+
+Rectangle source =
+{
+    0.0f,
+    0.0f,
+    (float)player->texture.width,
+    (float)player->texture.height
+};
+
+The source rectangle tells raylib which part of the image to
+use.
+
+Currently it uses the entire image:
+
+- Start at image X 0.
+- Start at image Y 0.
+- Use the full texture width.
+- Use the full texture height.
+
+Later, walking animation can use only one frame from a sprite
+sheet by changing this source rectangle.
+
+-----------------------------------------------------------
+8.3 Destination Rectangle
+-----------------------------------------------------------
+
+Rectangle destination = player->rectangle;
+
+The destination rectangle tells raylib:
+
+- Where to draw the player.
+- How large to display the player.
+
+-----------------------------------------------------------
+8.4 Origin
+-----------------------------------------------------------
+
+Vector2 origin =
+{
+    0.0f,
+    0.0f
+};
+
+The origin is the pivot point used for drawing and rotation.
+
+At 0, 0, the top-left corner is used as the origin.
+
+-----------------------------------------------------------
+8.5 DrawTexturePro
+-----------------------------------------------------------
+
+DrawTexturePro(
+    player->texture,
+    source,
+    destination,
+    origin,
+    0.0f,
+    WHITE
+);
+
+Arguments:
+
+1. Texture to draw.
+2. Part of the image to use.
+3. Position and displayed size.
+4. Drawing origin.
+5. Rotation in degrees.
+6. Color tint.
+
+Rotation is currently 0 degrees.
+
+WHITE means the original texture colors are preserved.
+
+===========================================================
+9. UnloadPlayer FUNCTION
+===========================================================
+
+Purpose:
+
+Releases the player texture from memory before the program
+closes.
+
+UnloadTexture(player->texture);
+
+raylib loads textures into graphics memory. Loaded resources
+should be unloaded when no longer needed.
+
+player->texture = (Texture2D){0};
+
+This resets the stored Texture2D after unloading it.
+
+===========================================================
+10. HOW main.c USES THE PLAYER MODULE
+===========================================================
+
+Include the header:
+
+#include "player.h"
+
+Create the player:
+
+Player player = InitPlayer(
+    "assets/sprites/player/player.png"
+);
+
+Update every frame:
+
+UpdatePlayer(
+    &player,
+    deltaTime,
+    (float)screenWidth,
+    walkAreaTop,
+    walkAreaBottom
+);
+
+Draw every frame:
+
+DrawPlayer(&player);
+
+Unload before closing:
+
+UnloadPlayer(&player);
+
+===========================================================
+11. COMMON ERRORS
+===========================================================
+
+Error:
+
+fatal error: player.h: No such file or directory
+
+Cause:
+
+GCC was not told to search the include folder.
+
+Solution:
+
+Add this compile option:
+
+-Iinclude
+
+-----------------------------------------------------------
+
+Warning:
+
+WARNING: FILEIO: [assets/player.png] Failed to open file
+
+Cause:
+
+The image path does not match the current asset location.
+
+Current correct path:
+
+assets/sprites/player/player.png
+
+-----------------------------------------------------------
+
+Problem:
+
+The program compiles, but the player does not move.
+
+Checks:
+
+- Confirm UpdatePlayer is called inside the game loop.
+- Confirm &player is passed to UpdatePlayer.
+- Confirm deltaTime comes from GetFrameTime.
+- Confirm the game window currently has keyboard focus.
+
+===========================================================
+12. CURRENT LIMITATIONS
+===========================================================
+
+The current player module does not yet include:
+
+- Idle animation
+- Walking animation
+- Facing left and right
+- Attacking
+- Health
+- Damage
+- Collision with objects
+- Camera-based world movement
+- Character selection
+
+These features will be added gradually after the basic
+modules are stable.
+
+===========================================================
+END OF DOCUMENT
+===========================================================

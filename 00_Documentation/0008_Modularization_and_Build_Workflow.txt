@@ -1,0 +1,571 @@
+===========================================================
+    WARDOGZ II - MODULARIZATION AND BUILD WORKFLOW
+===========================================================
+
+Document Number:
+0008
+
+Purpose:
+
+This document records the complete development change from a
+single main.c file to the current modular project structure.
+It also explains the exact compile and run workflow.
+
+===========================================================
+1. ORIGINAL SITUATION
+===========================================================
+
+Originally, main.c contained all current game logic:
+
+- Window creation
+- Player texture loading
+- Player rectangle
+- Player speed
+- Keyboard movement
+- Movement boundaries
+- Background drawing
+- Floor drawing
+- Foreground drawing
+- Player drawing
+- Texture unloading
+- Main loop
+
+This was acceptable for the first working prototype.
+
+However, Wardogz II will later include:
+
+- Stage scrolling
+- Camera movement
+- Animation
+- Enemies
+- Combat
+- Collision
+- User interface
+- Audio
+
+Keeping every system inside main.c would make the file too
+large and difficult to maintain.
+
+===========================================================
+2. CURRENT MODULAR STRUCTURE
+===========================================================
+
+Wardogz_II
+|
+|-- 00_Documentation
+|
+|-- .vscode
+|
+|-- assets
+|   |-- background
+|   |-- fonts
+|   |-- maps
+|   |-- music
+|   |-- sfx
+|   `-- sprites
+|       |-- effects
+|       |-- enemy
+|       |-- player
+|       |   `-- player.png
+|       `-- ui
+|
+|-- build
+|   `-- Wardogz_II.exe
+|
+|-- include
+|   `-- player.h
+|
+|-- src
+|   |-- main.c
+|   `-- player.c
+|
+|-- build.bat
+|-- run.bat
+|-- build_and_run.bat
+|-- .gitignore
+|-- README.md
+`-- how to run.txt
+
+===========================================================
+3. SOURCE AND HEADER SEPARATION
+===========================================================
+
+src folder:
+
+Stores C implementation files.
+
+Current files:
+
+- main.c
+- player.c
+
+include folder:
+
+Stores header files.
+
+Current file:
+
+- player.h
+
+The .h file describes what is available.
+
+The .c file contains how it works.
+
+Example:
+
+player.h declares:
+
+void DrawPlayer(const Player *player);
+
+player.c defines the complete function body.
+
+main.c includes player.h and calls DrawPlayer without needing
+to contain the drawing implementation.
+
+===========================================================
+4. WHAT MOVED OUT OF main.c
+===========================================================
+
+The following player responsibilities moved to player.c:
+
+- Loading the texture
+- Starting player position
+- Player size
+- Player speed
+- Reading movement keys
+- Changing player coordinates
+- Checking current movement boundaries
+- Preparing the source rectangle
+- Preparing the destination rectangle
+- Drawing the texture
+- Unloading the texture
+
+main.c now calls:
+
+InitPlayer
+UpdatePlayer
+DrawPlayer
+UnloadPlayer
+
+===========================================================
+5. WHAT REMAINS IN main.c
+===========================================================
+
+main.c currently contains:
+
+- Screen width and height
+- Temporary walkable-area limits
+- Window initialization
+- Target FPS
+- Player creation call
+- Main loop
+- Delta time
+- Player update call
+- Temporary stage drawing
+- Player drawing call
+- Cleanup calls
+
+The temporary stage drawing remains in main.c only until the
+stage module is created.
+
+===========================================================
+6. CURRENT ASSET PATH
+===========================================================
+
+The player image is stored at:
+
+assets/sprites/player/player.png
+
+The correct code is:
+
+Player player = InitPlayer(
+    "assets/sprites/player/player.png"
+);
+
+The old path was:
+
+assets/player.png
+
+Using the old path causes a raylib warning because the file is
+no longer stored there.
+
+===========================================================
+7. MANUAL COMPILE COMMAND
+===========================================================
+
+Current complete PowerShell command:
+
+gcc src/main.c src/player.c -o build/Wardogz_II.exe -Iinclude -I"C:\raylib\raylib\src" -L"C:\raylib\raylib\src" -lraylib -lopengl32 -lgdi32 -lwinmm
+
+This command must be run from the project root:
+
+C:\Users\jedja\OneDrive\Desktop\C_projects\Wardogz_II
+
+===========================================================
+8. COMPILE COMMAND BREAKDOWN
+===========================================================
+
+gcc
+
+Runs the GNU C Compiler.
+
+-----------------------------------------------------------
+
+src/main.c src/player.c
+
+Lists the current C source files to compile.
+
+-----------------------------------------------------------
+
+-o build/Wardogz_II.exe
+
+Creates the executable inside the build folder.
+
+-----------------------------------------------------------
+
+-Iinclude
+
+Adds the project's include folder to the header search path.
+
+This is required for:
+
+#include "player.h"
+
+-----------------------------------------------------------
+
+-I"C:\raylib\raylib\src"
+
+Adds the raylib source folder to the header search path.
+
+This is required for:
+
+#include "raylib.h"
+
+-----------------------------------------------------------
+
+-L"C:\raylib\raylib\src"
+
+Adds the raylib library location to the linker search path.
+
+-----------------------------------------------------------
+
+-lraylib
+
+Links raylib.
+
+-----------------------------------------------------------
+
+-lopengl32
+-lgdi32
+-lwinmm
+
+Links required Windows graphics and multimedia libraries.
+
+===========================================================
+9. MANUAL RUN COMMAND
+===========================================================
+
+PowerShell command:
+
+.\build\Wardogz_II.exe
+
+.\ means use the current folder as the starting location.
+
+The executable is then found inside the build folder.
+
+===========================================================
+10. FIRST COMPILATION ERRORS AND SOLUTIONS
+===========================================================
+
+-----------------------------------------------------------
+10.1 raylib.h Not Found
+-----------------------------------------------------------
+
+Error:
+
+fatal error: raylib.h: No such file or directory
+
+Reason:
+
+The original compile command used the wrong raylib path:
+
+C:\raylib\src
+
+Actual installation structure:
+
+C:\raylib\raylib\src
+
+Correct option:
+
+-I"C:\raylib\raylib\src"
+
+-----------------------------------------------------------
+10.2 player.h Not Found
+-----------------------------------------------------------
+
+Error:
+
+fatal error: player.h: No such file or directory
+
+Reason:
+
+player.h was inside the include folder, but GCC had not been
+told to search that folder.
+
+Solution:
+
+-Iinclude
+
+-----------------------------------------------------------
+10.3 Player Image Not Found
+-----------------------------------------------------------
+
+Warning:
+
+WARNING: FILEIO: [assets/player.png] Failed to open file
+
+Reason:
+
+The image was moved into the organized sprite folder.
+
+Solution:
+
+Use:
+
+assets/sprites/player/player.png
+
+===========================================================
+11. BATCH FILE WORKFLOW
+===========================================================
+
+The long manual commands were saved into three batch files.
+
+build.bat
+
+Compiles only.
+
+run.bat
+
+Runs only.
+
+build_and_run.bat
+
+Compiles and runs when the build succeeds.
+
+Normal development workflow:
+
+1. Edit a source file.
+2. Save the file.
+3. Run build_and_run.bat.
+4. Read any compiler error.
+5. Fix the code if needed.
+6. Run build_and_run.bat again.
+7. Test the game.
+
+===========================================================
+12. HOW THE MODULES CONNECT
+===========================================================
+
+main.c includes:
+
+#include "player.h"
+
+player.c also includes:
+
+#include "player.h"
+
+player.h includes:
+
+#include "raylib.h"
+
+Connection:
+
+main.c
+   |
+   | calls player functions declared in player.h
+   v
+player.h
+   |
+   | declarations and Player structure
+   v
+player.c
+   |
+   | actual function code
+   v
+raylib functions
+
+During compilation, GCC compiles both main.c and player.c and
+then links them into one executable.
+
+The user still runs only one file:
+
+build/Wardogz_II.exe
+
+Modular source files do not create separate games. They are
+combined into the same program.
+
+===========================================================
+13. DECLARATION VS DEFINITION VS CALL
+===========================================================
+
+Declaration:
+
+Found in player.h.
+
+Example:
+
+Player InitPlayer(const char *texturePath);
+
+This tells the compiler that the function exists.
+
+-----------------------------------------------------------
+
+Definition:
+
+Found in player.c.
+
+Example:
+
+Player InitPlayer(const char *texturePath)
+{
+    ...
+}
+
+This contains the actual instructions.
+
+-----------------------------------------------------------
+
+Call:
+
+Found in main.c.
+
+Example:
+
+Player player = InitPlayer(
+    "assets/sprites/player/player.png"
+);
+
+This executes the function.
+
+===========================================================
+14. POINTER FLOW
+===========================================================
+
+main.c creates:
+
+Player player;
+
+To let UpdatePlayer change the actual player, main.c sends its
+address:
+
+&player
+
+UpdatePlayer receives it as:
+
+Player *player
+
+Inside the function, members are accessed using:
+
+player->rectangle.x
+
+The same pointer approach is used by:
+
+DrawPlayer(&player);
+UnloadPlayer(&player);
+
+DrawPlayer uses const because it should not change the player.
+
+===========================================================
+15. WHY THE CURRENT STRUCTURE IS USEFUL
+===========================================================
+
+Benefits:
+
+- main.c is easier to read.
+- Player code is kept in one place.
+- Player changes are less likely to affect unrelated systems.
+- Future animation code can be added to the player module.
+- Future stage code can have its own files.
+- Compiler errors can be traced to a specific module.
+- Git changes become easier to review.
+- The project is ready to grow gradually.
+
+===========================================================
+16. NEXT PLANNED MODULE
+===========================================================
+
+Next files:
+
+include/stage.h
+src/stage.c
+
+Planned stage responsibilities:
+
+- Background area
+- Walkable floor
+- Foreground area
+- Walkable boundaries
+- Stage drawing
+- Future world width and height
+
+After the stage module works, the next planned module is:
+
+include/camera.h
+src/camera.c
+
+Planned camera responsibilities:
+
+- Follow the player
+- Scroll the visible screen
+- Respect stage limits
+- Separate screen coordinates from world coordinates
+
+===========================================================
+17. RULE FOR FUTURE MODULES
+===========================================================
+
+For each new system:
+
+1. Decide the system's responsibility.
+2. Create its header inside include.
+3. Create its source file inside src.
+4. Move only related code into that module.
+5. Keep main.c as the coordinator.
+6. Add the new .c file to the build commands.
+7. Compile immediately.
+8. Test before creating another module.
+9. Document the completed change.
+10. Commit and push after confirming it works.
+
+===========================================================
+18. CURRENT CHECKLIST
+===========================================================
+
+Completed:
+
+[OK] main.c moved into src
+[OK] player.h created inside include
+[OK] player.c created inside src
+[OK] Player structure created
+[OK] Player initialization separated
+[OK] Player update separated
+[OK] Player drawing separated
+[OK] Player unloading separated
+[OK] Project include path added
+[OK] Correct raylib path added
+[OK] Correct player image path used
+[OK] Modular compilation succeeded
+[OK] Executable runs from build folder
+[OK] Build scripts planned and created
+
+Next:
+
+[ ] Test all three batch files
+[ ] Add the files to Git
+[ ] Commit the modularization
+[ ] Push to GitHub
+[ ] Begin the stage module
+
+===========================================================
+END OF DOCUMENT
+===========================================================

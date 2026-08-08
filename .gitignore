@@ -1,4 +1,15 @@
+# Executables
 *.exe
+
+# Object files
 *.o
+
+# Build folder
 /build/
+
+# Visual Studio Code
+.vscode/settings.json
+
+# Windows
 Thumbs.db
+Desktop.ini

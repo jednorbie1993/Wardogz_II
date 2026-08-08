@@ -1,0 +1,248 @@
+===========================================================
+            WARDOGZ II - PROJECT STRUCTURE GUIDE
+===========================================================
+
+Project:
+Wardogz II
+Language: C
+Graphics Library: raylib
+
+-----------------------------------------------------------
+FINAL PROJECT STRUCTURE
+-----------------------------------------------------------
+
+Wardogz_II
+│
+├── 00_Documentation
+│   ├── GitHub_Setup_Wardogz_II.txt
+│   ├── Raylib_Setup.txt
+│   ├── Git_Commands.txt
+│   └── Project_Roadmap.txt
+│
+├── .vscode
+│
+├── assets
+│   ├── sprites
+│   ├── enemies
+│   ├── background
+│   ├── music
+│   ├── sfx
+│   ├── fonts
+│   └── ui
+│
+├── build
+│
+├── include
+│
+├── src
+│   └── main.c
+│
+├── .gitignore
+├── README.md
+└── how to run.txt
+
+===========================================================
+FOLDER PURPOSES
+===========================================================
+
+-----------------------------------------------------------
+00_Documentation
+-----------------------------------------------------------
+
+Purpose:
+Stores all project documentation.
+
+Examples:
+
+- GitHub setup guide
+- Raylib installation guide
+- Git commands
+- Project roadmap
+- Development notes
+- Future ideas
+- Troubleshooting
+
+Think of this folder as the project's manual.
+
+-----------------------------------------------------------
+.vscode
+-----------------------------------------------------------
+
+Purpose:
+Stores Visual Studio Code configuration files.
+
+Examples:
+
+- tasks.json
+- launch.json
+- settings.json
+
+These files allow easier building, debugging, and running
+the project directly from VS Code.
+
+No changes are required for now.
+
+-----------------------------------------------------------
+assets
+-----------------------------------------------------------
+
+Purpose:
+Stores all game resources.
+
+Subfolders:
+
+sprites
+    Player and NPC images.
+
+enemies
+    Enemy sprites.
+
+background
+    Maps and stage backgrounds.
+
+music
+    Background music.
+
+sfx
+    Sound effects.
+
+fonts
+    Custom fonts.
+
+ui
+    Buttons, icons, menus, and interface graphics.
+
+Keeping assets organized makes future development much
+easier.
+
+-----------------------------------------------------------
+build
+-----------------------------------------------------------
+
+Purpose:
+Stores compiled output files.
+
+Example:
+
+build
+    Wardogz_II.exe
+
+Advantages:
+
+- Keeps the root folder clean.
+- Easy to locate compiled files.
+- Separates source code from executable files.
+
+-----------------------------------------------------------
+include
+-----------------------------------------------------------
+
+Purpose:
+Stores all header (.h) files.
+
+Examples:
+
+player.h
+enemy.h
+camera.h
+collision.h
+ui.h
+
+This folder contains function declarations, structures,
+constants, and shared definitions.
+
+-----------------------------------------------------------
+src
+-----------------------------------------------------------
+
+Purpose:
+Stores all C source (.c) files.
+
+Examples:
+
+main.c
+player.c
+enemy.c
+camera.c
+battle.c
+collision.c
+ui.c
+
+All game logic belongs here.
+
+This is the standard structure used in most professional
+C and C++ projects.
+
+-----------------------------------------------------------
+README.md
+-----------------------------------------------------------
+
+Purpose:
+The first file visitors see on GitHub.
+
+Example contents:
+
+Wardogz II
+
+A 2D action RPG built in C using raylib.
+
+Current Progress
+
+✔ Window
+✔ Player Sprite
+✔ Movement
+
+Next Goals
+
+- Camera
+- Collision
+- Enemy AI
+- Battle System
+
+A good README helps other developers understand the
+project immediately.
+
+-----------------------------------------------------------
+how to run.txt
+-----------------------------------------------------------
+
+Purpose:
+Explains how to build and run the project.
+
+Example:
+
+1. Open the project in VS Code.
+2. Open the terminal.
+3. Compile the project.
+4. Run the executable.
+
+Useful for future reference and for anyone cloning the
+repository.
+
+===========================================================
+NEXT STEP
+===========================================================
+
+Current Location:
+
+Wardogz_II
+    main.c
+
+Recommended Location:
+
+Wardogz_II
+    src
+        main.c
+
+Reason:
+
+Professional C and C++ projects keep all source files
+inside the "src" folder.
+
+As the project grows (player.c, enemy.c, camera.c,
+battle.c, collision.c, ui.c, etc.), the project remains
+organized and much easier to maintain.
+
+===========================================================
+END OF DOCUMENT
+===========================================================
