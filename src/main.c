@@ -7,8 +7,8 @@ int main(void)
     const int screenHeight = 720;
 
     // Walkable area ng stage
-    const float walkAreaTop = 400.0f;
-    const float walkAreaBottom = 640.0f;
+    const float walkAreaTop = 410.0f;
+    const float walkAreaBottom = 820.0f;
 
     InitWindow(
         screenWidth,
@@ -18,8 +18,9 @@ int main(void)
 
     SetTargetFPS(60);
 
-    // Gumawa at mag-load ng player
+    // Load player and background
     Player player = InitPlayer("assets/sprites/player/player.png");
+    Texture2D background = LoadTexture("assets/background/back_alley.png");
 
     while (!WindowShouldClose())
     {
@@ -36,44 +37,34 @@ int main(void)
 
         BeginDrawing();
 
-        ClearBackground(SKYBLUE);
+        // Clear first, then draw the background
+        ClearBackground(BLACK);
 
-        // Background area
-        DrawRectangle(
-            0,
-            0,
-            screenWidth,
-            (int)walkAreaTop,
-            DARKBLUE
-        );
+        // Scale background to exactly fit 1280x720
+        Rectangle source = {
+            0.0f,
+            0.0f,
+            (float)background.width,
+            (float)background.height
+        };
 
-        DrawText(
-            "BACKGROUND AREA",
-            500,
-            180,
-            30,
+        Rectangle destination = {
+            0.0f,
+            0.0f,
+            (float)screenWidth,
+            (float)screenHeight
+        };
+
+        DrawTexturePro(
+            background,
+            source,
+            destination,
+            (Vector2){0.0f, 0.0f},
+            0.0f,
             WHITE
         );
 
-        // Walkable floor
-        DrawRectangle(
-            0,
-            (int)walkAreaTop,
-            screenWidth,
-            (int)(walkAreaBottom - walkAreaTop),
-            GRAY
-        );
-
-        // Foreground
-        DrawRectangle(
-            0,
-            (int)walkAreaBottom,
-            screenWidth,
-            screenHeight - (int)walkAreaBottom,
-            DARKGRAY
-        );
-
-        // Draw player
+        // Draw player on top of the background
         DrawPlayer(&player);
 
         DrawText(
@@ -87,7 +78,8 @@ int main(void)
         EndDrawing();
     }
 
-    // Alisin ang player texture sa memory
+    // Unload textures from memory
+    UnloadTexture(background);
     UnloadPlayer(&player);
 
     CloseWindow();

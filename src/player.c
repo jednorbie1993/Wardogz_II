@@ -7,13 +7,22 @@ Player InitPlayer(const char *texturePath)
     // Load player image
     player.texture = LoadTexture(texturePath);
 
+    player.idleTextures[0] = LoadTexture("assets/sprites/player/player_idle_1.png");
+    player.idleTextures[1] = LoadTexture("assets/sprites/player/player_idle_2.png");
+    player.idleTextures[2] = LoadTexture("assets/sprites/player/player_idle_3.png");
+
+    player.idleFrame = 0;
+    player.idleDirection = 1;
+    player.idleTimer = 0.0f;
+    player.idleFrameTime = 0.18f;
+
     // Player position and size
     player.rectangle = (Rectangle)
     {
         150.0f,   // X position
         500.0f,   // Y position
-        64.0f,    // Width
-        64.0f     // Height
+        113.0f,    // Width
+        180.0f     // Height
     };
 
     player.speed = 300.0f;
@@ -29,6 +38,28 @@ void UpdatePlayer(
     float walkAreaBottom
 )
 {
+    // Idle breathing animation
+    player->idleTimer += GetFrameTime();
+
+    if (player->idleTimer >= player->idleFrameTime)
+    {
+        player->idleTimer = 0.0f;
+
+        player->idleFrame += player->idleDirection;
+
+        if (player->idleFrame >= 2)
+        {
+            player->idleFrame = 2;
+            player->idleDirection = -1;
+        }
+
+        if (player->idleFrame <= 0)
+        {
+            player->idleFrame = 0;
+            player->idleDirection = 1;
+        }
+    }
+
     // Left movement
     if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A))
     {
@@ -73,36 +104,57 @@ void UpdatePlayer(
     }
 
     // Bottom walkable boundary
-    if (player->rectangle.y + player->rectangle.height > walkAreaBottom)
+    if (player->rectangle.y > walkAreaBottom)
     {
-        player->rectangle.y =
-            walkAreaBottom - player->rectangle.height;
+        player->rectangle.y = walkAreaBottom;
     }
 }
 
 void DrawPlayer(const Player *player)
 {
-    // Buong player image
+    float depth = (player->rectangle.y - 345.0f) / (700.0f - 270.0f);
+
+    if (depth < 0.0f)
+        depth = 0.0f;
+
+    if (depth > 1.0f)
+        depth = 1.0f;
+
+    float scale = 2.90f + (depth * 1.80f);    
+    float scaledWidth  = player->rectangle.width * scale * 1.30f;
+    float scaledHeight = player->rectangle.height * scale;
+
+    Texture2D currentTexture = player->idleTextures[player->idleFrame];
+    //player image
     Rectangle source =
     {
         0.0f,
         0.0f,
-        (float)player->texture.width,
-        (float)player->texture.height
+        (float)currentTexture.width,
+        (float)currentTexture.height
     };
 
-    // Position and size sa screen
-    Rectangle destination = player->rectangle;
+    // Scaled size depende sa lalim
+    //float scaledWidth = player->rectangle.width * scale;
+    //float scaledHeight = player->rectangle.height * scale;
 
-    // Drawing origin
+    // Position and size sa screen
+    Rectangle destination =
+    {
+        player->rectangle.x + (player->rectangle.width / 2.0f),
+        player->rectangle.y + player->rectangle.height,
+        scaledWidth,
+        scaledHeight
+    };
+
     Vector2 origin =
     {
-        0.0f,
-        0.0f
+        scaledWidth / 2.0f,
+        scaledHeight
     };
 
     DrawTexturePro(
-        player->texture,
+        currentTexture,
         source,
         destination,
         origin,
@@ -114,6 +166,11 @@ void DrawPlayer(const Player *player)
 void UnloadPlayer(Player *player)
 {
     UnloadTexture(player->texture);
+
+    for (int i = 0; i < 3; i++)
+    {
+        UnloadTexture(player->idleTextures[i]);
+    }
 
     player->texture = (Texture2D){0};
 }
