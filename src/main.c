@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include "player.h"
+#include "enemy.h"
 
 int main(void)
 {
@@ -20,6 +21,10 @@ int main(void)
 
     // Load player and background
     Player player = InitPlayer("assets/sprites/player/player.png");
+
+    // 0018 - Stationary enemy dummy
+    Enemy enemy = InitEnemy(850.0f, 470.0f);
+
     Texture2D background = LoadTexture("assets/background/back_alley.png");
 
     while (!WindowShouldClose())
@@ -34,6 +39,9 @@ int main(void)
             walkAreaTop,
             walkAreaBottom
         );
+
+        // 0018 - Check player's active attack hitbox against enemy hurtbox.
+        UpdateEnemyHit(&enemy, &player);
 
         BeginDrawing();
 
@@ -64,11 +72,14 @@ int main(void)
             WHITE
         );
 
+        // 0018 - Draw stationary enemy dummy and BLUE hurtbox.
+        DrawEnemy(&enemy);
+
         // Draw player on top of the background
         DrawPlayer(&player);
 
         DrawText(
-            "Move: Arrow Keys or WASD",
+            "Move: Arrow Keys | Attack: W A S D",
             30,
             30,
             25,
