@@ -1,0 +1,294 @@
+WARDOGZ II
+0012 - Player Perspective Scaling and Idle Animation
+=====================================================
+
+PURPOSE
+-------
+This update improves the player presentation in two ways:
+
+1. Perspective scaling
+   - Player is smaller near the top of the walk area.
+   - Player becomes larger while moving toward the bottom.
+   - This creates a fake 3D / camera-depth effect for the 2D beat-'em-up view.
+
+2. Idle breathing animation
+   - Player uses 4 idle images.
+   - Frames move forward and backward to look like breathing:
+     1 -> 2 -> 3 -> 4 -> 3 -> 2 -> 1
+
+
+=====================================================
+PART 1 - PLAYER PERSPECTIVE SCALING
+=====================================================
+
+Walk area reference:
+
+    walkAreaTop = 270.0f
+    walkAreaBottom = 750.0f
+
+Because the player's rectangle height is 180, the lowest rectangle.y position is:
+
+    750 - 180 = 570
+
+Depth calculation inside DrawPlayer():
+
+    float depth = (player->rectangle.y - 270.0f) / (570.0f - 270.0f);
+
+    if (depth < 0.0f)
+        depth = 0.0f;
+
+    if (depth > 1.0f)
+        depth = 1.0f;
+
+Current preferred scale:
+
+    float scale = 1.40f + (depth * 0.95f);
+
+Approximate result:
+
+    Top    = 140%
+    Middle = 187.5%
+    Bottom = 235%
+
+Scaled dimensions:
+
+    float scaledWidth = player->rectangle.width * scale;
+    float scaledHeight = player->rectangle.height * scale;
+
+Destination rectangle:
+
+    Rectangle destination =
+    {
+        player->rectangle.x - (scaledWidth - player->rectangle.width) / 2.0f,
+        player->rectangle.y + player->rectangle.height - scaledHeight,
+        scaledWidth,
+        scaledHeight
+    };
+
+IMPORTANT:
+The scaling is only used for drawing.
+The original player rectangle is still used for movement and boundaries.
+
+The player is anchored around the feet so that the character grows upward
+instead of appearing to sink into the floor.
+
+
+=====================================================
+PART 2 - IDLE BREATHING IMAGES
+=====================================================
+
+Idle image files:
+
+    assets/sprites/player/player_idle_1.png
+    assets/sprites/player/player_idle_2.png
+    assets/sprites/player/player_idle_3.png
+    assets/sprites/player/player_idle_4.png
+
+Recommended image rules:
+
+- All 4 images should use the same canvas size.
+- Feet should stay in almost the same position.
+- Character should have enough transparent space around the head and boots.
+- Only small body changes should happen between frames.
+- Breathing should look subtle, not like jumping.
+
+
+=====================================================
+PART 3 - PLAYER STRUCT FIELDS
+=====================================================
+
+Add these fields to the Player struct in player.h:
+
+    Texture2D idleTextures[4];
+
+    int idleFrame;
+    int idleDirection;
+
+    float idleTimer;
+    float idleFrameTime;
+
+
+=====================================================
+PART 4 - LOAD IDLE TEXTURES
+=====================================================
+
+Inside InitPlayer(), after loading the normal player texture:
+
+    player.idleTextures[0] = LoadTexture("assets/sprites/player/player_idle_1.png");
+    player.idleTextures[1] = LoadTexture("assets/sprites/player/player_idle_2.png");
+    player.idleTextures[2] = LoadTexture("assets/sprites/player/player_idle_3.png");
+    player.idleTextures[3] = LoadTexture("assets/sprites/player/player_idle_4.png");
+
+Initialize the animation values:
+
+    player.idleFrame = 0;
+    player.idleDirection = 1;
+    player.idleTimer = 0.0f;
+    player.idleFrameTime = 0.18f;
+
+NOTE:
+A previous issue happened because the path was written as:
+
+    assets/sprites/player_idle_1.png
+
+but the files were actually inside:
+
+    assets/sprites/player/
+
+Correct asset paths are important because if LoadTexture() cannot find the image,
+the player can appear missing.
+
+
+=====================================================
+PART 5 - UPDATE THE IDLE ANIMATION
+=====================================================
+
+Inside UpdatePlayer():
+
+    player->idleTimer += GetFrameTime();
+
+    if (player->idleTimer >= player->idleFrameTime)
+    {
+        player->idleTimer = 0.0f;
+
+        player->idleFrame += player->idleDirection;
+
+        if (player->idleFrame >= 3)
+        {
+            player->idleFrame = 3;
+            player->idleDirection = -1;
+        }
+
+        if (player->idleFrame <= 0)
+        {
+            player->idleFrame = 0;
+            player->idleDirection = 1;
+        }
+    }
+
+Animation order:
+
+    0 -> 1 -> 2 -> 3 -> 2 -> 1 -> 0
+
+Equivalent image order:
+
+    idle_1
+      ->
+    idle_2
+      ->
+    idle_3
+      ->
+    idle_4
+      ->
+    idle_3
+      ->
+    idle_2
+      ->
+    idle_1
+
+This back-and-forth order creates a smoother inhale/exhale effect.
+
+
+=====================================================
+PART 6 - DRAW CURRENT IDLE FRAME
+=====================================================
+
+Inside DrawPlayer():
+
+    Texture2D currentTexture = player->idleTextures[player->idleFrame];
+
+Use the current texture size for the source rectangle:
+
+    Rectangle source =
+    {
+        0.0f,
+        0.0f,
+        (float)currentTexture.width,
+        (float)currentTexture.height
+    };
+
+Then draw using:
+
+    DrawTexturePro(
+        currentTexture,
+        source,
+        destination,
+        origin,
+        0.0f,
+        WHITE
+    );
+
+IMPORTANT:
+Do not keep using:
+
+    player->texture.width
+    player->texture.height
+
+for the idle frame source rectangle.
+
+Use:
+
+    currentTexture.width
+    currentTexture.height
+
+
+=====================================================
+PART 7 - IDLE SPEED
+=====================================================
+
+Current starting speed:
+
+    player.idleFrameTime = 0.18f;
+
+If the breathing animation is too fast:
+
+    0.22f
+    0.25f
+    0.30f
+
+Higher value = slower animation.
+Lower value = faster animation.
+
+
+=====================================================
+TEST CHECKLIST
+=====================================================
+
+After building and running:
+
+[ ] Player is visible.
+[ ] All 4 idle images load correctly.
+[ ] Breathing animation loops smoothly.
+[ ] Feet do not noticeably jump between frames.
+[ ] Player still moves correctly.
+[ ] Player still becomes larger toward the bottom.
+[ ] Player remains smaller toward the top.
+[ ] Scaling does not change the movement rectangle.
+[ ] Head, ears, and boots are not cut off.
+
+
+=====================================================
+BUILD AND RUN
+=====================================================
+
+From the Wardogz_II project folder:
+
+    .\build_and_run.bat
+
+
+=====================================================
+SUMMARY
+=====================================================
+
+This update added:
+
+- Fake perspective / depth scaling
+- Foot-anchored player scaling
+- 4-frame idle breathing animation
+- Forward/backward idle frame sequence
+- Idle animation timer
+- Correct texture loading paths
+- Current texture handling inside DrawPlayer()
+
+File:
+0012_Player_Perspective_Scaling_and_Idle_Animation.txt

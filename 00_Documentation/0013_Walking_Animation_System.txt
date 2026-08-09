@@ -1,0 +1,393 @@
+WARDOGZ II DOCUMENTATION
+0013 - Walking Animation System
+
+Date: 2026-08-09
+
+============================================================
+TITLE
+============================================================
+
+0013_Walking_Animation_System
+
+============================================================
+PURPOSE
+============================================================
+
+This update adds a 4-frame walking animation to the player.
+
+The player now uses:
+
+- Idle animation when no movement key is pressed.
+- Walking animation when Arrow Keys or WASD are pressed.
+- Horizontal mirroring so the same walking sprites can be used for both LEFT and RIGHT movement.
+
+This means there is no need to create a second set of walking sprites for the opposite direction.
+
+
+============================================================
+PLAYER SPRITES
+============================================================
+
+Folder:
+
+assets/sprites/player/
+
+Required files:
+
+player_idle_1.png
+player_idle_2.png
+player_idle_3.png
+
+player_walk_1.png
+player_walk_2.png
+player_walk_3.png
+player_walk_4.png
+
+
+============================================================
+WALKING FRAME ORDER
+============================================================
+
+Walking animation:
+
+1 -> 2 -> 3 -> 4 -> 1 -> 2 -> 3 -> 4 ...
+
+The animation keeps looping while a movement key is held.
+
+When the movement key is released, the player returns to the idle animation.
+
+
+============================================================
+CONTROLS
+============================================================
+
+LEFT:
+Left Arrow
+A
+
+RIGHT:
+Right Arrow
+D
+
+UP:
+Up Arrow
+W
+
+DOWN:
+Down Arrow
+S
+
+
+============================================================
+PLAYER BEHAVIOR
+============================================================
+
+No movement key:
+
+IDLE animation
+
+player_idle_1
+player_idle_2
+player_idle_3
+player_idle_2
+player_idle_1
+...
+
+
+Movement key pressed:
+
+WALK animation
+
+player_walk_1
+player_walk_2
+player_walk_3
+player_walk_4
+repeat
+
+
+============================================================
+LEFT AND RIGHT FACING
+============================================================
+
+The walking sprites only need one original direction.
+
+LEFT movement:
+
+Use the original walking sprite normally.
+
+RIGHT movement:
+
+Use the same walking sprite but flip/mirror it horizontally using raylib.
+
+This is handled in DrawPlayer() using the source Rectangle.
+
+
+Normal source width:
+
+source.width = currentTexture.width;
+
+
+Mirrored source width:
+
+source.x = currentTexture.width;
+source.width = -currentTexture.width;
+
+
+A negative source width tells raylib to draw the texture horizontally flipped.
+
+
+============================================================
+UP AND DOWN MOVEMENT
+============================================================
+
+When moving UP or DOWN:
+
+- The walking animation still plays.
+- The player keeps the last LEFT or RIGHT facing direction.
+
+Example:
+
+Player walks RIGHT.
+Then player presses UP.
+
+The player continues facing RIGHT while walking upward.
+
+
+============================================================
+NEW PLAYER VARIABLES
+============================================================
+
+Added to Player struct:
+
+Texture2D walkTextures[4];
+
+int walkFrame;
+float walkTimer;
+float walkFrameTime;
+
+bool isWalking;
+bool facingRight;
+
+
+Purpose:
+
+walkTextures[4]
+Stores the four walking PNG textures.
+
+walkFrame
+Stores the current walking frame.
+
+walkTimer
+Counts animation time.
+
+walkFrameTime
+Controls how fast the walking frames change.
+
+isWalking
+True while any movement key is pressed.
+
+facingRight
+Controls whether the player texture should be mirrored.
+
+
+============================================================
+WALK ANIMATION SPEED
+============================================================
+
+Current value:
+
+player.walkFrameTime = 0.12f;
+
+Smaller number:
+Faster animation.
+
+Example:
+0.08f = faster
+
+Larger number:
+Slower animation.
+
+Example:
+0.18f = slower
+
+
+============================================================
+PLAYER.C LOGIC
+============================================================
+
+UpdatePlayer() first checks movement:
+
+movingLeft
+movingRight
+movingUp
+movingDown
+
+Then:
+
+player->isWalking =
+    movingLeft ||
+    movingRight ||
+    movingUp ||
+    movingDown;
+
+
+Facing direction:
+
+if moving LEFT:
+
+player->facingRight = false;
+
+
+if moving RIGHT:
+
+player->facingRight = true;
+
+
+If walking:
+
+player->walkTimer += deltaTime;
+
+When walkTimer reaches walkFrameTime:
+
+walkFrame increases.
+
+After frame 4:
+
+walkFrame returns to 0.
+
+
+If not walking:
+
+- Walking frame resets.
+- Walking timer resets.
+- Idle animation continues.
+
+
+============================================================
+DRAWPLAYER LOGIC
+============================================================
+
+DrawPlayer() chooses which texture to display.
+
+If walking:
+
+currentTexture =
+    player->walkTextures[player->walkFrame];
+
+
+If not walking:
+
+currentTexture =
+    player->idleTextures[player->idleFrame];
+
+
+Then the same depth scaling system is applied.
+
+
+============================================================
+MIRROR SYSTEM
+============================================================
+
+Source rectangle starts normally:
+
+Rectangle source =
+{
+    0.0f,
+    0.0f,
+    (float)currentTexture.width,
+    (float)currentTexture.height
+};
+
+
+When facing RIGHT:
+
+if (player->facingRight)
+{
+    source.x = (float)currentTexture.width;
+    source.width = -(float)currentTexture.width;
+}
+
+
+This mirrors the image horizontally without creating new PNG files.
+
+
+============================================================
+TEXTURE UNLOADING
+============================================================
+
+UnloadPlayer() must unload:
+
+- Original texture
+- 3 idle textures
+- 4 walking textures
+
+Walking textures are unloaded using:
+
+for (int i = 0; i < 4; i++)
+{
+    UnloadTexture(player->walkTextures[i]);
+}
+
+
+============================================================
+EXPECTED RESULT
+============================================================
+
+After Build and Run:
+
+1. Player stands still.
+   -> Idle animation plays.
+
+2. Press LEFT.
+   -> Player walks left.
+   -> Walking frames loop.
+
+3. Press RIGHT.
+   -> Player walks right.
+   -> Same walking images are mirrored.
+
+4. Press UP or DOWN.
+   -> Walking animation plays.
+   -> Player keeps last horizontal facing direction.
+
+5. Release movement key.
+   -> Player returns to idle animation.
+
+
+============================================================
+IMPORTANT
+============================================================
+
+Do not create separate:
+
+player_walk_right_1.png
+player_walk_right_2.png
+player_walk_right_3.png
+player_walk_right_4.png
+
+They are not needed.
+
+The raylib mirror system handles the opposite direction.
+
+
+============================================================
+CURRENT SYSTEM STATUS
+============================================================
+
+Implemented:
+
+[OK] 3-frame idle animation
+[OK] 4-frame walking animation
+[OK] Arrow Key movement
+[OK] WASD movement
+[OK] LEFT facing
+[OK] RIGHT mirror facing
+[OK] UP/DOWN walking animation
+[OK] Return to idle after movement
+[OK] Existing depth scaling preserved
+[OK] Existing walkable boundaries preserved
+
+
+============================================================
+END OF DOCUMENTATION
+============================================================

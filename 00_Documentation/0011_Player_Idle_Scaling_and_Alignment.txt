@@ -1,0 +1,449 @@
+============================================================
+WARDOGZ II - 0011
+PLAYER IDLE SPRITE SIZE, ALIGNMENT, AND DEPTH SCALING
+============================================================
+
+DATE:
+August 8, 2026
+
+
+------------------------------------------------------------
+1. IDLE ANIMATION FRAMES
+------------------------------------------------------------
+
+Originally, the player had 4 idle animation frames.
+
+Current setup:
+- player_idle_1.png
+- player_idle_2.png
+- player_idle_3.png
+
+player_idle_4.png was removed.
+
+In player.h:
+
+OLD:
+Texture2D idleTextures[4];
+
+NEW:
+Texture2D idleTextures[3];
+
+
+In player.c, remove:
+
+player.idleTextures[3] =
+    LoadTexture("assets/sprites/player/player_idle_4.png");
+
+
+Idle animation should now use frame indexes:
+
+0
+1
+2
+
+Example animation sequence:
+
+0 -> 1 -> 2 -> 1 -> 0
+
+
+------------------------------------------------------------
+2. IMPORTANT FIX - IDLE TEXTURE SOURCE SIZE
+------------------------------------------------------------
+
+Problem:
+
+The idle PNG images were changed to a larger canvas size.
+
+However, DrawPlayer() was still using the dimensions of:
+
+player->texture
+
+This caused parts of the idle images, such as the hands and shoes,
+to be cut off.
+
+
+OLD:
+
+Rectangle source =
+{
+    0.0f,
+    0.0f,
+    (float)player->texture.width,
+    (float)player->texture.height
+};
+
+
+FIX:
+
+Texture2D currentTexture =
+    player->idleTextures[player->idleFrame];
+
+Rectangle source =
+{
+    0.0f,
+    0.0f,
+    (float)currentTexture.width,
+    (float)currentTexture.height
+};
+
+
+IMPORTANT:
+
+Always use currentTexture.width and currentTexture.height when
+drawing the current animation frame.
+
+Do not use player->texture dimensions for idle animation frames.
+
+
+------------------------------------------------------------
+3. SPRITE CANVAS SIZE
+------------------------------------------------------------
+
+The animation PNG canvas was increased so that future animations
+have enough space.
+
+This is useful for:
+
+- Idle
+- Walking
+- Punching
+- Kicking
+- Hurt animations
+- Special attacks
+
+A large transparent canvas does NOT mean that the player's
+gameplay collision size must also be large.
+
+IMAGE CANVAS SIZE
+and
+GAMEPLAY PLAYER SIZE
+
+are two different things.
+
+
+------------------------------------------------------------
+4. PLAYER VISUAL SCALE
+------------------------------------------------------------
+
+Player visual size is controlled inside:
+
+src/player.c
+
+Function:
+
+DrawPlayer()
+
+
+Current structure:
+
+float depth =
+    (player->rectangle.y - 270.0f) /
+    (700.0f - 270.0f);
+
+if (depth < 0.0f)
+    depth = 0.0f;
+
+if (depth > 1.0f)
+    depth = 1.0f;
+
+float scale = 2.70f + (depth * 1.80f);
+
+float scaledWidth =
+    player->rectangle.width * scale * 1.30f;
+
+float scaledHeight =
+    player->rectangle.height * scale;
+
+
+------------------------------------------------------------
+5. DEPTH / PERSPECTIVE EFFECT
+------------------------------------------------------------
+
+The player changes size depending on the Y position.
+
+TOP / BACK:
+Player is smaller.
+
+MIDDLE:
+Player gradually becomes larger.
+
+BOTTOM / FRONT:
+Player is largest.
+
+
+Example:
+
+Y = 270
+depth = 0.0
+small player
+
+
+Middle of the walk area:
+depth is approximately 0.5
+medium player
+
+
+Y = 700
+depth = 1.0
+large player
+
+
+This creates a fake 3D perspective effect for the
+2D beat-'em-up stage.
+
+
+------------------------------------------------------------
+6. SCALE VALUES
+------------------------------------------------------------
+
+Example:
+
+float scale = 2.70f + (depth * 1.80f);
+
+
+2.70f
+=
+Base player size.
+
+This controls the player's size near the TOP of the stage.
+
+
+1.80f
+=
+Depth growth.
+
+This controls how much larger the player becomes when moving
+toward the BOTTOM of the stage.
+
+
+Example:
+
+TOP:
+scale = approximately 2.70
+
+
+MIDDLE:
+scale = approximately 3.60
+
+
+BOTTOM:
+scale = approximately 4.50
+
+
+If the TOP player is too small or too large:
+
+Change:
+2.70f
+
+
+If the difference between TOP and BOTTOM is too small:
+
+Increase:
+1.80f
+
+
+If the difference is too large:
+
+Decrease:
+1.80f
+
+
+------------------------------------------------------------
+7. PLAYER WIDTH
+------------------------------------------------------------
+
+Current width adjustment:
+
+float scaledWidth =
+    player->rectangle.width * scale * 1.30f;
+
+
+The:
+
+1.30f
+
+is an extra width multiplier.
+
+
+Increase it if the character looks too thin.
+
+Example:
+
+1.35f
+1.40f
+
+
+Decrease it if the character looks too wide.
+
+Example:
+
+1.25f
+1.20f
+
+
+------------------------------------------------------------
+8. PLAYER DRAWING ALIGNMENT
+------------------------------------------------------------
+
+The sprite should be anchored using the player's bottom-center
+position.
+
+Current setup:
+
+Rectangle destination =
+{
+    player->rectangle.x +
+        (player->rectangle.width / 2.0f),
+
+    player->rectangle.y +
+        player->rectangle.height,
+
+    scaledWidth,
+    scaledHeight
+};
+
+
+Vector2 origin =
+{
+    scaledWidth / 2.0f,
+    scaledHeight
+};
+
+
+DrawTexturePro(
+    currentTexture,
+    source,
+    destination,
+    origin,
+    0.0f,
+    WHITE
+);
+
+
+This makes the sprite follow the player's ground position instead
+of using the upper-left corner of the large transparent image.
+
+
+------------------------------------------------------------
+9. WALK AREA VS IMAGE SIZE
+------------------------------------------------------------
+
+IMPORTANT:
+
+Do NOT confuse:
+
+1024 x 1024 PNG canvas
+
+with:
+
+walkAreaTop
+walkAreaBottom
+
+
+The PNG dimensions are IMAGE dimensions.
+
+walkAreaTop and walkAreaBottom are GAME WORLD Y coordinates.
+
+
+Example:
+
+const float walkAreaTop = 270.0f;
+const float walkAreaBottom = 700.0f;
+
+
+The value:
+
+700.0f
+
+does NOT mean the image is 700 pixels tall.
+
+It means Y = 700 is being used as the bottom/front position of
+the playable floor.
+
+
+------------------------------------------------------------
+10. BETTER FUTURE SETUP
+------------------------------------------------------------
+
+Currently, DrawPlayer() uses hardcoded values:
+
+270.0f
+700.0f
+
+
+Example:
+
+float depth =
+    (player->rectangle.y - 270.0f) /
+    (700.0f - 270.0f);
+
+
+Later, improve this so DrawPlayer() uses the same:
+
+walkAreaTop
+walkAreaBottom
+
+used by the movement system.
+
+
+This will prevent the movement area and perspective scaling
+from becoming out of sync.
+
+
+------------------------------------------------------------
+11. TEXTURE CLEANUP
+------------------------------------------------------------
+
+Because there are now 3 idle textures, they should also be
+unloaded when the game closes.
+
+In:
+
+src/player.c
+
+
+Use:
+
+void UnloadPlayer(Player *player)
+{
+    UnloadTexture(player->texture);
+
+    for (int i = 0; i < 3; i++)
+    {
+        UnloadTexture(player->idleTextures[i]);
+    }
+
+    player->texture = (Texture2D){0};
+}
+
+
+------------------------------------------------------------
+12. CURRENT GOAL
+------------------------------------------------------------
+
+Current player system:
+
+[OK] Player PNG loads
+[OK] 3 idle animation frames
+[OK] Idle animation
+[OK] Larger animation canvas
+[OK] Hands/shoes no longer cropped
+[OK] Visual player size adjusted
+[OK] Extra width adjustment
+[OK] Bottom-center sprite alignment
+[OK] Depth-based scaling
+[OK] Smaller at the back/top
+[OK] Gradually larger toward the front/bottom
+
+NEXT:
+
+- Finalize walkable floor boundaries
+- Synchronize walkAreaTop / walkAreaBottom with DrawPlayer()
+- Separate visual sprite size from gameplay collision box
+- Add walking animation
+- Add attack animations later
+
+
+============================================================
+END OF 0011
+============================================================
