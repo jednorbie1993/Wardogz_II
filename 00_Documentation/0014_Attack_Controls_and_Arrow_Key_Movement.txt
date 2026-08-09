@@ -1,0 +1,133 @@
+0014 - Attack Controls and Arrow Key Movement
+
+Project: Wardogz II System: Player Controls / Basic Attack Input
+
+Purpose
+
+This update separates movement controls from attack controls.
+
+Before this update, W/A/S/D could be used for movement. The goal is to
+reserve four keyboard buttons for the player’s four basic attacks while
+using the Arrow Keys for movement.
+
+Final Controls
+
+MOVEMENT - Arrow Left = Move Left - Arrow Right = Move Right - Arrow Up
+= Move Up - Arrow Down = Move Down
+
+ATTACK - A = Left Punch - W = Right Punch - S = Left Kick - D = Right
+Kick
+
+Attack Types
+
+The following attack states were added to player.h:
+
+    typedef enum
+    {
+        ATTACK_NONE,
+        ATTACK_LEFT_PUNCH,
+        ATTACK_RIGHT_PUNCH,
+        ATTACK_LEFT_KICK,
+        ATTACK_RIGHT_KICK
+    } AttackType;
+
+The Player structure stores the current attack:
+
+    AttackType currentAttack;
+
+ATTACK_NONE means the player is currently not performing an attack.
+
+Movement Input
+
+Movement is now detected only with the Arrow Keys:
+
+    bool movingLeft =
+        IsKeyDown(KEY_LEFT);
+
+    bool movingRight =
+        IsKeyDown(KEY_RIGHT);
+
+    bool movingUp =
+        IsKeyDown(KEY_UP);
+
+    bool movingDown =
+        IsKeyDown(KEY_DOWN);
+
+The player’s walking state is true when at least one movement key is
+held:
+
+    player->isWalking =
+        movingLeft ||
+        movingRight ||
+        movingUp ||
+        movingDown;
+
+Basic Attack Input
+
+The four attack buttons use IsKeyPressed():
+
+    if (IsKeyPressed(KEY_A))
+    {
+        player->currentAttack = ATTACK_LEFT_PUNCH;
+    }
+    else if (IsKeyPressed(KEY_W))
+    {
+        player->currentAttack = ATTACK_RIGHT_PUNCH;
+    }
+    else if (IsKeyPressed(KEY_S))
+    {
+        player->currentAttack = ATTACK_LEFT_KICK;
+    }
+    else if (IsKeyPressed(KEY_D))
+    {
+        player->currentAttack = ATTACK_RIGHT_KICK;
+    }
+
+IsKeyPressed() is used instead of IsKeyDown() so one key press starts
+one attack rather than repeatedly starting an attack every frame while
+the key is held.
+
+Attack Animation Assets
+
+Three animation frames were prepared for each basic attack.
+
+Left Punch: - left_punch1.png - left_punch2.png - left_punch3.png
+
+Right Punch: - right_punch1.png - right_punch2.png - right_punch3.png
+
+Left Kick: - left_kick1.png - left_kick2.png - left_kick3.png
+
+Right Kick: - right_kick1.png - right_kick2.png - right_kick3.png
+
+Asset folder:
+
+    assets/sprites/player/
+
+Attack Animation Behavior
+
+Each attack plays three frames and then returns to the normal player
+animation.
+
+    A -> Left Punch 1 -> 2 -> 3 -> Idle/Walk
+    W -> Right Punch 1 -> 2 -> 3 -> Idle/Walk
+    S -> Left Kick 1 -> 2 -> 3 -> Idle/Walk
+    D -> Right Kick 1 -> 2 -> 3 -> Idle/Walk
+
+The initial attack frame timing is approximately:
+
+    0.10 seconds per frame
+
+A new attack should not interrupt the current attack until its
+three-frame animation finishes.
+
+Current System Status
+
+Completed: - Arrow Key movement - A/W/S/D reserved for attacks - Four
+attack states - Left Punch animation - Right Punch animation - Left Kick
+animation - Right Kick animation - Automatic return to Idle/Walk after
+attack
+
+Not included yet: - Enemy hit detection - Attack hitboxes - Damage -
+Combos - Special moves
+
+These combat features will be added in later steps.
