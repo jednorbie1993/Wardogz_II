@@ -1,0 +1,161 @@
+0015 - Diagonal Movement Vector Speed Fix
+
+Project: Wardogz II System: Player Movement
+
+Problem
+
+The player moved at the expected speed when pressing only one Arrow Key.
+
+Example:
+
+    Right Arrow
+
+moves only on the X axis.
+
+However, pressing two directions at the same time, such as:
+
+    Up + Right
+
+changed both X and Y during the same frame.
+
+The old movement logic independently applied full speed to both axes:
+
+    player->rectangle.x += player->speed * deltaTime;
+    player->rectangle.y -= player->speed * deltaTime;
+
+Because both axes received full movement speed, diagonal movement felt
+faster than horizontal or vertical movement.
+
+This was especially noticeable when moving in a zigzag pattern.
+
+Solution
+
+Movement is represented using a Raylib Vector2.
+
+Start with no movement:
+
+    Vector2 movement = { 0.0f, 0.0f };
+
+Then build the movement direction from the Arrow Keys:
+
+    if (movingLeft)
+    {
+        movement.x -= 1.0f;
+    }
+
+    if (movingRight)
+    {
+        movement.x += 1.0f;
+    }
+
+    if (movingUp)
+    {
+        movement.y -= 1.0f;
+    }
+
+    if (movingDown)
+    {
+        movement.y += 1.0f;
+    }
+
+Diagonal Speed Correction
+
+If both X and Y contain movement, the player is moving diagonally.
+
+The following correction is applied:
+
+    if (movement.x != 0.0f && movement.y != 0.0f)
+    {
+        const float diagonalFactor = 0.70710678f;
+
+        movement.x *= diagonalFactor;
+        movement.y *= diagonalFactor;
+    }
+
+0.70710678 is approximately:
+
+    1 / sqrt(2)
+
+This reduces the X and Y components during diagonal movement so the
+player’s total movement speed remains consistent.
+
+Apply Movement
+
+After calculating the movement vector:
+
+    player->rectangle.x +=
+        movement.x * player->speed * deltaTime;
+
+    player->rectangle.y +=
+        movement.y * player->speed * deltaTime;
+
+Final Movement Section
+
+    // =========================
+    // MOVEMENT
+    // =========================
+
+    Vector2 movement = { 0.0f, 0.0f };
+
+    if (movingLeft)
+    {
+        movement.x -= 1.0f;
+    }
+
+    if (movingRight)
+    {
+        movement.x += 1.0f;
+    }
+
+    if (movingUp)
+    {
+        movement.y -= 1.0f;
+    }
+
+    if (movingDown)
+    {
+        movement.y += 1.0f;
+    }
+
+    // Prevent faster diagonal movement
+    if (movement.x != 0.0f && movement.y != 0.0f)
+    {
+        const float diagonalFactor = 0.70710678f;
+
+        movement.x *= diagonalFactor;
+        movement.y *= diagonalFactor;
+    }
+
+    player->rectangle.x +=
+        movement.x * player->speed * deltaTime;
+
+    player->rectangle.y +=
+        movement.y * player->speed * deltaTime;
+
+Result
+
+Before:
+
+    Right       = normal speed
+    Up          = normal speed
+    Up + Right  = faster diagonal speed
+
+After:
+
+    Right       = normal speed
+    Up          = normal speed
+    Up + Right  = consistent overall speed
+    Down + Left = consistent overall speed
+
+The player can now move diagonally without receiving an unintended speed
+boost.
+
+Why This Matters
+
+Wardogz II uses a beat-’em-up style movement area where the player can
+move horizontally and vertically.
+
+Consistent diagonal speed makes movement: - More controllable - More
+predictable - Smoother - Better suited for combat positioning
+
+This fix should remain part of the base player movement system.
