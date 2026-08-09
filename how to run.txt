@@ -45,7 +45,7 @@ STEP 3 - COMPILE THE PROJECT
 
 Run the following command:
 
-gcc src/main.c src/player.c -o build/Wardogz_II.exe ^
+gcc src/main.c src/player.c src\enemy.c -o build/Wardogz_II.exe ^
 -Iinclude ^
 -IC:\raylib\raylib\src ^
 -LC:\raylib\raylib\src ^

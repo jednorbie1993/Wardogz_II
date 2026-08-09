@@ -6,7 +6,7 @@ echo      Building Wardogz II
 echo ==========================================
 echo.
 
-gcc src/main.c src/player.c -o build/Wardogz_II.exe ^
+gcc src/main.c src/player.c src\enemy.c -o build/Wardogz_II.exe ^
 -Iinclude ^
 -I"C:\raylib\raylib\src" ^
 -L"C:\raylib\raylib\src" ^
