@@ -5,6 +5,17 @@
 
 #define IDLE_FRAME_COUNT 3
 #define WALK_FRAME_COUNT 12
+#define ATTACK_FRAME_COUNT 3
+
+// ATTACK TYPES
+typedef enum
+{
+    ATTACK_NONE,
+    ATTACK_LEFT_PUNCH,
+    ATTACK_RIGHT_PUNCH,
+    ATTACK_LEFT_KICK,
+    ATTACK_RIGHT_KICK
+} AttackType;
 
 // Lahat ng impormasyon tungkol sa player
 typedef struct Player
@@ -29,8 +40,22 @@ typedef struct Player
     float walkTimer;
     float walkFrameTime;
 
+    // ATTACK ANIMATIONS
+    Texture2D leftPunchTextures[ATTACK_FRAME_COUNT];
+    Texture2D rightPunchTextures[ATTACK_FRAME_COUNT];
+    Texture2D leftKickTextures[ATTACK_FRAME_COUNT];
+    Texture2D rightKickTextures[ATTACK_FRAME_COUNT];
+
+    int attackFrame;
+    float attackTimer;
+    float attackFrameTime;
+    bool isAttacking;
+
     // Player state
     bool isWalking;
+
+    // Current attack input
+    AttackType currentAttack;
 
     // false = LEFT
     // true  = RIGHT
@@ -51,6 +76,18 @@ void UpdatePlayer(
     float walkAreaTop,
     float walkAreaBottom
 );
+
+
+// ============================================================
+// 0017 - ATTACK HITBOX SYSTEM
+// ============================================================
+
+// True habang active ang attack hitbox.
+// TEMPORARY TEST: buong attack animation muna para madaling makita.
+bool IsPlayerAttackHitboxActive(const Player *player);
+
+// Kunin ang rectangle ng current attack hitbox.
+Rectangle GetPlayerAttackHitbox(const Player *player);
 
 
 // I-drawing ang player
