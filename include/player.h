@@ -3,6 +3,9 @@
 
 #include "raylib.h"
 
+#define IDLE_FRAME_COUNT 3
+#define WALK_FRAME_COUNT 12
+
 // Lahat ng impormasyon tungkol sa player
 typedef struct Player
 {
@@ -10,7 +13,8 @@ typedef struct Player
     Texture2D texture;
     float speed;
 
-    Texture2D idleTextures[3];
+    // IDLE ANIMATION
+    Texture2D idleTextures[IDLE_FRAME_COUNT];
 
     int idleFrame;
     int idleDirection;
@@ -18,10 +22,26 @@ typedef struct Player
     float idleTimer;
     float idleFrameTime;
 
+    // WALKING ANIMATION
+    Texture2D walkTextures[WALK_FRAME_COUNT];
+
+    int walkFrame;
+    float walkTimer;
+    float walkFrameTime;
+
+    // Player state
+    bool isWalking;
+
+    // false = LEFT
+    // true  = RIGHT
+    bool facingRight;
+
 } Player;
 
-// Gumawa ng player at mag-load ng texture
+
+// Gumawa ng player at mag-load ng textures
 Player InitPlayer(const char *texturePath);
+
 
 // Basahin ang keyboard at galawin ang player
 void UpdatePlayer(
@@ -32,10 +52,12 @@ void UpdatePlayer(
     float walkAreaBottom
 );
 
+
 // I-drawing ang player
 void DrawPlayer(const Player *player);
 
-// Alisin ang texture sa memory
+
+// Alisin ang textures sa memory
 void UnloadPlayer(Player *player);
 
 #endif
