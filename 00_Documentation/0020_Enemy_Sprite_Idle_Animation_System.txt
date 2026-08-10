@@ -1,0 +1,128 @@
+WARDOGZ II DOCUMENTATION 0020 - Enemy Sprite / Idle Animation System
+
+Date: 2026-08-10
+
+============================================================ TITLE
+============================================================
+
+0020_Enemy_Sprite_Idle_Animation_System
+
+============================================================ OBJECTIVE
+============================================================
+
+Replace the temporary enemy dummy appearance with the Stage 1 Punk
+sprite and add a working idle animation while preserving the systems
+completed in 0018 and 0019.
+
+============================================================ ENEMY ASSET
+LOCATION ============================================================
+
+assets/sprites/enemy/stage_1/punk/
+
+punk_idle_1.png punk_idle_2.png punk_idle_3.png
+
+============================================================ ENEMY IDLE
+ANIMATION ============================================================
+
+The Punk enemy uses 3 idle textures.
+
+Animation order: 0 -> 1 -> 2 -> 1 -> 0 -> repeat
+
+Idle frame time: 0.19 seconds
+
+The animation uses: idleTextures[] idleFrame idleDirection idleTimer
+idleFrameTime
+
+When the enemy reaches 0 HP, the idle animation and movement stop.
+
+============================================================ FINAL ENEMY
+HURTBOX ============================================================
+
+The enemy hurtbox was manually measured and adjusted to fit the Punk.
+
+Final values:
+
+X position: x Y offset: y - 200 Width: 148.0f Height: 276.0f
+
+enemy.hurtbox = (Rectangle) { x, y - 200, 148.0f, 276.0f };
+
+The BLUE rectangle remains visible as a debug hurtbox.
+
+============================================================ PUNK SPRITE
+SIZE AND ALIGNMENT
+============================================================
+
+Final sprite draw size: spriteSize = 580.0f
+
+The Punk image position is calculated from enemy->hurtbox, so the sprite
+follows the enemy hurtbox when the enemy moves or is knocked back.
+
+Current alignment: enemy->hurtbox.width / 1.70f enemy->hurtbox.height /
+0.65f
+
+Fine-tuning values: spriteOffsetX = 0.0f spriteOffsetY = 0.0f
+
+============================================================ HIT
+REACTION / KNOCKBACK PRESERVED
+============================================================
+
+The 0019 system remains active.
+
+-   Enemy loses 10 HP per successful attack.
+-   One attack cannot repeatedly damage during the same attack.
+-   Enemy enters hit reaction.
+-   Enemy sprite changes to ORANGE during hit reaction.
+-   Knockback follows the player’s facing direction.
+-   Knockback speed: 360.0f
+-   Hit reaction timer: 0.12f
+-   Enemy remains inside the horizontal screen boundary.
+-   Punk sprite follows the hurtbox during knockback.
+
+============================================================ ENEMY DEATH
+BEHAVIOR ============================================================
+
+At 0 HP: hp = 0 isAlive = false
+
+Hit reaction and knockback are reset immediately. The defeated Punk
+sprite is tinted GRAY. Idle animation and movement stop.
+
+============================================================ HP DISPLAY
+============================================================
+
+The HP bar and HP text use enemy->hurtbox as their position reference.
+
+============================================================ TEXTURE
+CLEANUP ============================================================
+
+UnloadEnemy() unloads all Punk idle textures when the game closes.
+
+============================================================ TEST RESULT
+============================================================
+
+PASSED
+
+Confirmed working:
+
+-   Punk enemy sprite loads.
+-   3-frame idle animation works.
+-   Idle order is 0 -> 1 -> 2 -> 1 -> 0.
+-   Punk sprite size and position were manually adjusted.
+-   Blue hurtbox was manually measured and aligned.
+-   Enemy HP/damage still works.
+-   Punch and kick collision still works.
+-   Left/right knockback still works.
+-   Punk sprite follows the hurtbox during knockback.
+-   Enemy stops movement/animation at 0 HP.
+-   0018 and 0019 systems remain integrated.
+
+============================================================ STATUS
+============================================================
+
+0020 - Enemy Sprite / Idle Animation System
+
+COMPLETE
+
+============================================================ NEXT
+============================================================
+
+Proceed to 0021 after saving the final working 0020 build.

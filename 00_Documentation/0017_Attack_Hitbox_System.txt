@@ -1,0 +1,261 @@
+WARDOGZ II DOCUMENTATION
+0017 - Attack Hitbox System
+
+Date: 2026-08-09
+
+============================================================
+TITLE
+============================================================
+
+0017_Attack_Hitbox_System
+
+
+============================================================
+OVERVIEW
+============================================================
+
+This update adds an Attack Hitbox System to the player's
+four basic attacks.
+
+A visible red rectangle is used as a temporary debug hitbox.
+
+The red box shows the area where an attack can potentially hit
+an enemy.
+
+
+============================================================
+ATTACK BUTTONS
+============================================================
+
+A = Left Punch
+W = Right Punch
+S = Left Kick
+D = Right Kick
+
+
+============================================================
+HITBOX FUNCTION
+============================================================
+
+The system uses:
+
+IsPlayerAttackHitboxActive()
+
+and:
+
+GetPlayerAttackHitbox()
+
+IsPlayerAttackHitboxActive() determines when the attack can hit.
+
+GetPlayerAttackHitbox() calculates the position and size of the
+red attack box.
+
+
+============================================================
+ACTIVE HIT FRAME
+============================================================
+
+The attack animation contains 3 frames.
+
+Frame 0 = Attack preparation
+Frame 1 = Active hit frame
+Frame 2 = Recovery
+
+Final hitbox rule:
+
+player->attackFrame == 1
+
+Only Frame 1 should produce an active attack hitbox.
+
+
+============================================================
+DEBUG RED BOX
+============================================================
+
+During development, the attack hitbox is drawn as a red box.
+
+The red box makes it easier to adjust:
+
+- Attack reach
+- Hitbox height
+- Hitbox thickness
+- Left/right position
+
+
+============================================================
+INDIVIDUAL ATTACK HITBOXES
+============================================================
+
+Each attack has its own hitbox values.
+
+This is important because every sprite has a different pose
+and attack reach.
+
+The system does NOT use one shared punch hitbox and one shared
+kick hitbox.
+
+Each attack can be adjusted separately.
+
+
+============================================================
+LEFT PUNCH - A
+============================================================
+
+Current values:
+
+hitbox.width  = scaledWidth  * 0.25f;
+hitbox.height = scaledHeight * 0.10f;
+hitbox.y      = topY + (scaledHeight * 0.32f);
+
+Horizontal distance:
+
+scaledWidth * 0.04f
+
+
+============================================================
+RIGHT PUNCH - W
+============================================================
+
+Current values:
+
+hitbox.width  = scaledWidth  * 0.24f;
+hitbox.height = scaledHeight * 0.10f;
+hitbox.y      = topY + (scaledHeight * 0.32f);
+
+Horizontal distance:
+
+scaledWidth * 0.01f
+
+The Right Punch sprite has a shorter visible reach, so its
+hitbox is positioned closer to the player.
+
+
+============================================================
+LEFT KICK - S
+============================================================
+
+Current values:
+
+hitbox.width  = scaledWidth  * 0.25f;
+hitbox.height = scaledHeight * 0.29f;
+hitbox.y      = topY + (scaledHeight * 0.35f);
+
+Horizontal distance:
+
+scaledWidth * 0.02f
+
+
+============================================================
+RIGHT KICK - D
+============================================================
+
+Current values:
+
+hitbox.width  = scaledWidth  * 0.26f;
+hitbox.height = scaledHeight * 0.32f;
+hitbox.y      = topY + (scaledHeight * 0.33f);
+
+The final horizontal offset can continue to be fine-tuned
+depending on the exact sprite position.
+
+
+============================================================
+HITBOX VALUE GUIDE
+============================================================
+
+hitbox.width
+
+Controls the horizontal length or attack reach.
+
+Higher number = longer hitbox
+Lower number  = shorter hitbox
+
+
+hitbox.height
+
+Controls the vertical thickness of the red box.
+
+Higher number = thicker/taller hitbox
+Lower number  = thinner hitbox
+
+
+hitbox.y
+
+Controls the vertical position of the hitbox.
+
+Higher number = moves the hitbox downward
+Lower number  = moves the hitbox upward
+
+
+============================================================
+FACING DIRECTION
+============================================================
+
+The attack hitbox automatically follows the player's facing
+direction.
+
+Facing Right:
+
+The hitbox is placed in front of the player on the right side.
+
+Facing Left:
+
+The hitbox is mirrored to the left side.
+
+This allows the same attack system to work in both directions.
+
+
+============================================================
+DEPTH SCALING
+============================================================
+
+The hitbox uses the same depth scaling idea as the player sprite.
+
+Because the player becomes larger or smaller depending on the
+Y position on the stage, the hitbox also scales with the player.
+
+This keeps the attack area visually closer to the sprite size.
+
+
+============================================================
+WHY EACH ATTACK IS SEPARATE
+============================================================
+
+Separate hitboxes allow future attacks to have different:
+
+- Reach
+- Height
+- Damage
+- Hit frame
+- Knockback
+- Stun
+- Combo behavior
+
+This is more flexible than using one hitbox for every punch or kick.
+
+
+============================================================
+STATUS
+============================================================
+
+0017 Attack Hitbox System
+
+STATUS: COMPLETE / HITBOX POSITION TUNED
+
+Current behavior:
+
+- Red debug hitbox is visible during testing
+- Each attack has independent hitbox values
+- Hitbox follows left/right facing
+- Hitbox scales with player depth
+- Final hit detection should use attackFrame == 1
+
+
+============================================================
+NEXT SYSTEM
+============================================================
+
+0018 - Enemy Dummy + Hurtbox System
+
+The next system will add an enemy target with a hurtbox so the
+player's attack hitbox can detect an actual hit.

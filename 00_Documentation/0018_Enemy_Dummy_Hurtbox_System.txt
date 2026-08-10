@@ -1,0 +1,344 @@
+WARDOGZ II DOCUMENTATION
+0018 - Enemy Dummy + Hurtbox System
+
+Date: 2026-08-09
+
+============================================================
+TITLE
+============================================================
+
+0018_Enemy_Dummy_Hurtbox_System
+
+
+============================================================
+OVERVIEW
+============================================================
+
+This update adds the first enemy target to Wardogz II.
+
+The enemy is currently a stationary dummy used for testing the
+player's Attack Hitbox System from Documentation 0017.
+
+The system can now detect when the player's RED attack hitbox
+touches the enemy's BLUE hurtbox.
+
+When a valid hit is detected, the enemy loses HP.
+
+
+============================================================
+NEW FILES
+============================================================
+
+Two new enemy system files were added:
+
+src/enemy.c
+include/enemy.h
+
+The main game files now include:
+
+src/
+    main.c
+    player.c
+    enemy.c
+
+include/
+    player.h
+    enemy.h
+
+
+============================================================
+ENEMY STRUCTURE
+============================================================
+
+The Enemy structure contains:
+
+Rectangle hurtbox;
+
+    Defines the enemy's body collision area.
+
+int hp;
+
+    Stores the enemy's current HP.
+
+int maxHp;
+
+    Stores the enemy's maximum HP.
+
+bool isAlive;
+
+    Determines whether the enemy is still alive.
+
+bool hitByCurrentAttack;
+
+    Prevents one player attack from damaging the enemy
+    multiple times.
+
+
+============================================================
+ENEMY DUMMY
+============================================================
+
+The current enemy is a stationary testing dummy.
+
+Initial HP:
+
+100 HP
+
+Current damage per successful player attack:
+
+10 HP
+
+Example:
+
+100 HP
+90 HP
+80 HP
+70 HP
+60 HP
+...
+
+
+============================================================
+ENEMY HURTBOX
+============================================================
+
+The enemy uses a Rectangle as its hurtbox.
+
+The hurtbox is temporarily displayed with a BLUE outline.
+
+BLUE BOX = Enemy Hurtbox
+
+This makes it easy to visually check whether the player's
+attack range correctly overlaps the enemy.
+
+
+============================================================
+PLAYER ATTACK HITBOX
+============================================================
+
+The player's attack area comes from the 0017 system:
+
+GetPlayerAttackHitbox()
+
+The RED box represents the player's attack hitbox.
+
+RED BOX = Player Attack Hitbox
+
+BLUE BOX = Enemy Hurtbox
+
+
+============================================================
+COLLISION DETECTION
+============================================================
+
+The system checks whether the player's active attack hitbox
+overlaps the enemy hurtbox.
+
+Collision is checked using:
+
+CheckCollisionRecs(attackHitbox, enemy->hurtbox)
+
+Basic flow:
+
+Player attacks
+    |
+    v
+Attack hitbox becomes active
+    |
+    v
+RED hitbox touches BLUE hurtbox
+    |
+    v
+Collision detected
+    |
+    v
+Enemy loses HP
+
+
+============================================================
+ONE HIT PER ATTACK
+============================================================
+
+The enemy uses:
+
+hitByCurrentAttack
+
+This prevents the same attack animation from repeatedly
+damaging the enemy every game frame.
+
+After a successful hit:
+
+enemy->hitByCurrentAttack = true;
+
+The enemy cannot receive another hit from that same attack.
+
+When the player's attack completely finishes:
+
+player->isAttacking == false
+
+the hit lock is reset:
+
+enemy->hitByCurrentAttack = false;
+
+The next attack can then damage the enemy again.
+
+
+============================================================
+HP SYSTEM
+============================================================
+
+Current enemy settings:
+
+Maximum HP = 100
+Attack Damage = 10
+
+When collision occurs:
+
+enemy->hp -= 10;
+
+When HP reaches zero or below:
+
+enemy->hp = 0;
+enemy->isAlive = false;
+
+
+============================================================
+ENEMY HP DISPLAY
+============================================================
+
+The enemy currently displays:
+
+- HP number
+- HP bar
+- Blue hurtbox
+- Gray dummy body
+
+These are development/debug visuals and can be replaced later
+when the real enemy sprites and UI are added.
+
+
+============================================================
+MAIN.C CONNECTION
+============================================================
+
+The enemy is initialized in main.c.
+
+Example:
+
+Enemy enemy = InitEnemy(850.0f, 470.0f);
+
+During the game update:
+
+UpdateEnemyHit(&enemy, &player);
+
+During drawing:
+
+DrawEnemy(&enemy);
+
+This connects the player attack system to the enemy system.
+
+
+============================================================
+BUILD UPDATE
+============================================================
+
+Because enemy.c was added to the project, it must also be
+included in the GCC build command.
+
+The project now compiles:
+
+src/main.c
+src/player.c
+src/enemy.c
+
+with the include folder:
+
+-Iinclude
+
+
+============================================================
+BUILD ISSUE ENCOUNTERED
+============================================================
+
+During implementation, GCC initially reported:
+
+implicit declaration of function 'IsPlayerAttackHitboxActive'
+
+and:
+
+implicit declaration of function 'GetPlayerAttackHitbox'
+
+The current player.h already contained the required function
+declarations.
+
+The files and compiler environment were checked using the
+preprocessor and a direct enemy.c compilation test.
+
+The final full build completed successfully using:
+
+C:\w64devkit\bin\gcc.exe
+
+GCC 16.1.0
+
+
+============================================================
+TEST RESULT
+============================================================
+
+0018 was tested successfully.
+
+Confirmed behavior:
+
+- Game builds successfully
+- Game runs successfully
+- Enemy dummy appears
+- Blue enemy hurtbox appears
+- Player red attack hitbox can overlap the enemy
+- Collision is detected
+- Enemy HP decreases when an attack connects
+- Damage is not repeatedly applied by the same attack
+
+
+============================================================
+STATUS
+============================================================
+
+0018 - Enemy Dummy + Hurtbox System
+
+STATUS: COMPLETE
+
+
+============================================================
+SYSTEM PROGRESS
+============================================================
+
+0016 - Basic Attack Movement Lock System
+STATUS: COMPLETE
+
+0017 - Attack Hitbox System
+STATUS: COMPLETE
+
+0018 - Enemy Dummy + Hurtbox System
+STATUS: COMPLETE
+
+
+============================================================
+NEXT SYSTEM
+============================================================
+
+0019 - Enemy Hit Reaction / Knockback System
+
+Planned goal:
+
+When the player's attack successfully hits the enemy, the enemy
+will visually react to the hit.
+
+Possible first features:
+
+- Hit reaction state
+- Small knockback
+- Different knockback direction based on player facing
+- Temporary reaction duration
+
+This will make successful attacks feel more visible and
+responsive than HP reduction alone.

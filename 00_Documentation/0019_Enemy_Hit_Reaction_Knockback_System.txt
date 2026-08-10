@@ -1,0 +1,327 @@
+WARDOGZ II DOCUMENTATION
+0019 - Enemy Hit Reaction / Knockback System
+
+Date: 2026-08-10
+
+============================================================
+TITLE
+============================================================
+
+0019_Enemy_Hit_Reaction_Knockback_System
+
+
+============================================================
+OVERVIEW
+============================================================
+
+This update adds a basic hit reaction and knockback system to
+the enemy dummy introduced in Documentation 0018.
+
+Previously, a successful player attack only reduced the enemy's
+HP. The enemy now also reacts visually and moves backward when
+hit.
+
+The knockback direction depends on the player's facing direction.
+
+
+============================================================
+PREVIOUS SYSTEM
+============================================================
+
+0018 added:
+
+- Enemy dummy
+- Blue enemy hurtbox
+- HP system
+- Player attack collision detection
+- One damage registration per attack
+
+0019 builds on that system by adding physical feedback when a
+successful attack connects.
+
+
+============================================================
+ENEMY HIT REACTION
+============================================================
+
+When the player's active attack hitbox collides with the enemy
+hurtbox, the enemy enters a temporary hit reaction state.
+
+During this reaction:
+
+- Enemy HP decreases
+- Enemy briefly changes color for visual feedback
+- Enemy is pushed away from the player
+- The reaction automatically ends after a short duration
+
+This makes successful attacks easier to see and feel during
+combat testing.
+
+
+============================================================
+KNOCKBACK DIRECTION
+============================================================
+
+The knockback direction uses the player's current facing
+direction.
+
+Player facing RIGHT:
+
+Player  --->  Enemy
+              ---> Knockback
+
+The enemy moves to the RIGHT.
+
+Player facing LEFT:
+
+Knockback <---
+Enemy     <--- Player
+
+The enemy moves to the LEFT.
+
+This works for all four current basic attacks.
+
+
+============================================================
+SUPPORTED ATTACKS
+============================================================
+
+The knockback system was tested with:
+
+A = Left Punch
+W = Right Punch
+S = Left Kick
+D = Right Kick
+
+All four attacks correctly push the enemy in the direction the
+player is attacking.
+
+
+============================================================
+HIT REACTION STATE
+============================================================
+
+The Enemy structure now stores temporary hit reaction data.
+
+The system tracks whether the enemy is currently reacting to a
+hit and how long the reaction should remain active.
+
+This prevents the knockback from continuing forever and creates
+a short controlled reaction after each successful attack.
+
+
+============================================================
+KNOCKBACK MOVEMENT
+============================================================
+
+While the enemy is in the hit reaction state, its horizontal
+position changes over time.
+
+The movement is frame-rate independent because the knockback
+movement uses deltaTime.
+
+Basic behavior:
+
+Player attack connects
+        |
+        v
+Enemy takes damage
+        |
+        v
+Hit reaction begins
+        |
+        v
+Knockback direction is selected
+        |
+        v
+Enemy moves backward briefly
+        |
+        v
+Reaction timer ends
+        |
+        v
+Enemy stops moving
+
+
+============================================================
+VISUAL HIT FEEDBACK
+============================================================
+
+During the temporary hit reaction, the enemy dummy changes color.
+
+This temporary color change is only development feedback.
+
+It makes it easier to confirm that:
+
+- Collision happened
+- Damage was registered
+- Hit reaction started
+- Knockback was triggered
+
+The debug visual can later be replaced with a real enemy hit
+sprite or hit animation.
+
+
+============================================================
+ENEMY DEATH BEHAVIOR
+============================================================
+
+The existing HP system remains active.
+
+When enemy HP reaches zero:
+
+enemy->hp = 0;
+enemy->isAlive = false;
+
+After the enemy is no longer alive:
+
+- No additional hit reaction occurs
+- No additional knockback occurs
+- The enemy stops moving
+
+This was tested successfully.
+
+
+============================================================
+BOUNDARY PROTECTION
+============================================================
+
+The enemy knockback is restricted by the horizontal screen
+boundaries.
+
+This prevents repeated attacks from pushing the enemy completely
+outside the playable screen.
+
+
+============================================================
+ONE HIT PER ATTACK
+============================================================
+
+The system still uses:
+
+hitByCurrentAttack
+
+This prevents one attack animation from repeatedly damaging and
+knocking back the enemy every game frame.
+
+One successful attack produces one damage event and one knockback
+reaction.
+
+After the player's attack finishes, the hit lock resets and the
+next attack can hit normally.
+
+
+============================================================
+CURRENT COMBAT FLOW
+============================================================
+
+The current basic combat flow is now:
+
+1. Player presses W, A, S, or D.
+2. Attack animation begins.
+3. Player movement is temporarily locked.
+4. Attack reaches its active hit frame.
+5. Red player attack hitbox appears.
+6. Red hitbox overlaps the blue enemy hurtbox.
+7. Collision is detected.
+8. Enemy loses HP.
+9. Enemy enters hit reaction state.
+10. Enemy briefly changes color.
+11. Enemy moves backward based on player facing direction.
+12. Hit reaction ends.
+13. Enemy waits for the next valid attack.
+
+If HP reaches 0, the enemy becomes inactive and stops reacting.
+
+
+============================================================
+FILES INVOLVED
+============================================================
+
+include/enemy.h
+
+    Stores the Enemy structure and hit reaction / knockback data.
+
+src/enemy.c
+
+    Handles damage detection, hit reaction state, knockback
+    movement, enemy death behavior, and enemy drawing.
+
+src/main.c
+
+    Updates the enemy system every game frame and provides the
+    screen information required for knockback boundary handling.
+
+The player facing direction comes from the existing player
+system.
+
+
+============================================================
+TEST RESULT
+============================================================
+
+0019 was tested successfully.
+
+Confirmed behavior:
+
+- Game builds and runs
+- Enemy blue hurtbox still works
+- Punch attacks damage the enemy
+- Kick attacks damage the enemy
+- Enemy reacts when hit
+- Enemy moves backward when hit
+- Facing right pushes the enemy right
+- Facing left pushes the enemy left
+- Left Punch knockback works
+- Right Punch knockback works
+- Left Kick knockback works
+- Right Kick knockback works
+- Enemy HP reaches 0 correctly
+- Enemy stops moving after reaching 0 HP
+- Dead enemy no longer performs knockback reactions
+
+
+============================================================
+STATUS
+============================================================
+
+0019 - Enemy Hit Reaction / Knockback System
+
+STATUS: COMPLETE
+
+
+============================================================
+SYSTEM PROGRESS
+============================================================
+
+0016 - Basic Attack Movement Lock System
+STATUS: COMPLETE
+
+0017 - Attack Hitbox System
+STATUS: COMPLETE
+
+0018 - Enemy Dummy + Hurtbox System
+STATUS: COMPLETE
+
+0019 - Enemy Hit Reaction / Knockback System
+STATUS: COMPLETE
+
+
+============================================================
+NEXT DEVELOPMENT STEP
+============================================================
+
+The enemy now has the basic foundation required for visible
+combat reactions.
+
+Possible next systems include:
+
+- Enemy movement / basic AI
+- Enemy facing direction
+- Enemy attack system
+- Player hurtbox and damage system
+- Enemy sprite and animation system
+- Improved hit reaction animation
+
+The next system should be selected based on the desired combat
+development order.

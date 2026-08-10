@@ -1,0 +1,180 @@
+WARDOGZ II DOCUMENTATION
+0016 - Basic Attack Movement Lock System
+
+Date: 2026-08-09
+
+============================================================
+TITLE
+============================================================
+
+0016_Basic_Attack_Movement_Lock_System
+
+
+============================================================
+OVERVIEW
+============================================================
+
+This update improves the Basic Attack System by temporarily
+locking normal player movement while an attack animation is active.
+
+The player uses:
+
+Arrow Keys = Movement
+W / A / S / D = Attack Buttons
+
+When an attack button is pressed, the player stops moving until
+the attack animation finishes.
+
+
+============================================================
+CONTROL SETUP
+============================================================
+
+MOVEMENT
+
+Arrow Left  = Move Left
+Arrow Right = Move Right
+Arrow Up    = Move Up
+Arrow Down  = Move Down
+
+
+ATTACK BUTTONS
+
+A = Left Punch
+W = Right Punch
+S = Left Kick
+D = Right Kick
+
+
+============================================================
+MAIN RULE
+============================================================
+
+While:
+
+player->isAttacking == true
+
+normal Arrow Key movement is disabled.
+
+This prevents the player from sliding across the floor while
+performing an attack animation.
+
+
+============================================================
+ATTACK FLOW
+============================================================
+
+Example:
+
+1. Player holds Arrow Right.
+2. Player starts walking to the right.
+3. Player presses W.
+4. Right Punch attack starts.
+5. Normal Arrow Key movement is temporarily locked.
+6. Player stays in position while attacking.
+7. Attack animation finishes.
+8. isAttacking becomes false.
+9. If Arrow Right is still being held, walking continues.
+
+
+============================================================
+MOVEMENT LOCK
+============================================================
+
+Movement is only processed when the player is NOT attacking.
+
+Example logic:
+
+if (!player->isAttacking)
+{
+    // Arrow Key movement
+}
+
+
+============================================================
+WALKING STATE
+============================================================
+
+Walking animation is also disabled while attacking.
+
+The walking state checks:
+
+!player->isAttacking
+
+before allowing the walk animation to continue.
+
+This prevents walking frames from appearing during an attack.
+
+
+============================================================
+FACING DIRECTION LOCK
+============================================================
+
+Facing direction is also temporarily locked while attacking.
+
+This means the player cannot suddenly flip left/right in the
+middle of an attack animation.
+
+After the attack finishes, Arrow Left and Arrow Right can update
+the facing direction again.
+
+
+============================================================
+WHY THIS SYSTEM IS IMPORTANT
+============================================================
+
+This creates cleaner and more controlled combat behavior.
+
+Benefits:
+
+- Prevents sliding attacks
+- Keeps attack animations stable
+- Keeps player direction consistent during attacks
+- Makes future hitbox positioning easier
+- Creates a better foundation for enemy collision
+- Creates a better foundation for future combo attacks
+
+
+============================================================
+CURRENT ATTACK STATE
+============================================================
+
+The player already has:
+
+ATTACK_NONE
+ATTACK_LEFT_PUNCH
+ATTACK_RIGHT_PUNCH
+ATTACK_LEFT_KICK
+ATTACK_RIGHT_KICK
+
+The attack state is controlled using:
+
+player->isAttacking
+player->currentAttack
+player->attackFrame
+player->attackTimer
+
+
+============================================================
+STATUS
+============================================================
+
+0016 Basic Attack Movement Lock System
+
+STATUS: COMPLETE
+
+Current behavior:
+
+Arrow Keys = Movement
+W/A/S/D = Basic Attacks
+Attack starts = Movement locked
+Attack ends = Movement restored
+
+
+============================================================
+NEXT SYSTEM
+============================================================
+
+0017 - Attack Hitbox System
+
+The next system adds visible attack hitboxes for punches and kicks.
