@@ -40,8 +40,13 @@ int main(void)
             walkAreaBottom
         );
 
-        // 0018 - Check player's active attack hitbox against enemy hurtbox.
-        UpdateEnemyHit(&enemy, &player);
+        // 0019 - Damage + enemy hit reaction / knockback.
+        UpdateEnemyHit(
+            &enemy,
+            &player,
+            deltaTime,
+            (float)screenWidth
+        );
 
         BeginDrawing();
 
@@ -72,7 +77,7 @@ int main(void)
             WHITE
         );
 
-        // 0018 - Draw stationary enemy dummy and BLUE hurtbox.
+        // 0019 - Draw enemy dummy, hurtbox, HP, and hit reaction.
         DrawEnemy(&enemy);
 
         // Draw player on top of the background

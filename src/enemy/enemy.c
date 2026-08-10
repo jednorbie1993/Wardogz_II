@@ -6,10 +6,10 @@ Enemy InitEnemy(float x, float y)
 
     enemy.hurtbox = (Rectangle) // eto ung lapad at laki ng blue rectangle box
     {
-        x,
-        y - 20, // - pataas + pababa 
-        140.0f,
-        250.0f
+        x, // pakaliwa , pakanan
+        y - 200, // - pataas + pababa 
+        148.0f, //taba ng retangle
+        276.0f //taas ng rectangle
     };
 
     enemy.maxHp = 100;
@@ -198,23 +198,26 @@ void DrawEnemy(const Enemy *enemy)
         (float)currentTexture.height
     };
 
-    // The Punk PNG uses a large transparent 1024x1024 canvas.
-    // Draw the full canvas larger, then anchor it to the bottom-center
-    // of the existing enemy hurtbox.
+    // 0020 - Sprite and hurtbox use ONE position source.
+    // enemy->hurtbox is the base position, so knockback moves both together.
     float spriteSize = 580.0f;
+
+    // Fine-tune only the image relative to the hurtbox.
+    float spriteOffsetX = 0.0f;   // + right, - left
+    float spriteOffsetY = 0.0f;   // + down,  - up
 
     float hurtboxCenterX =
         enemy->hurtbox.x +
-        enemy->hurtbox.width / 1.50f;
+        enemy->hurtbox.width / 1.70f;
 
     float hurtboxBottomY =
         enemy->hurtbox.y +
-        enemy->hurtbox.height / 0.60f; // mababa pababa mataas paas ung enemy image position
+        enemy->hurtbox.height / 0.65f;
 
     Rectangle destination =
     {
-        hurtboxCenterX - spriteSize / 2.0f,
-        hurtboxBottomY - spriteSize,
+        hurtboxCenterX - spriteSize / 2.0f + spriteOffsetX,
+        hurtboxBottomY - spriteSize + spriteOffsetY,
         spriteSize,
         spriteSize
     };
