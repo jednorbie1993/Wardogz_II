@@ -2,12 +2,21 @@
 cls
 
 echo ==========================================
-echo      Building Wardogz II
+echo          Building Wardogz II
 echo ==========================================
 echo.
 
-gcc src/main.c src/player.c src\enemy.c -o build/Wardogz_II.exe ^
+if not exist build mkdir build
+
+gcc src\main.c ^
+src\player\player.c ^
+src\enemy\enemy.c ^
+src\enemy\stage_1\punk.c ^
+-o build\Wardogz_II.exe ^
 -Iinclude ^
+-Iinclude\player ^
+-Iinclude\enemy ^
+-Iinclude\enemy\stage_1 ^
 -I"C:\raylib\raylib\src" ^
 -L"C:\raylib\raylib\src" ^
 -lraylib ^

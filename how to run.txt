@@ -1,159 +1,185 @@
-===========================================================
-            HOW TO RUN - WARDOGZ II
-===========================================================
-
-Project:
-Wardogz II
-
-Language:
-C
-
-Graphics Library:
-raylib
+WARDOGZ II - HOW TO RUN
+Updated: 2026-08-10
 
 ===========================================================
-STEP 1 - OPEN THE PROJECT
+STEP 1 - OPEN PROJECT FOLDER
 ===========================================================
 
-1. Open Visual Studio Code.
+Open this folder in VS Code:
 
-2. Click:
+Wardogz_II
 
-    File
-        Open Folder...
-
-3. Select:
-
-    Wardogz_II
 
 ===========================================================
-STEP 2 - OPEN THE TERMINAL
+STEP 2 - BUILD AND RUN
 ===========================================================
 
-Click:
+Recommended command:
 
-    Terminal
-        New Terminal
+.\build_and_run.bat
 
-or press
+This will:
+1. Compile the game.
+2. Compile player.c.
+3. Compile the shared enemy.c.
+4. Compile the Stage 1 punk.c.
+5. Create Wardogz_II.exe.
+6. Run the game automatically.
 
-    Ctrl + `
 
 ===========================================================
-STEP 3 - COMPILE THE PROJECT
+STEP 3 - BUILD ONLY
 ===========================================================
 
-Run the following command:
+If you only want to compile the game, run:
 
-gcc src/main.c src/player.c src\enemy.c -o build/Wardogz_II.exe ^
--Iinclude ^
--IC:\raylib\raylib\src ^
--LC:\raylib\raylib\src ^
--lraylib ^
--lopengl32 ^
--lgdi32 ^
--lwinmm
+.\build.bat
 
-If there are no errors, the executable will be created inside:
+If successful, the executable will be created here:
 
-build/
+build\Wardogz_II.exe
+
 
 ===========================================================
 STEP 4 - RUN THE GAME
 ===========================================================
 
-Run:
+If the game is already compiled, run:
 
 .\build\Wardogz_II.exe
+
+
+===========================================================
+STEP 5 - RUN USING RUN.BAT
+===========================================================
+
+You can also run:
+
+.\run.bat
+
+This runs the existing:
+
+build\Wardogz_II.exe
+
+
+===========================================================
+CURRENT SOURCE FILES
+===========================================================
+
+The build currently compiles:
+
+src\main.c
+src\player\player.c
+src\enemy\enemy.c
+src\enemy\stage_1\punk.c
+
+
+===========================================================
+CURRENT HEADER FOLDERS
+===========================================================
+
+include\
+include\player\
+include\enemy\
+include\enemy\stage_1\
+
 
 ===========================================================
 PROJECT STRUCTURE
 ===========================================================
 
 Wardogz_II
-│
-├── assets
-├── build
-├── include
-├── src
-│   └── main.c
-│
-├── README.md
-└── how to run.txt
-
-===========================================================
-NOTES
-===========================================================
-
-- All source (.c) files belong inside the "src" folder.
-
-- All header (.h) files belong inside the "include" folder.
-
-- Compiled executable files are stored inside the "build" folder.
-
-- Assets such as images, music, sound effects, and fonts are stored inside the "assets" folder.
-
-===========================================================
-CURRENT STATUS
-===========================================================
-
-✔ Window Creation
-✔ Player Sprite
-✔ Player Movement
-✔ GitHub Repository
-✔ Project Folder Structure
-
-Next Goal:
-
-- Large World
-- Camera System
-- World Boundary
-- Animation
-- Enemy System
+|
++-- assets
+|
++-- build
+|   +-- Wardogz_II.exe
+|
++-- include
+|   |
+|   +-- player
+|   |   +-- player.h
+|   |
+|   +-- enemy
+|       +-- enemy.h
+|       |
+|       +-- stage_1
+|           +-- punk.h
+|
++-- src
+|   |
+|   +-- main.c
+|   |
+|   +-- player
+|   |   +-- player.c
+|   |
+|   +-- enemy
+|       +-- enemy.c
+|       |
+|       +-- stage_1
+|           +-- punk.c
+|
++-- build.bat
++-- build_and_run.bat
++-- run.bat
++-- how to run.txt
 
 
 ===========================================================
-BATCH FILE COMMANDS
+ENEMY SYSTEM STRUCTURE
 ===========================================================
 
-The project includes three batch files for easier compiling
-and running from the VS Code terminal.
+enemy.c / enemy.h
+= Shared system for ALL enemies.
 
------------------------------------------------------------
-BUILD ONLY - build.bat
------------------------------------------------------------
+Contains:
+- Damage
+- HP
+- HP bar
+- Hurtbox
+- Hit detection
+- Hit reaction
+- Knockback
+- Death
+- Common animation logic
+- Common sprite drawing
 
-Run:
 
-    .\build.bat
+punk.c / punk.h
+= Stage 1 Punk settings.
 
-This compiles the Wardogz II source files and creates:
+Contains:
+- Punk textures
+- Punk sprite size
+- Punk sprite alignment
+- Punk hurtbox size
+- Punk HP/settings
 
-    build\Wardogz_II.exe
-
------------------------------------------------------------
-RUN ONLY - run.bat
------------------------------------------------------------
-
-Run:
-
-    .\run.bat
-
-This runs the already compiled game:
-
-    build\Wardogz_II.exe
-
------------------------------------------------------------
-BUILD AND RUN - build_and_run.bat
------------------------------------------------------------
-
-Run:
-
-    .\build_and_run.bat
-
-This first compiles the project and, if the build succeeds,
-automatically runs Wardogz II.
 
 ===========================================================
-END OF DOCUMENT
+QUICK COMMANDS
+===========================================================
+
+BUILD + RUN:
+
+.\build_and_run.bat
+
+
+BUILD ONLY:
+
+.\build.bat
+
+
+RUN EXE ONLY:
+
+.\build\Wardogz_II.exe
+
+
+RUN USING BAT:
+
+.\run.bat
+
+
+===========================================================
+END
 ===========================================================
