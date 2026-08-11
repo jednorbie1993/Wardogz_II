@@ -35,6 +35,14 @@ Enemy InitPunk(float x, float y)
     enemy.chaseDepthTolerance = 8.0f;
 
     // ============================================================
+    // 0032 - PUNK STAGE POSITION ANCHOR
+    // ============================================================
+    // InitPunk(x, y) stores the Punk hurtbox at y - 200.
+    // This converts hurtbox.y back to the same logical stage Y used
+    // by walkAreaTop / walkAreaBottom in main.c.
+    enemy.stageAnchorOffsetY = 200.0f;
+
+    // ============================================================
     // PUNK - IDLE TEXTURES
     // ============================================================
 

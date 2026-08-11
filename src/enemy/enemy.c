@@ -49,6 +49,11 @@ Enemy InitEnemyBase(void)
     enemy.chaseDepthTolerance = 8.0f;
 
     // ============================================================
+    // 0032 - ENEMY STAGE BOUNDARY DEFAULTS
+    // ============================================================
+    enemy.stageAnchorOffsetY = 0.0f;
+
+    // ============================================================
     // GENERIC IDLE DEFAULTS
     // ============================================================
 
@@ -70,6 +75,130 @@ Enemy InitEnemyBase(void)
 }
 
 
+// ============================================================
+// 0033 - ENEMY DEPTH SCALE (PLAYER-STYLE)
+// ============================================================
+// The player keeps a small logical rectangle and derives its visible
+// sprite + hurtbox from the same depth formula.  Enemy now follows the
+// same rule.  InitPunk() position stays logical; these helpers return
+// the scaled combat body used for drawing and collisions.
+
+static float GetEnemyPerspectiveScale(const Enemy *enemy)
+{
+    float stageY =
+        enemy->hurtbox.y +
+        enemy->stageAnchorOffsetY;
+
+    float depth =
+        (stageY - 345.0f) /
+        (700.0f - 270.0f);
+
+    if (depth < 0.0f)
+        depth = 0.0f;
+
+    if (depth > 1.0f)
+        depth = 1.0f;
+
+    // Exact perspective curve used by DrawPlayer().
+    float playerStyleScale =
+        2.90f +
+        (depth * 1.80f);
+
+    // Punk's current 580px art / 148x276 hurtbox were tuned around
+    // its original starting stage Y (~470).  Use that point as 1.0
+    // so existing size/alignment is preserved there, then grow/shrink
+    // with the SAME player perspective curve above/below it.
+    const float referenceDepth =
+        (470.0f - 345.0f) /
+        (700.0f - 270.0f);
+
+    const float referenceScale =
+        2.90f +
+        (referenceDepth * 1.80f);
+
+    return playerStyleScale / referenceScale;
+}
+
+static Rectangle GetEnemyScaledHurtbox(const Enemy *enemy)
+{
+    float scale = GetEnemyPerspectiveScale(enemy);
+
+    float scaledWidth =
+        enemy->hurtbox.width * scale;
+
+    float scaledHeight =
+        enemy->hurtbox.height * scale;
+
+    // Same idea as Player: keep the character anchored at the feet.
+    float centerX =
+        enemy->hurtbox.x +
+        (enemy->hurtbox.width / 2.0f);
+
+    float bottomY =
+        enemy->hurtbox.y +
+        enemy->hurtbox.height;
+
+    return (Rectangle)
+    {
+        centerX - (scaledWidth / 2.0f),
+        bottomY - scaledHeight,
+        scaledWidth,
+        scaledHeight
+    };
+}
+
+
+// ============================================================
+// 0032 - ENEMY STAGE BOUNDARY / WALK AREA CLAMP
+// ============================================================
+//
+// The player already uses walkAreaTop / walkAreaBottom in main.c.
+// Enemy characters use the same stage limits, but their hurtbox may
+// be positioned above the logical stage Y. stageAnchorOffsetY converts
+// hurtbox.y back to the character's stage-position anchor.
+//
+// This clamp is for NORMAL combat movement. A future entrance/spawn
+// system can intentionally skip this clamp while an enemy is entering.
+
+static void ClampEnemyToStage(
+    Enemy *enemy,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    // Horizontal stage limits.
+    if (enemy->hurtbox.x < 0.0f)
+    {
+        enemy->hurtbox.x = 0.0f;
+    }
+
+    if (enemy->hurtbox.x + enemy->hurtbox.width > screenWidth)
+    {
+        enemy->hurtbox.x = screenWidth - enemy->hurtbox.width;
+    }
+
+    // Convert hurtbox Y to the same logical stage-Y system used by
+    // InitPunk(x, y) and the player's walk-area limits.
+    float stageY =
+        enemy->hurtbox.y +
+        enemy->stageAnchorOffsetY;
+
+    if (stageY < walkAreaTop)
+    {
+        enemy->hurtbox.y =
+            walkAreaTop -
+            enemy->stageAnchorOffsetY;
+    }
+
+    if (stageY > walkAreaBottom)
+    {
+        enemy->hurtbox.y =
+            walkAreaBottom -
+            enemy->stageAnchorOffsetY;
+    }
+}
+
 
 // ============================================================
 // 0030 FIX - VERTICAL / DEPTH RANGE CHECK
@@ -88,9 +217,12 @@ static bool IsPlayerInEnemyVerticalRange(
 {
     Rectangle playerHurtbox = GetPlayerHurtbox(player);
 
-    float enemyTop = enemy->hurtbox.y;
+    Rectangle enemyHurtbox =
+        GetEnemyScaledHurtbox(enemy);
+
+    float enemyTop = enemyHurtbox.y;
     float enemyBottom =
-        enemy->hurtbox.y + enemy->hurtbox.height;
+        enemyHurtbox.y + enemyHurtbox.height;
 
     float playerTop = playerHurtbox.y;
     float playerBottom =
@@ -111,11 +243,16 @@ static bool IsPlayerInEnemyVerticalRange(
 
 Rectangle GetEnemyFootMarker(const Enemy *enemy)
 {
+    // Same pattern as GetPlayerFootMarker(): derive feet from the
+    // already depth-scaled body hurtbox, not from the logical box.
+    Rectangle hurtbox =
+        GetEnemyScaledHurtbox(enemy);
+
     Rectangle feet =
     {
-        enemy->hurtbox.x + (enemy->hurtbox.width * -0.80f),
-        enemy->hurtbox.y + enemy->hurtbox.height - 34.0f,
-        enemy->hurtbox.width * 2.50f,
+        hurtbox.x + (hurtbox.width * -0.80f),
+        hurtbox.y + hurtbox.height - 34.0f,
+        hurtbox.width * 2.50f,
         44.0f
     };
 
@@ -151,7 +288,9 @@ void UpdateEnemyHit(
     Enemy *enemy,
     Player *player,
     float deltaTime,
-    float screenWidth
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
 )
 {
     // ============================================================
@@ -201,22 +340,13 @@ void UpdateEnemyHit(
 
         enemy->hitReactionTimer -= deltaTime;
 
-        // Keep the enemy inside the screen.
-        if (enemy->hurtbox.x < 0.0f)
-        {
-            enemy->hurtbox.x = 0.0f;
-        }
-
-        if (
-            enemy->hurtbox.x +
-            enemy->hurtbox.width >
-            screenWidth
-        )
-        {
-            enemy->hurtbox.x =
-                screenWidth -
-                enemy->hurtbox.width;
-        }
+        // 0032 - Keep knockback inside the normal combat area.
+        ClampEnemyToStage(
+            enemy,
+            screenWidth,
+            walkAreaTop,
+            walkAreaBottom
+        );
 
         if (enemy->hitReactionTimer <= 0.0f)
         {
@@ -236,9 +366,12 @@ void UpdateEnemyHit(
         enemy->attackCooldownTimer -= deltaTime;
     }
 
+    Rectangle scaledEnemyHurtbox =
+        GetEnemyScaledHurtbox(enemy);
+
     float enemyCenterX =
-        enemy->hurtbox.x +
-        enemy->hurtbox.width / 2.0f;
+        scaledEnemyHurtbox.x +
+        scaledEnemyHurtbox.width / 2.0f;
 
     Rectangle playerHurtbox =
         GetPlayerHurtbox(player);
@@ -326,19 +459,17 @@ void UpdateEnemyHit(
             enemy->hurtbox.x += moveX * enemy->chaseSpeed * deltaTime;
             enemy->hurtbox.y += moveY * enemy->chaseSpeed * deltaTime;
 
-            // Keep the enemy inside the horizontal screen bounds.
-            if (enemy->hurtbox.x < 0.0f)
-            {
-                enemy->hurtbox.x = 0.0f;
-            }
-
-            if (enemy->hurtbox.x + enemy->hurtbox.width > screenWidth)
-            {
-                enemy->hurtbox.x = screenWidth - enemy->hurtbox.width;
-            }
+            // 0032 - Clamp normal chase to the stage walk area.
+            ClampEnemyToStage(
+                enemy,
+                screenWidth,
+                walkAreaTop,
+                walkAreaBottom
+            );
 
             // Recalculate after movement so attack logic uses fresh distance.
-            enemyCenterX = enemy->hurtbox.x + enemy->hurtbox.width / 2.0f;
+            scaledEnemyHurtbox = GetEnemyScaledHurtbox(enemy);
+            enemyCenterX = scaledEnemyHurtbox.x + scaledEnemyHurtbox.width / 2.0f;
             distanceX = playerCenterX - enemyCenterX;
             absoluteDistanceX = distanceX;
             if (absoluteDistanceX < 0.0f)
@@ -404,6 +535,16 @@ void UpdateEnemyHit(
     }
 
     // ============================================================
+    // 0032 - FINAL NORMAL-COMBAT BOUNDARY SAFETY
+    // ============================================================
+    ClampEnemyToStage(
+        enemy,
+        screenWidth,
+        walkAreaTop,
+        walkAreaBottom
+    );
+
+    // ============================================================
     // PLAYER ATTACK COLLISION
     // ============================================================
 
@@ -423,7 +564,10 @@ void UpdateEnemyHit(
 
         if (
             IsSameGroundDepth(enemy, player) &&
-            CheckCollisionRecs(attackHitbox, enemy->hurtbox)
+            CheckCollisionRecs(
+                attackHitbox,
+                GetEnemyScaledHurtbox(enemy)
+            )
         )
         {
             // ====================================================
@@ -480,31 +624,43 @@ void UpdateEnemyHit(
 
 Rectangle GetEnemyAttackHitbox(const Enemy *enemy)
 {
+    Rectangle hurtbox =
+        GetEnemyScaledHurtbox(enemy);
+
+    float scale =
+        GetEnemyPerspectiveScale(enemy);
+
+    float attackWidth =
+        enemy->attackHitboxWidth * scale;
+
+    float attackHeight =
+        enemy->attackHitboxHeight * scale;
+
     float centerY =
-        enemy->hurtbox.y +
-        enemy->hurtbox.height * 0.48f;
+        hurtbox.y +
+        hurtbox.height * 0.48f;
 
     Rectangle hitbox =
     {
         0.0f,
-        centerY - enemy->attackHitboxHeight / 2.0f,
-        enemy->attackHitboxWidth,
-        enemy->attackHitboxHeight
+        centerY - attackHeight / 2.0f,
+        attackWidth,
+        attackHeight
     };
 
     if (enemy->attackDirection > 0)
     {
         hitbox.x =
-            enemy->hurtbox.x +
-            enemy->hurtbox.width -
-            10.0f;
+            hurtbox.x +
+            hurtbox.width -
+            (10.0f * scale);
     }
     else
     {
         hitbox.x =
-            enemy->hurtbox.x -
-            enemy->attackHitboxWidth +
-            10.0f;
+            hurtbox.x -
+            attackWidth +
+            (10.0f * scale);
     }
 
     return hitbox;
@@ -532,36 +688,49 @@ void DrawEnemy(const Enemy *enemy)
         (float)currentTexture.height
     };
 
-    // 0031 - Mirror the existing Punk sprite when facing RIGHT.
-    // The original Punk art faces LEFT, so no new image is needed.
-    if (enemy->facingRight)
+    // 0031 FIX - Mirror the Punk sprite when facing LEFT.
+    // The original Punk art faces RIGHT.
+    if (!enemy->facingRight)
     {
         source.x = (float)currentTexture.width;
         source.width = -(float)currentTexture.width;
     }
 
-    // The hurtbox is the shared position source.
-    // Character-specific files only provide spriteSize and offsets.
+    // ============================================================
+    // 0033 - PLAYER-STYLE ENEMY DEPTH SCALING
+    // ============================================================
+    float perspectiveScale =
+        GetEnemyPerspectiveScale(enemy);
+
+    Rectangle scaledHurtbox =
+        GetEnemyScaledHurtbox(enemy);
+
+    float scaledSpriteSize =
+        enemy->spriteSize *
+        perspectiveScale;
+
+    // Sprite and BLUE hurtbox use the SAME scaled body anchor.
+    // This keeps them as one unit from TOP -> BOTTOM.
     float hurtboxCenterX =
-        enemy->hurtbox.x +
-        enemy->hurtbox.width / 2.0f;
+        scaledHurtbox.x +
+        scaledHurtbox.width / 2.0f;
 
     float hurtboxBottomY =
-        enemy->hurtbox.y +
-        enemy->hurtbox.height;
+        scaledHurtbox.y +
+        scaledHurtbox.height;
 
     Rectangle destination =
     {
         hurtboxCenterX -
-            enemy->spriteSize / 2.0f +
-            enemy->spriteOffsetX,
+            scaledSpriteSize / 2.0f +
+            (enemy->spriteOffsetX * perspectiveScale),
 
         hurtboxBottomY -
-            enemy->spriteSize +
-            enemy->spriteOffsetY,
+            scaledSpriteSize +
+            (enemy->spriteOffsetY * perspectiveScale),
 
-        enemy->spriteSize,
-        enemy->spriteSize
+        scaledSpriteSize,
+        scaledSpriteSize
     };
 
     Color spriteTint = WHITE;
@@ -589,7 +758,7 @@ void DrawEnemy(const Enemy *enemy)
     // ============================================================
 
     DrawRectangleLinesEx(
-        enemy->hurtbox,
+        scaledHurtbox,
         4.0f,
         BLUE
     );
@@ -642,9 +811,9 @@ void DrawEnemy(const Enemy *enemy)
 
     Rectangle hpBack =
     {
-        enemy->hurtbox.x,
-        enemy->hurtbox.y - 24.0f,
-        enemy->hurtbox.width,
+        scaledHurtbox.x,
+        scaledHurtbox.y - 24.0f,
+        scaledHurtbox.width,
         12.0f
     };
 
@@ -662,8 +831,8 @@ void DrawEnemy(const Enemy *enemy)
 
     DrawText(
         TextFormat("HP: %d", enemy->hp),
-        (int)enemy->hurtbox.x,
-        (int)enemy->hurtbox.y - 50,
+        (int)scaledHurtbox.x,
+        (int)scaledHurtbox.y - 50,
         20,
         WHITE
     );

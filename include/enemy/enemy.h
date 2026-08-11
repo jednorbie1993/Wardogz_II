@@ -56,6 +56,14 @@ typedef struct Enemy
     float chaseDepthTolerance;
 
     // ============================================================
+    // 0032 - ENEMY STAGE BOUNDARY / WALK AREA
+    // ============================================================
+    // Y offset from hurtbox.y to the character's stage-position anchor.
+    // For Punk, InitPunk(x, y) uses y as the stage position and places
+    // the hurtbox 200 px above it, so this value is 200.0f.
+    float stageAnchorOffsetY;
+
+    // ============================================================
     // GENERIC IDLE ANIMATION
     // ============================================================
 
@@ -91,7 +99,9 @@ void UpdateEnemyHit(
     Enemy *enemy,
     Player *player,
     float deltaTime,
-    float screenWidth
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
 );
 
 

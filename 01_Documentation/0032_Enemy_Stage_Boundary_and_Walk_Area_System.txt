@@ -1,0 +1,116 @@
+WARDOGZ II DOCUMENTATION
+0032 - Enemy Stage Boundary / Walk Area System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0032_Enemy_Stage_Boundary_and_Walk_Area_System
+
+============================================================
+PURPOSE
+============================================================
+
+Prevent the Punk enemy from leaving the normal combat walk area
+while using the 0031 chase AI.
+
+Before 0032:
+- Punk could chase the player upward/downward without a stage Y clamp.
+- Punk only had horizontal screen protection.
+
+After 0032:
+- Punk stays inside the same logical walkAreaTop / walkAreaBottom
+  used by the player.
+- Horizontal chase and knockback remain inside the screen.
+- Vertical/depth chase is clamped to the normal combat area.
+
+============================================================
+NEW ENEMY DATA
+============================================================
+
+float stageAnchorOffsetY;
+
+Purpose:
+Converts enemy hurtbox.y into the enemy's logical stage Y.
+
+For Punk:
+stageAnchorOffsetY = 200.0f
+
+Because InitPunk(x, y) creates the hurtbox at:
+
+y - 200.0f
+
+============================================================
+NEW INTERNAL SYSTEM
+============================================================
+
+ClampEnemyToStage()
+
+It limits:
+- LEFT  = 0
+- RIGHT = screenWidth - hurtbox.width
+- TOP   = walkAreaTop
+- BOTTOM = walkAreaBottom
+
+The Y clamp uses the enemy stage anchor, not the top of the tall
+body hurtbox.
+
+============================================================
+IMPORTANT FOR FUTURE ENEMY INTRO
+============================================================
+
+0032 is the NORMAL COMBAT boundary system.
+
+A future enemy entrance/spawn system can temporarily bypass the
+normal clamp so an enemy can intentionally enter from:
+- top
+- left
+- right
+- other off-stage spawn points
+
+Once the entrance finishes, normal 0032 boundaries can be enabled.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/enemy/enemy.h
+src/enemy/enemy.c
+src/enemy/stage_1/punk.c
+src/main.c
+
+UNCHANGED:
+include/enemy/stage_1/punk.h
+
+============================================================
+TEST
+============================================================
+
+1. Build and run the game.
+2. Move the player toward the top of the walk area.
+3. Let Punk chase the player.
+4. Punk should stop at the stage top boundary and not continue
+   above the normal combat area.
+5. Move toward the bottom.
+6. Punk should stay inside the bottom boundary.
+7. Move left/right.
+8. Punk should remain inside the screen horizontally.
+9. Attack Punk near a boundary.
+10. Knockback should not push Punk outside the normal combat area.
+
+Existing 0030 and 0031 systems should still work:
+- enemy attack
+- player damage
+- hit reaction / knockback
+- depth validation
+- enemy facing
+- chase AI
+
+============================================================
+STATUS
+============================================================
+
+0032 - COMPLETE

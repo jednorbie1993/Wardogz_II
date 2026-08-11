@@ -25,7 +25,7 @@ int main(void)
         InitPlayer("assets/sprites/player/player.png");
 
     // 0018 - Stationary enemy dummy
-    Enemy enemy = InitPunk(850.0f, 470.0f);
+    Enemy enemy = InitPunk(1850.0f, 470.0f);
 
     Texture2D background =
         LoadTexture("assets/background/back_alley.png");
@@ -50,7 +50,9 @@ int main(void)
             &enemy,
             &player,
             deltaTime,
-            (float)screenWidth
+            (float)screenWidth,
+            walkAreaTop,
+            walkAreaBottom
         );
 
         // ========================================================
