@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include "player.h"
 #include "enemy.h"
+#include "punk.h"
 
 int main(void)
 {
@@ -23,7 +24,7 @@ int main(void)
     Player player = InitPlayer("assets/sprites/player/player.png");
 
     // 0018 - Stationary enemy dummy
-    Enemy enemy = InitEnemy(850.0f, 470.0f);
+    Enemy enemy = InitPunk(850.0f, 470.0f);
 
     Texture2D background = LoadTexture("assets/background/back_alley.png");
 
