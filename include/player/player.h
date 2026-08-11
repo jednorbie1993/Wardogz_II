@@ -60,6 +60,15 @@ typedef struct Player
     // Stores one attack pressed while another attack is still playing.
     AttackType bufferedAttack;
 
+    // 0027 - BASIC COMBO CHAIN STATE
+    int comboStep;              // Current step in A -> W -> D
+    float comboTimer;           // Time left to continue the combo
+    bool comboFinisherActive;   // True when A -> W -> D reaches D
+
+    // 0028 - DIRECTION + ATTACK COMMAND STATE
+    bool commandAttackActive;   // True when a directional command starts
+    AttackType commandAttack;   // Attack used by the directional command
+
     // false = LEFT
     // true  = RIGHT
     bool facingRight;
@@ -95,4 +104,4 @@ float GetPlayerAttackHitReactionTime(const Player *player);
 void DrawPlayer(const Player *player);
 void UnloadPlayer(Player *player);
 
-#endif
+#endif // PLAYER_H

@@ -2,60 +2,172 @@
 #include "player_attack_data.h"
 
 // ============================================================
-// 0026 - COMBO INPUT BUFFER
+// 0028 - DIRECTION + ATTACK COMMANDS
 // ============================================================
-// This is NOT the final combo-chain system yet.
 //
-// Purpose:
-// - If the player presses A/W/S/D during an attack,
-//   remember ONE next attack.
-// - When the current 3-frame attack finishes,
-//   automatically start the buffered attack.
+// Existing basic attacks:
+// A = Left Punch
+// W = Right Punch
+// S = Left Kick
+// D = Right Kick
 //
-// Example:
-// Press A.
-// Before A finishes, press W.
-// A finishes -> W starts automatically.
+// Existing combo:
+// A -> W -> D
 //
-// This makes fast command input possible later for Tekken-style
-// move strings and combo chains.
+// New directional command detection:
+// FORWARD  + A = Forward Left Punch
+// FORWARD  + D = Forward Right Kick
+// BACKWARD + A = Backward Left Punch
+// BACKWARD + D = Backward Right Kick
+//
+// 0028 detects the command only.
+// It still reuses the normal A/D animations.
+
+#define COMBO_WINDOW 0.70f
+
+static bool IsForwardHeld(const Player *player)
+{
+    if (player->facingRight)
+        return IsKeyDown(KEY_RIGHT);
+
+    return IsKeyDown(KEY_LEFT);
+}
+
+static bool IsBackwardHeld(const Player *player)
+{
+    if (player->facingRight)
+        return IsKeyDown(KEY_LEFT);
+
+    return IsKeyDown(KEY_RIGHT);
+}
 
 static AttackType GetPressedAttack(void)
 {
     if (IsKeyPressed(KEY_A))
-    {
         return ATTACK_LEFT_PUNCH;
-    }
 
     if (IsKeyPressed(KEY_W))
-    {
         return ATTACK_RIGHT_PUNCH;
-    }
 
     if (IsKeyPressed(KEY_S))
-    {
         return ATTACK_LEFT_KICK;
-    }
 
     if (IsKeyPressed(KEY_D))
-    {
         return ATTACK_RIGHT_KICK;
-    }
 
     return ATTACK_NONE;
+}
+
+static void ResetCombo(Player *player)
+{
+    player->comboStep = 0;
+    player->comboTimer = 0.0f;
+    player->comboFinisherActive = false;
+}
+
+static void RegisterComboInput(Player *player, AttackType attack)
+{
+    if (attack == ATTACK_NONE)
+        return;
+
+    player->comboTimer = COMBO_WINDOW;
+
+    if (player->comboStep == 0)
+    {
+        if (attack == ATTACK_LEFT_PUNCH)
+            player->comboStep = 1;
+        else
+            ResetCombo(player);
+
+        return;
+    }
+
+    if (player->comboStep == 1)
+    {
+        if (attack == ATTACK_RIGHT_PUNCH)
+        {
+            player->comboStep = 2;
+        }
+        else if (attack == ATTACK_LEFT_PUNCH)
+        {
+            player->comboStep = 1;
+        }
+        else
+        {
+            ResetCombo(player);
+        }
+
+        return;
+    }
+
+    if (player->comboStep == 2)
+    {
+        if (attack == ATTACK_RIGHT_KICK)
+        {
+            player->comboStep = 3;
+            player->comboFinisherActive = true;
+        }
+        else if (attack == ATTACK_LEFT_PUNCH)
+        {
+            player->comboStep = 1;
+        }
+        else
+        {
+            ResetCombo(player);
+        }
+    }
+}
+
+static void DetectDirectionalCommand(
+    Player *player,
+    AttackType attack
+)
+{
+    player->commandAttackActive = false;
+    player->commandAttack = ATTACK_NONE;
+
+    if (attack == ATTACK_NONE)
+        return;
+
+    if (IsForwardHeld(player))
+    {
+        if (
+            attack == ATTACK_LEFT_PUNCH ||
+            attack == ATTACK_RIGHT_KICK
+        )
+        {
+            player->commandAttackActive = true;
+            player->commandAttack = attack;
+            return;
+        }
+    }
+
+    if (IsBackwardHeld(player))
+    {
+        if (
+            attack == ATTACK_LEFT_PUNCH ||
+            attack == ATTACK_RIGHT_KICK
+        )
+        {
+            player->commandAttackActive = true;
+            player->commandAttack = attack;
+        }
+    }
 }
 
 static void StartPlayerAttack(Player *player, AttackType attack)
 {
     if (attack == ATTACK_NONE)
-    {
         return;
-    }
+
+    DetectDirectionalCommand(player, attack);
 
     player->currentAttack = attack;
     player->isAttacking = true;
     player->attackFrame = 0;
     player->attackTimer = 0.0f;
+
+    RegisterComboInput(player, attack);
 }
 
 void UpdatePlayerAttack(Player *player, float deltaTime)
@@ -63,11 +175,21 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
     AttackType pressedAttack = GetPressedAttack();
 
     // ============================================================
-    // ATTACK INPUT / BUFFER
+    // 0027 - COMBO WINDOW TIMER
+    // ============================================================
+    if (player->comboTimer > 0.0f)
+    {
+        player->comboTimer -= deltaTime;
+
+        if (player->comboTimer <= 0.0f)
+            ResetCombo(player);
+    }
+
+    // ============================================================
+    // 0026 - ATTACK INPUT BUFFER
     // ============================================================
     if (!player->isAttacking)
     {
-        // No attack is playing, so start the input immediately.
         StartPlayerAttack(player, pressedAttack);
     }
     else if (
@@ -75,8 +197,6 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
         player->bufferedAttack == ATTACK_NONE
     )
     {
-        // One attack is already playing.
-        // Save ONE next attack instead of ignoring the input.
         player->bufferedAttack = pressedAttack;
     }
 
@@ -97,8 +217,16 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
 
             if (player->attackFrame >= ATTACK_FRAME_COUNT)
             {
-                // Current attack finished.
-                // If 0026 stored another attack, consume it now.
+                if (player->comboFinisherActive)
+                {
+                    player->comboFinisherActive = false;
+                    player->comboStep = 0;
+                    player->comboTimer = 0.0f;
+                }
+
+                player->commandAttackActive = false;
+                player->commandAttack = ATTACK_NONE;
+
                 if (player->bufferedAttack != ATTACK_NONE)
                 {
                     AttackType nextAttack = player->bufferedAttack;

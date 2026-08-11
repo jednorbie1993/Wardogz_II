@@ -1,0 +1,113 @@
+WARDOGZ II DOCUMENTATION
+0027 - Basic Combo Chains
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0027_Basic_Combo_Chains
+
+============================================================
+PURPOSE
+============================================================
+
+Add the first real combo-recognition logic on top of the 0026
+input buffer.
+
+0026 remembers one next attack input.
+
+0027 now recognizes one ordered attack sequence:
+
+A -> W -> D
+
+============================================================
+COMBO
+============================================================
+
+A = Left Punch
+W = Right Punch
+D = Right Kick
+
+Step 0:
+No combo started.
+
+Step 1:
+A accepted.
+
+Step 2:
+A -> W accepted.
+
+Step 3:
+A -> W -> D completed.
+
+============================================================
+COMBO WINDOW
+============================================================
+
+COMBO_WINDOW = 0.70 seconds
+
+If the next required attack is too slow, the combo resets.
+
+============================================================
+NEW PLAYER DATA
+============================================================
+
+int comboStep;
+float comboTimer;
+bool comboFinisherActive;
+
+============================================================
+IMAGES
+============================================================
+
+No new images are required.
+
+0027 reuses the current Left Punch, Right Punch,
+and Right Kick animations.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/player/player.h
+
+UPDATED:
+src/player/player.c
+
+UPDATED:
+src/player/player_attack.c
+
+NEW:
+00_Documentation/0027_Basic_Combo_Chains.txt
+
+============================================================
+TEST
+============================================================
+
+Press quickly:
+
+A -> W -> D
+
+Expected:
+Left Punch -> Right Punch -> Right Kick.
+
+Wrong sequence:
+A -> S
+
+Expected:
+Combo resets.
+
+Slow sequence:
+A -> wait more than 0.70 sec -> W
+
+Expected:
+Combo resets.
+
+============================================================
+STATUS
+============================================================
+
+0027 - COMPLETE

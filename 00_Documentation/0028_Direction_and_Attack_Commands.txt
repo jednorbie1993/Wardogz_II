@@ -1,0 +1,154 @@
+WARDOGZ II DOCUMENTATION
+0028 - Direction + Attack Commands
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0028_Direction_and_Attack_Commands
+
+============================================================
+PURPOSE
+============================================================
+
+Add the first directional attack command detection system.
+
+This is another foundation step toward Tekken-style commands.
+
+============================================================
+BASIC ATTACKS
+============================================================
+
+A = Left Punch
+W = Right Punch
+S = Left Kick
+D = Right Kick
+
+============================================================
+BASIC COMBO
+============================================================
+
+A -> W -> D
+
+============================================================
+NEW DIRECTIONAL COMMANDS
+============================================================
+
+Forward + A
+- Forward Left Punch
+
+Forward + D
+- Forward Right Kick
+
+Backward + A
+- Backward Left Punch
+
+Backward + D
+- Backward Right Kick
+
+Forward and backward depend on facing direction.
+
+Facing RIGHT:
+Forward  = RIGHT ARROW
+Backward = LEFT ARROW
+
+Facing LEFT:
+Forward  = LEFT ARROW
+Backward = RIGHT ARROW
+
+============================================================
+NEW PLAYER DATA
+============================================================
+
+bool commandAttackActive;
+- True when the current attack started as a directional command.
+
+AttackType commandAttack;
+- Stores which attack was used by the command.
+
+============================================================
+HOW IT WORKS
+============================================================
+
+When A or D is pressed, 0028 checks whether the player is also
+holding Forward or Backward.
+
+If yes:
+commandAttackActive = true
+
+and the current attack is stored in:
+commandAttack
+
+============================================================
+IMPORTANT
+============================================================
+
+0028 only adds command detection.
+
+The command still reuses the existing normal attack animation.
+
+Example:
+
+Forward + D
+
+is recognized as a directional command but currently uses the
+normal Right Kick animation.
+
+Unique move animations and unique directional move stats can
+be added later.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/player/player.h
+
+UPDATED:
+src/player/player.c
+
+UPDATED:
+src/player/player_attack.c
+
+NEW:
+00_Documentation/0028_Direction_and_Attack_Commands.txt
+
+============================================================
+TEST
+============================================================
+
+Facing RIGHT:
+
+Hold RIGHT + press A
+Expected:
+Forward directional Left Punch command.
+
+Hold RIGHT + press D
+Expected:
+Forward directional Right Kick command.
+
+Hold LEFT + press A
+Expected:
+Backward directional Left Punch command.
+
+Hold LEFT + press D
+Expected:
+Backward directional Right Kick command.
+
+Normal A/W/S/D attacks should still work.
+
+A -> W -> D combo should still work.
+
+============================================================
+IMAGES
+============================================================
+
+No new images required for 0028.
+
+============================================================
+STATUS
+============================================================
+
+0028 - COMPLETE

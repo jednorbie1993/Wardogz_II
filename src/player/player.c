@@ -108,6 +108,15 @@ Player InitPlayer(const char *texturePath)
     // 0026 - No buffered attack when the player is created.
     player.bufferedAttack = ATTACK_NONE;
 
+    // 0027 - Basic combo chain starts empty.
+    player.comboStep = 0;
+    player.comboTimer = 0.0f;
+    player.comboFinisherActive = false;
+
+    // 0028 - No directional command attack at startup.
+    player.commandAttackActive = false;
+    player.commandAttack = ATTACK_NONE;
+
     player.facingRight = true;
 
     // ============================================================
