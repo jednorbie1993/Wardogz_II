@@ -13,6 +13,7 @@ src\player\player.c ^
 src\player\player_move.c ^
 src\player\player_attack.c ^
 src\player\player_draw.c ^
+src\player\player_attack_data.c ^
 src\enemy\enemy.c ^
 src\enemy\stage_1\punk.c ^
 -o build\Wardogz_II.exe ^
