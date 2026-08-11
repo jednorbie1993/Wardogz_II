@@ -27,6 +27,14 @@ Enemy InitPunk(float x, float y)
     enemy.hp = enemy.maxHp;
 
     // ============================================================
+    // 0031 - PUNK FACING + CHASE AI
+    // ============================================================
+    enemy.facingRight = false;
+    enemy.chaseSpeed = 115.0f;
+    enemy.chaseStopDistance = 155.0f;
+    enemy.chaseDepthTolerance = 8.0f;
+
+    // ============================================================
     // PUNK - IDLE TEXTURES
     // ============================================================
 

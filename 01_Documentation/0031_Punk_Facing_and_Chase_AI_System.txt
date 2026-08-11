@@ -1,0 +1,204 @@
+WARDOGZ II DOCUMENTATION
+0031 - Punk Facing and Chase AI System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0031_Punk_Facing_and_Chase_AI_System
+
+============================================================
+PURPOSE
+============================================================
+
+Make the Stage 1 Punk actively follow the player instead of
+waiting as a stationary enemy.
+
+0031 adds:
+- automatic enemy facing
+- left/right sprite mirroring
+- horizontal chase movement
+- vertical/depth chase movement
+- attack-range stopping
+- diagonal chase speed normalization
+
+============================================================
+ENEMY BEHAVIOR
+============================================================
+
+PLAYER FAR AWAY:
+Punk moves toward the player.
+
+PLAYER ON DIFFERENT DEPTH / GROUND Y:
+Punk moves up or down until the foot markers are close enough.
+
+PLAYER ON THE LEFT:
+Punk faces LEFT.
+
+PLAYER ON THE RIGHT:
+Punk faces RIGHT.
+
+PLAYER INSIDE ATTACK POSITION:
+Punk stops chasing and the existing 0030 attack system can attack.
+
+Basic flow:
+
+IDLE / TRACK PLAYER
+        |
+        v
+CHASE PLAYER
+        |
+        v
+ALIGN DEPTH
+        |
+        v
+STOP IN ATTACK RANGE
+        |
+        v
+0030 BASIC ATTACK
+
+============================================================
+NEW ENEMY DATA
+============================================================
+
+bool facingRight;
+- false = facing LEFT
+- true  = facing RIGHT
+
+bool isChasing;
+- true while the enemy is currently moving toward the player
+
+float chaseSpeed;
+- Punk movement speed
+- current Punk value: 115.0f
+
+float chaseStopDistance;
+- horizontal distance where the Punk stops advancing
+- current Punk value: 155.0f
+
+float chaseDepthTolerance;
+- allowed Y/depth difference before the Punk stops moving vertically
+- current Punk value: 8.0f
+
+============================================================
+SPRITE FACING
+============================================================
+
+No new Punk image is required.
+
+The existing idle sprite is mirrored horizontally depending on
+which side of the Punk the player is standing on.
+
+The current Punk art is treated as facing LEFT by default.
+
+facingRight = false
+- draw normal source rectangle
+
+facingRight = true
+- draw mirrored source rectangle
+
+============================================================
+CHASE MOVEMENT
+============================================================
+
+The Punk compares its center position with the player.
+
+Horizontal:
+- player right of Punk -> move right
+- player left of Punk  -> move left
+
+Depth / Y:
+- player foot marker below Punk -> move down
+- player foot marker above Punk -> move up
+
+If both X and Y movement happen together, diagonal movement is
+normalized with approximately:
+
+0.70710678f
+
+This prevents diagonal chase movement from becoming faster than
+straight movement.
+
+============================================================
+0030 SYSTEMS PRESERVED
+============================================================
+
+0031 keeps the existing:
+
+- Player HP
+- Player hurtbox
+- Enemy hurtbox
+- Enemy attack hitbox
+- Player -> Enemy damage
+- Enemy -> Player damage
+- Knockback
+- Hit reaction
+- Foot / ground markers
+- Ground-depth hit validation
+- Enemy attack cooldown
+
+The Punk does not chase while:
+- attacking
+- receiving hit reaction
+- dead
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/enemy/enemy.h
+src/enemy/enemy.c
+src/enemy/stage_1/punk.c
+
+NEW:
+00_Documentation/0031_Punk_Facing_and_Chase_AI_System.txt
+
+============================================================
+TEST
+============================================================
+
+1. Build and run Wardogz II.
+
+2. Move to the LEFT side of Punk.
+Expected:
+- Punk faces left.
+- Punk moves toward player.
+
+3. Move to the RIGHT side of Punk.
+Expected:
+- Punk sprite mirrors and faces right.
+- Punk moves toward player.
+
+4. Move UP or DOWN away from Punk's ground depth.
+Expected:
+- Punk follows vertically.
+- Punk tries to align its foot marker with the player's foot marker.
+
+5. Move diagonally away.
+Expected:
+- Punk follows diagonally.
+- diagonal movement should not be faster than straight movement.
+
+6. Let Punk reach attack range.
+Expected:
+- Punk stops advancing.
+- existing 0030 enemy attack activates.
+- player can still receive damage and knockback.
+
+7. Attack Punk while it chases.
+Expected:
+- Punk stops chasing during hit reaction.
+- player attack damage and knockback still work.
+
+8. Reduce Punk HP to 0.
+Expected:
+- Punk stops chasing and attacking.
+
+============================================================
+STATUS
+============================================================
+
+0031 - COMPLETE

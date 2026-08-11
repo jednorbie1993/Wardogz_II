@@ -40,6 +40,15 @@ Enemy InitEnemyBase(void)
     enemy.attackDirection = -1;
 
     // ============================================================
+    // 0031 - FACING + CHASE AI DEFAULTS
+    // ============================================================
+    enemy.facingRight = false;
+    enemy.isChasing = false;
+    enemy.chaseSpeed = 115.0f;
+    enemy.chaseStopDistance = 155.0f;
+    enemy.chaseDepthTolerance = 8.0f;
+
+    // ============================================================
     // GENERIC IDLE DEFAULTS
     // ============================================================
 
@@ -257,6 +266,91 @@ void UpdateEnemyHit(
         absoluteDistanceX = -absoluteDistanceX;
     }
 
+    // ============================================================
+    // 0031 - ENEMY FACING + CHASE AI
+    // ============================================================
+    // Face the player whenever the Punk is free to react.
+    if (!enemy->isAttacking && !enemy->isHit)
+    {
+        enemy->facingRight = (distanceX >= 0.0f);
+    }
+
+    Rectangle enemyFeet = GetEnemyFootMarker(enemy);
+    Rectangle playerFeet = GetPlayerFootMarker(player);
+
+    float enemyGroundY = enemyFeet.y + enemyFeet.height / 2.0f;
+    float playerGroundY = playerFeet.y + playerFeet.height / 2.0f;
+    float depthDifference = playerGroundY - enemyGroundY;
+
+    float absoluteDepthDifference = depthDifference;
+    if (absoluteDepthDifference < 0.0f)
+    {
+        absoluteDepthDifference = -absoluteDepthDifference;
+    }
+
+    enemy->isChasing = false;
+
+    if (
+        !enemy->isAttacking &&
+        !enemy->isHit &&
+        player->isAlive
+    )
+    {
+        float moveX = 0.0f;
+        float moveY = 0.0f;
+
+        // Move horizontally until close enough to attack.
+        if (absoluteDistanceX > enemy->chaseStopDistance)
+        {
+            moveX = (distanceX > 0.0f) ? 1.0f : -1.0f;
+        }
+
+        // Move on the depth axis until both foot markers line up.
+        if (absoluteDepthDifference > enemy->chaseDepthTolerance)
+        {
+            moveY = (depthDifference > 0.0f) ? 1.0f : -1.0f;
+        }
+
+        if (moveX != 0.0f || moveY != 0.0f)
+        {
+            enemy->isChasing = true;
+
+            // Normalize diagonal chase so diagonal movement is not faster.
+            if (moveX != 0.0f && moveY != 0.0f)
+            {
+                const float diagonalFactor = 0.70710678f;
+                moveX *= diagonalFactor;
+                moveY *= diagonalFactor;
+            }
+
+            enemy->hurtbox.x += moveX * enemy->chaseSpeed * deltaTime;
+            enemy->hurtbox.y += moveY * enemy->chaseSpeed * deltaTime;
+
+            // Keep the enemy inside the horizontal screen bounds.
+            if (enemy->hurtbox.x < 0.0f)
+            {
+                enemy->hurtbox.x = 0.0f;
+            }
+
+            if (enemy->hurtbox.x + enemy->hurtbox.width > screenWidth)
+            {
+                enemy->hurtbox.x = screenWidth - enemy->hurtbox.width;
+            }
+
+            // Recalculate after movement so attack logic uses fresh distance.
+            enemyCenterX = enemy->hurtbox.x + enemy->hurtbox.width / 2.0f;
+            distanceX = playerCenterX - enemyCenterX;
+            absoluteDistanceX = distanceX;
+            if (absoluteDistanceX < 0.0f)
+            {
+                absoluteDistanceX = -absoluteDistanceX;
+            }
+
+            enemy->attackDirection = (distanceX >= 0.0f) ? 1 : -1;
+            enemy->facingRight = (distanceX >= 0.0f);
+        }
+    }
+
     // Start a basic attack when the player is close enough.
     if (
         !enemy->isAttacking &&
@@ -437,6 +531,14 @@ void DrawEnemy(const Enemy *enemy)
         (float)currentTexture.width,
         (float)currentTexture.height
     };
+
+    // 0031 - Mirror the existing Punk sprite when facing RIGHT.
+    // The original Punk art faces LEFT, so no new image is needed.
+    if (enemy->facingRight)
+    {
+        source.x = (float)currentTexture.width;
+        source.width = -(float)currentTexture.width;
+    }
 
     // The hurtbox is the shared position source.
     // Character-specific files only provide spriteSize and offsets.

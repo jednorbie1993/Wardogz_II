@@ -47,6 +47,15 @@ typedef struct Enemy
     int attackDirection;
 
     // ============================================================
+    // 0031 - FACING + CHASE AI
+    // ============================================================
+    bool facingRight;
+    bool isChasing;
+    float chaseSpeed;
+    float chaseStopDistance;
+    float chaseDepthTolerance;
+
+    // ============================================================
     // GENERIC IDLE ANIMATION
     // ============================================================
 
