@@ -74,6 +74,18 @@ typedef struct Player
     float recoveryTimer;        // Remaining recovery time
     bool cancelWindowOpen;      // True when next attack may be buffered/cancelled
 
+    // ============================================================
+    // 0030 - PLAYER HURT / HP STATE
+    // ============================================================
+    int maxHp;
+    int hp;
+    bool isAlive;
+
+    bool isHit;
+    float hitReactionTimer;
+    float knockbackSpeed;
+    int knockbackDirection;
+
     // false = LEFT
     // true  = RIGHT
     bool facingRight;
@@ -105,6 +117,22 @@ Rectangle GetPlayerAttackHitbox(const Player *player);
 int GetPlayerAttackDamage(const Player *player);
 float GetPlayerAttackKnockbackSpeed(const Player *player);
 float GetPlayerAttackHitReactionTime(const Player *player);
+
+// 0030 - Player hurtbox / hit reaction
+Rectangle GetPlayerHurtbox(const Player *player);
+Rectangle GetPlayerFootMarker(const Player *player);
+void DamagePlayer(
+    Player *player,
+    int damage,
+    int knockbackDirection,
+    float knockbackSpeed,
+    float hitReactionTime
+);
+void UpdatePlayerHitReaction(
+    Player *player,
+    float deltaTime,
+    float screenWidth
+);
 
 void DrawPlayer(const Player *player);
 void UnloadPlayer(Player *player);

@@ -24,6 +24,22 @@ Enemy InitEnemyBase(void)
     enemy.knockbackDirection = 0;
 
     // ============================================================
+    // 0030 - BASIC ENEMY ATTACK DEFAULTS
+    // ============================================================
+    enemy.isAttacking = false;
+    enemy.attackTimer = 0.0f;
+    enemy.attackCooldownTimer = 0.60f;
+    enemy.hitPlayerThisAttack = false;
+
+    enemy.attackDamage = 10;
+    enemy.attackRange = 210.0f;
+    enemy.attackHitboxWidth = 150.0f;
+    enemy.attackHitboxHeight = 120.0f;
+    enemy.attackKnockbackSpeed = 190.0f;
+    enemy.attackHitReactionTime = 0.16f;
+    enemy.attackDirection = -1;
+
+    // ============================================================
     // GENERIC IDLE DEFAULTS
     // ============================================================
 
@@ -45,9 +61,86 @@ Enemy InitEnemyBase(void)
 }
 
 
+
+// ============================================================
+// 0030 FIX - VERTICAL / DEPTH RANGE CHECK
+// ============================================================
+//
+// Do not divide the floor into artificial TOP/MIDDLE/BOTTOM zones.
+// Combat now uses the actual rectangles shown on screen.
+// If the player hurtbox is vertically near the enemy body, the
+// enemy is allowed to start an attack. Actual damage still requires
+// the YELLOW attack hitbox to overlap the GREEN player hurtbox.
+
+static bool IsPlayerInEnemyVerticalRange(
+    const Enemy *enemy,
+    const Player *player
+)
+{
+    Rectangle playerHurtbox = GetPlayerHurtbox(player);
+
+    float enemyTop = enemy->hurtbox.y;
+    float enemyBottom =
+        enemy->hurtbox.y + enemy->hurtbox.height;
+
+    float playerTop = playerHurtbox.y;
+    float playerBottom =
+        playerHurtbox.y + playerHurtbox.height;
+
+    // Small forgiveness around the visible boxes.
+    const float verticalMargin = 35.0f;
+
+    return
+        playerBottom >= enemyTop - verticalMargin &&
+        playerTop <= enemyBottom + verticalMargin;
+}
+
+
+// ============================================================
+// 0030 FIX 3 - ENEMY FOOT / GROUND MARKER
+// ============================================================
+
+Rectangle GetEnemyFootMarker(const Enemy *enemy)
+{
+    Rectangle feet =
+    {
+        enemy->hurtbox.x + (enemy->hurtbox.width * -0.80f),
+        enemy->hurtbox.y + enemy->hurtbox.height - 34.0f,
+        enemy->hurtbox.width * 2.50f,
+        44.0f
+    };
+
+    return feet;
+}
+
+
+// ============================================================
+// 0030 FIX 3 - GROUND DEPTH CHECK
+// ============================================================
+//
+// Body overlap is NOT enough.
+// Player and enemy must also overlap at the foot/ground marker.
+
+static bool IsSameGroundDepth(
+    const Enemy *enemy,
+    const Player *player
+)
+{
+    Rectangle enemyFeet =
+        GetEnemyFootMarker(enemy);
+
+    Rectangle playerFeet =
+        GetPlayerFootMarker(player);
+
+    return CheckCollisionRecs(
+        enemyFeet,
+        playerFeet
+    );
+}
+
 void UpdateEnemyHit(
     Enemy *enemy,
-    const Player *player,
+    Player *player,
     float deltaTime,
     float screenWidth
 )
@@ -126,6 +219,97 @@ void UpdateEnemyHit(
     }
 
     // ============================================================
+    // 0030 - ENEMY ATTACK UPDATE
+    // ============================================================
+
+    if (enemy->attackCooldownTimer > 0.0f)
+    {
+        enemy->attackCooldownTimer -= deltaTime;
+    }
+
+    float enemyCenterX =
+        enemy->hurtbox.x +
+        enemy->hurtbox.width / 2.0f;
+
+    Rectangle playerHurtbox =
+        GetPlayerHurtbox(player);
+
+    float playerCenterX =
+        playerHurtbox.x +
+        playerHurtbox.width / 2.0f;
+
+    float distanceX =
+        playerCenterX - enemyCenterX;
+
+    if (distanceX >= 0.0f)
+    {
+        enemy->attackDirection = 1;
+    }
+    else
+    {
+        enemy->attackDirection = -1;
+    }
+
+    float absoluteDistanceX = distanceX;
+
+    if (absoluteDistanceX < 0.0f)
+    {
+        absoluteDistanceX = -absoluteDistanceX;
+    }
+
+    // Start a basic attack when the player is close enough.
+    if (
+        !enemy->isAttacking &&
+        !enemy->isHit &&
+        enemy->attackCooldownTimer <= 0.0f &&
+        absoluteDistanceX <= enemy->attackRange &&
+        IsPlayerInEnemyVerticalRange(enemy, player) &&
+        player->isAlive
+    )
+    {
+        enemy->isAttacking = true;
+        enemy->attackTimer = 0.18f;
+        enemy->hitPlayerThisAttack = false;
+    }
+
+    if (enemy->isAttacking)
+    {
+        Rectangle enemyAttackHitbox =
+            GetEnemyAttackHitbox(enemy);
+
+        if (
+            !enemy->hitPlayerThisAttack &&
+            player->isAlive &&
+            IsSameGroundDepth(enemy, player) &&
+            CheckCollisionRecs(
+                enemyAttackHitbox,
+                playerHurtbox
+            )
+        )
+        {
+            DamagePlayer(
+                player,
+                enemy->attackDamage,
+                enemy->attackDirection,
+                enemy->attackKnockbackSpeed,
+                enemy->attackHitReactionTime
+            );
+
+            enemy->hitPlayerThisAttack = true;
+        }
+
+        enemy->attackTimer -= deltaTime;
+
+        if (enemy->attackTimer <= 0.0f)
+        {
+            enemy->isAttacking = false;
+            enemy->attackTimer = 0.0f;
+            enemy->attackCooldownTimer = 1.10f;
+            enemy->hitPlayerThisAttack = false;
+        }
+    }
+
+    // ============================================================
     // PLAYER ATTACK COLLISION
     // ============================================================
 
@@ -143,7 +327,10 @@ void UpdateEnemyHit(
         Rectangle attackHitbox =
             GetPlayerAttackHitbox(player);
 
-        if (CheckCollisionRecs(attackHitbox, enemy->hurtbox))
+        if (
+            IsSameGroundDepth(enemy, player) &&
+            CheckCollisionRecs(attackHitbox, enemy->hurtbox)
+        )
         {
             // ====================================================
             // DAMAGE
@@ -191,6 +378,43 @@ void UpdateEnemyHit(
     }
 }
 
+
+
+// ============================================================
+// 0030 - ENEMY ATTACK HITBOX
+// ============================================================
+
+Rectangle GetEnemyAttackHitbox(const Enemy *enemy)
+{
+    float centerY =
+        enemy->hurtbox.y +
+        enemy->hurtbox.height * 0.48f;
+
+    Rectangle hitbox =
+    {
+        0.0f,
+        centerY - enemy->attackHitboxHeight / 2.0f,
+        enemy->attackHitboxWidth,
+        enemy->attackHitboxHeight
+    };
+
+    if (enemy->attackDirection > 0)
+    {
+        hitbox.x =
+            enemy->hurtbox.x +
+            enemy->hurtbox.width -
+            10.0f;
+    }
+    else
+    {
+        hitbox.x =
+            enemy->hurtbox.x -
+            enemy->attackHitboxWidth +
+            10.0f;
+    }
+
+    return hitbox;
+}
 
 void DrawEnemy(const Enemy *enemy)
 {
@@ -267,6 +491,44 @@ void DrawEnemy(const Enemy *enemy)
         4.0f,
         BLUE
     );
+
+    // ============================================================
+    // 0030 FIX 3 - ENEMY FOOT MARKER DEBUG
+    // ============================================================
+    Rectangle enemyFeet =
+        GetEnemyFootMarker(enemy);
+
+    DrawRectangleRec(
+        enemyFeet,
+        Fade(ORANGE, 0.35f)
+    );
+
+    DrawRectangleLinesEx(
+        enemyFeet,
+        3.0f,
+        ORANGE
+    );
+
+    // ============================================================
+    // 0030 - ENEMY ATTACK HITBOX DEBUG
+    // ============================================================
+
+    if (enemy->isAttacking)
+    {
+        Rectangle attackHitbox =
+            GetEnemyAttackHitbox(enemy);
+
+        DrawRectangleRec(
+            attackHitbox,
+            Fade(YELLOW, 0.30f)
+        );
+
+        DrawRectangleLinesEx(
+            attackHitbox,
+            4.0f,
+            YELLOW
+        );
+    }
 
     // ============================================================
     // HP BAR

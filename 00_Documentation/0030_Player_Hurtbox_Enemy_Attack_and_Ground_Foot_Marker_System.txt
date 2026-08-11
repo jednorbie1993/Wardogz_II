@@ -1,0 +1,607 @@
+WARDOGZ II DOCUMENTATION
+0030 - Player Hurtbox + Enemy Attack + Ground Foot Marker System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0030_Player_Hurtbox_Enemy_Attack_and_Ground_Foot_Marker_System
+
+============================================================
+PURPOSE
+============================================================
+
+Make combat two-way.
+
+Before 0030:
+The player could attack and damage the Punk enemy.
+
+After 0030:
+The Punk can attack the player when the player enters attack range.
+
+============================================================
+NEW PLAYER SYSTEMS
+============================================================
+
+Player HP:
+100
+
+Player hurtbox:
+Follows the visible/scaled player body.
+
+Debug color:
+GREEN
+
+Player ground / foot marker:
+A small marker at the player's feet represents the player's
+actual position on the stage depth axis.
+
+Debug color:
+PURPLE
+
+Player hit reaction:
+When hit, the player receives damage and short knockback.
+
+============================================================
+NEW ENEMY ATTACK
+============================================================
+
+Enemy attack damage:
+10
+
+Enemy attack range:
+210
+
+Enemy attack active time:
+0.18 seconds
+
+Enemy attack cooldown:
+1.10 seconds after an attack
+
+Enemy attack knockback:
+190
+
+Enemy hit reaction applied to player:
+0.16 seconds
+
+Enemy attack hitbox debug color:
+YELLOW
+
+Enemy ground / foot marker:
+A small marker at the enemy's feet represents the enemy's
+actual position on the stage depth axis.
+
+Debug color:
+ORANGE
+
+============================================================
+HOW IT WORKS
+============================================================
+
+1. Punk checks horizontal distance to the player.
+2. Player and enemy ground/foot marker Y positions are checked.
+3. The player and enemy must be close enough on the same ground/depth axis.
+4. If the player is inside attack range and cooldown is ready,
+   Punk starts a basic attack.
+5. A yellow enemy attack hitbox appears.
+6. A hit is valid only when BOTH conditions are true:
+
+   A. Attack hitbox overlaps the target body hurtbox.
+   B. Player and enemy foot/ground marker Y positions are within
+      the allowed depth tolerance.
+
+7. On a successful enemy hit:
+   Player HP decreases by 10.
+8. Player receives short knockback.
+9. Punk waits for cooldown before attacking again.
+
+============================================================
+GROUND / FOOT MARKER DEPTH SYSTEM
+============================================================
+
+The full body hurtboxes are NOT used by themselves to decide
+whether two characters are on the same stage depth.
+
+This fixes the problem where tall player/enemy body boxes could
+overlap even when one character was visually in the TOP area
+and the other was in the MIDDLE or BOTTOM area.
+
+PLAYER:
+GREEN  = body hurtbox
+PURPLE = foot / ground marker
+
+ENEMY:
+BLUE   = body hurtbox
+YELLOW = attack hitbox
+ORANGE = foot / ground marker
+
+VALID HIT RULE:
+
+Attack Hitbox overlaps Body Hurtbox
++
+Player Foot Marker Y is close to Enemy Foot Marker Y
+=
+VALID HIT
+
+IMPORTANT:
+The foot markers do NOT need to overlap on the X axis.
+Horizontal range is already handled by the attack hitbox and
+body hurtbox collision.
+
+The ground-depth system compares the CENTER Y position of the
+player and enemy foot markers.
+
+depthDistance =
+absolute difference between playerGroundY and enemyGroundY
+
+A hit is allowed only when:
+
+depthDistance <= depthTolerance
+
+The same ground-depth validation is applied in BOTH directions:
+
+- Enemy attack -> Player
+- Player attack -> Enemy
+
+This fixes the bug where the player could still hit the enemy
+from TOP/MIDDLE/BOTTOM differences just because the large attack
+and body boxes touched.
+
+The foot marker works like a character's ground/shadow position.
+The feet represent the character's actual stage depth, not the
+head, hands, or full sprite height.
+
+============================================================
+FOOT MARKER TUNING
+============================================================
+
+Default marker height:
+14.0f
+
+Foot marker WIDTH examples:
+
+60% width:
+X offset = 0.20f
+Width    = 0.60f
+
+80% width:
+X offset = 0.10f
+Width    = 0.80f
+
+100% width:
+X offset = 0.00f
+Width    = 1.00f
+
+120% width:
+X offset = -0.10f
+Width    = 1.20f
+
+Negative X offset extends the marker farther to the left.
+
+============================================================
+DEPTH TOLERANCE
+============================================================
+
+depthTolerance controls how close the foot-marker Y positions
+must be before an attack is valid.
+
+Smaller value = stricter.
+Larger value  = more forgiving.
+
+Example values:
+
+0.10f = extremely strict
+10.0f = strict
+20.0f = moderate
+30.0f = more forgiving
+
+NOTE:
+Changing the visual width of the foot marker does not determine
+the depth hit by itself. The final depth validation uses the
+marker Y positions.
+
+============================================================
+IMPORTANT
+============================================================
+
+No new Punk attack sprite is required yet.
+
+The Punk still shows its current idle sprite while the attack
+logic/hitbox is active.
+
+This system establishes the gameplay logic first.
+
+A later system can add:
+- Punk punch/kick animation
+- enemy facing sprite
+- enemy movement/chase AI
+- different enemy attack data
+- player hit animation
+- death animation
+
+============================================================
+0029 SETTINGS PRESERVED
+============================================================
+
+COMBO_WINDOW = 2.00f
+ATTACK_RECOVERY_TIME = 0.00f
+CANCEL_WINDOW_FRAME = 0
+
+These values preserve the more responsive attack feel chosen
+before starting 0030.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/player/player.h
+src/player/player.c
+src/player/player_attack.c
+src/player/player_draw.c
+include/enemy/enemy.h
+src/enemy/enemy.c
+src/main.c
+
+NEW:
+00_Documentation/0030_Player_Hurtbox_Enemy_Attack_and_Ground_Foot_Marker_System.txt
+
+============================================================
+TEST
+============================================================
+
+1. Build and run the game.
+2. Walk close to Punk.
+3. Wait near Punk.
+
+Expected:
+- Yellow enemy attack hitbox appears.
+- Green player hurtbox is visible.
+- Purple player foot marker is visible.
+- Orange enemy foot marker is visible.
+- Player HP starts at 100.
+- Same-depth attacks can connect.
+- Different-depth attacks do NOT connect even if large body
+  boxes visually overlap.
+- Player -> Enemy attacks require the ground-depth check.
+- Enemy -> Player attacks require the ground-depth check.
+- A successful enemy hit lowers HP by 10.
+- Player is pushed slightly away.
+- Punk can damage the player again on a new attack.
+- Punk does not damage every frame.
+- Punk waits between attacks.
+
+Player attacks should still:
+- damage Punk
+- use per-move damage
+- use per-move knockback
+- support input buffering
+- support A -> W -> D combo
+- support directional command detection
+
+============================================================
+STATUS
+============================================================
+
+0030 - COMPLETE
+
+FINAL 0030 FEATURES:
+- Player HP system
+- Player body hurtbox
+- Enemy body hurtbox
+- Enemy attack hitbox
+- Enemy damage to player
+- Player hit reaction / knockback
+- Repeat enemy attacks
+- Player foot / ground marker
+- Enemy foot / ground marker
+- Ground Y depth-distance validation
+- Depth validation for Enemy -> Player
+- Depth validation for Player -> Enemy
+- Adjustable foot marker width and X position
+- Adjustable depthToleranceWARDOGZ II DOCUMENTATION
+0030 - Player Hurtbox + Enemy Attack + Ground Foot Marker System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0030_Player_Hurtbox_Enemy_Attack_and_Ground_Foot_Marker_System
+
+============================================================
+PURPOSE
+============================================================
+
+Make combat two-way.
+
+Before 0030:
+The player could attack and damage the Punk enemy.
+
+After 0030:
+The Punk can attack the player when the player enters attack range.
+
+============================================================
+NEW PLAYER SYSTEMS
+============================================================
+
+Player HP:
+100
+
+Player hurtbox:
+Follows the visible/scaled player body.
+
+Debug color:
+GREEN
+
+Player ground / foot marker:
+A small marker at the player's feet represents the player's
+actual position on the stage depth axis.
+
+Debug color:
+PURPLE
+
+Player hit reaction:
+When hit, the player receives damage and short knockback.
+
+============================================================
+NEW ENEMY ATTACK
+============================================================
+
+Enemy attack damage:
+10
+
+Enemy attack range:
+210
+
+Enemy attack active time:
+0.18 seconds
+
+Enemy attack cooldown:
+1.10 seconds after an attack
+
+Enemy attack knockback:
+190
+
+Enemy hit reaction applied to player:
+0.16 seconds
+
+Enemy attack hitbox debug color:
+YELLOW
+
+Enemy ground / foot marker:
+A small marker at the enemy's feet represents the enemy's
+actual position on the stage depth axis.
+
+Debug color:
+ORANGE
+
+============================================================
+HOW IT WORKS
+============================================================
+
+1. Punk checks horizontal distance to the player.
+2. Player and enemy ground/foot marker Y positions are checked.
+3. The player and enemy must be close enough on the same ground/depth axis.
+4. If the player is inside attack range and cooldown is ready,
+   Punk starts a basic attack.
+5. A yellow enemy attack hitbox appears.
+6. A hit is valid only when BOTH conditions are true:
+
+   A. Attack hitbox overlaps the target body hurtbox.
+   B. Player and enemy foot/ground marker Y positions are within
+      the allowed depth tolerance.
+
+7. On a successful enemy hit:
+   Player HP decreases by 10.
+8. Player receives short knockback.
+9. Punk waits for cooldown before attacking again.
+
+============================================================
+GROUND / FOOT MARKER DEPTH SYSTEM
+============================================================
+
+The full body hurtboxes are NOT used by themselves to decide
+whether two characters are on the same stage depth.
+
+This fixes the problem where tall player/enemy body boxes could
+overlap even when one character was visually in the TOP area
+and the other was in the MIDDLE or BOTTOM area.
+
+PLAYER:
+GREEN  = body hurtbox
+PURPLE = foot / ground marker
+
+ENEMY:
+BLUE   = body hurtbox
+YELLOW = attack hitbox
+ORANGE = foot / ground marker
+
+VALID HIT RULE:
+
+Attack Hitbox overlaps Body Hurtbox
++
+Player Foot Marker Y is close to Enemy Foot Marker Y
+=
+VALID HIT
+
+IMPORTANT:
+The foot markers do NOT need to overlap on the X axis.
+Horizontal range is already handled by the attack hitbox and
+body hurtbox collision.
+
+The ground-depth system compares the CENTER Y position of the
+player and enemy foot markers.
+
+depthDistance =
+absolute difference between playerGroundY and enemyGroundY
+
+A hit is allowed only when:
+
+depthDistance <= depthTolerance
+
+The same ground-depth validation is applied in BOTH directions:
+
+- Enemy attack -> Player
+- Player attack -> Enemy
+
+This fixes the bug where the player could still hit the enemy
+from TOP/MIDDLE/BOTTOM differences just because the large attack
+and body boxes touched.
+
+The foot marker works like a character's ground/shadow position.
+The feet represent the character's actual stage depth, not the
+head, hands, or full sprite height.
+
+============================================================
+FOOT MARKER TUNING
+============================================================
+
+Default marker height:
+14.0f
+
+Foot marker WIDTH examples:
+
+60% width:
+X offset = 0.20f
+Width    = 0.60f
+
+80% width:
+X offset = 0.10f
+Width    = 0.80f
+
+100% width:
+X offset = 0.00f
+Width    = 1.00f
+
+120% width:
+X offset = -0.10f
+Width    = 1.20f
+
+Negative X offset extends the marker farther to the left.
+
+============================================================
+DEPTH TOLERANCE
+============================================================
+
+depthTolerance controls how close the foot-marker Y positions
+must be before an attack is valid.
+
+Smaller value = stricter.
+Larger value  = more forgiving.
+
+Example values:
+
+0.10f = extremely strict
+10.0f = strict
+20.0f = moderate
+30.0f = more forgiving
+
+NOTE:
+Changing the visual width of the foot marker does not determine
+the depth hit by itself. The final depth validation uses the
+marker Y positions.
+
+============================================================
+IMPORTANT
+============================================================
+
+No new Punk attack sprite is required yet.
+
+The Punk still shows its current idle sprite while the attack
+logic/hitbox is active.
+
+This system establishes the gameplay logic first.
+
+A later system can add:
+- Punk punch/kick animation
+- enemy facing sprite
+- enemy movement/chase AI
+- different enemy attack data
+- player hit animation
+- death animation
+
+============================================================
+0029 SETTINGS PRESERVED
+============================================================
+
+COMBO_WINDOW = 2.00f
+ATTACK_RECOVERY_TIME = 0.00f
+CANCEL_WINDOW_FRAME = 0
+
+These values preserve the more responsive attack feel chosen
+before starting 0030.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/player/player.h
+src/player/player.c
+src/player/player_attack.c
+src/player/player_draw.c
+include/enemy/enemy.h
+src/enemy/enemy.c
+src/main.c
+
+NEW:
+00_Documentation/0030_Player_Hurtbox_Enemy_Attack_and_Ground_Foot_Marker_System.txt
+
+============================================================
+TEST
+============================================================
+
+1. Build and run the game.
+2. Walk close to Punk.
+3. Wait near Punk.
+
+Expected:
+- Yellow enemy attack hitbox appears.
+- Green player hurtbox is visible.
+- Purple player foot marker is visible.
+- Orange enemy foot marker is visible.
+- Player HP starts at 100.
+- Same-depth attacks can connect.
+- Different-depth attacks do NOT connect even if large body
+  boxes visually overlap.
+- Player -> Enemy attacks require the ground-depth check.
+- Enemy -> Player attacks require the ground-depth check.
+- A successful enemy hit lowers HP by 10.
+- Player is pushed slightly away.
+- Punk can damage the player again on a new attack.
+- Punk does not damage every frame.
+- Punk waits between attacks.
+
+Player attacks should still:
+- damage Punk
+- use per-move damage
+- use per-move knockback
+- support input buffering
+- support A -> W -> D combo
+- support directional command detection
+
+============================================================
+STATUS
+============================================================
+
+0030 - COMPLETE
+
+FINAL 0030 FEATURES:
+- Player HP system
+- Player body hurtbox
+- Enemy body hurtbox
+- Enemy attack hitbox
+- Enemy damage to player
+- Player hit reaction / knockback
+- Repeat enemy attacks
+- Player foot / ground marker
+- Enemy foot / ground marker
+- Ground Y depth-distance validation
+- Depth validation for Enemy -> Player
+- Depth validation for Player -> Enemy
+- Adjustable foot marker width and X position
+- Adjustable depthTolerance

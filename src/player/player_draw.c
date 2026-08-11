@@ -148,4 +148,45 @@ void DrawPlayer(const Player *player)
             RED
         );
     }
+
+    // ============================================================
+    // 0030 - PLAYER HURTBOX DEBUG
+    // ============================================================
+    Rectangle playerHurtbox =
+        GetPlayerHurtbox(player);
+
+    DrawRectangleLinesEx(
+        playerHurtbox,
+        3.0f,
+        GREEN
+    );
+
+    // ============================================================
+    // 0030 FIX 3 - PLAYER FOOT MARKER DEBUG
+    // ============================================================
+    Rectangle playerFeet =
+        GetPlayerFootMarker(player);
+
+    DrawRectangleRec(
+        playerFeet,
+        Fade(PURPLE, 0.35f)
+    );
+
+    DrawRectangleLinesEx(
+        playerFeet,
+        3.0f,
+        PURPLE
+    );
+
+    // ============================================================
+    // 0030 - PLAYER HP DISPLAY
+    // ============================================================
+    DrawText(
+        TextFormat("Player HP: %d", player->hp),
+        30,
+        65,
+        25,
+        GREEN
+    );
+
 }

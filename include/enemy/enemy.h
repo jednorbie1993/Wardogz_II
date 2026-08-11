@@ -31,6 +31,22 @@ typedef struct Enemy
     int knockbackDirection;
 
     // ============================================================
+    // 0030 - BASIC ENEMY ATTACK
+    // ============================================================
+    bool isAttacking;
+    float attackTimer;
+    float attackCooldownTimer;
+    bool hitPlayerThisAttack;
+
+    int attackDamage;
+    float attackRange;
+    float attackHitboxWidth;
+    float attackHitboxHeight;
+    float attackKnockbackSpeed;
+    float attackHitReactionTime;
+    int attackDirection;
+
+    // ============================================================
     // GENERIC IDLE ANIMATION
     // ============================================================
 
@@ -64,10 +80,15 @@ Enemy InitEnemyBase(void);
 // Handles idle animation, hit detection, damage, knockback, and death.
 void UpdateEnemyHit(
     Enemy *enemy,
-    const Player *player,
+    Player *player,
     float deltaTime,
     float screenWidth
 );
+
+
+// 0030 - Current enemy attack hitbox.
+Rectangle GetEnemyAttackHitbox(const Enemy *enemy);
+Rectangle GetEnemyFootMarker(const Enemy *enemy);
 
 
 // Shared drawing system.

@@ -17,7 +17,7 @@
 //
 // 0029 makes chaining more controlled and fighting-game-like.
 
-#define COMBO_WINDOW 2.0f
+#define COMBO_WINDOW 2.00f
 
 // Short post-attack recovery.
 // During recovery, a fresh attack cannot start yet.

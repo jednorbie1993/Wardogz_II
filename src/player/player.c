@@ -122,6 +122,18 @@ Player InitPlayer(const char *texturePath)
     player.recoveryTimer = 0.0f;
     player.cancelWindowOpen = false;
 
+    // ============================================================
+    // 0030 - PLAYER HP / HURT STATE
+    // ============================================================
+    player.maxHp = 100;
+    player.hp = player.maxHp;
+    player.isAlive = true;
+
+    player.isHit = false;
+    player.hitReactionTimer = 0.0f;
+    player.knockbackSpeed = 0.0f;
+    player.knockbackDirection = 0;
+
     player.facingRight = true;
 
     // ============================================================
@@ -162,4 +174,174 @@ void UnloadPlayer(Player *player)
     }
 
     player->texture = (Texture2D){0};
+}
+
+// ============================================================
+// 0030 - PLAYER HURTBOX
+// ============================================================
+
+Rectangle GetPlayerHurtbox(const Player *player)
+{
+    // ============================================================
+    // 0030 FIX - HURTBOX FOLLOWS THE ACTUAL SCALED PLAYER SPRITE
+    // ============================================================
+
+    float depth =
+        (player->rectangle.y - 345.0f) /
+        (700.0f - 270.0f);
+
+    if (depth < 0.0f)
+        depth = 0.0f;
+
+    if (depth > 1.0f)
+        depth = 1.0f;
+
+    float scale =
+        2.90f +
+        (depth * 1.80f);
+
+    float scaledWidth =
+        player->rectangle.width *
+        scale *
+        1.30f;
+
+    float scaledHeight =
+        player->rectangle.height *
+        scale;
+
+    // Same bottom-center anchor used by DrawPlayer().
+    float spriteLeft =
+        player->rectangle.x +
+        (player->rectangle.width / 2.0f) -
+        (scaledWidth / 2.0f);
+
+    float spriteTop =
+        player->rectangle.y +
+        player->rectangle.height -
+        scaledHeight;
+
+    // Body hurtbox inside the visible sprite.
+    Rectangle hurtbox =
+    {
+        spriteLeft + (scaledWidth * 0.37f),   // X
+        spriteTop  + (scaledHeight * 0.26f),  // Y
+        scaledWidth  * 0.26f,                 // WIDTH
+        scaledHeight * 0.50f                  // HEIGHT
+    };
+
+    return hurtbox;
+}
+
+// ============================================================
+// 0030 FIX 3 - PLAYER FOOT / GROUND MARKER
+// ============================================================
+//
+// This small box represents the player's real ground position.
+// It is used for depth/lane checks instead of the full body.
+
+Rectangle GetPlayerFootMarker(const Player *player)
+{
+    Rectangle hurtbox =
+        GetPlayerHurtbox(player);
+
+    Rectangle feet =
+    {
+        hurtbox.x + (hurtbox.width * -0.80f),
+        hurtbox.y + hurtbox.height - 34.0f,
+        hurtbox.width * 2.50f,
+        44.0f
+    };
+
+    return feet;
+}
+
+
+
+// ============================================================
+// 0030 - DAMAGE PLAYER
+// ============================================================
+
+void DamagePlayer(
+    Player *player,
+    int damage,
+    int knockbackDirection,
+    float knockbackSpeed,
+    float hitReactionTime
+)
+{
+    // 0030 FIX:
+    // hitPlayerThisAttack already prevents repeated damage from the SAME
+    // enemy attack, so a later enemy attack may damage the player again.
+    if (!player->isAlive)
+    {
+        return;
+    }
+
+    player->hp -= damage;
+
+    if (player->hp < 0)
+    {
+        player->hp = 0;
+    }
+
+    player->isHit = true;
+    player->hitReactionTimer = hitReactionTime;
+    player->knockbackSpeed = knockbackSpeed;
+    player->knockbackDirection = knockbackDirection;
+
+    if (player->hp <= 0)
+    {
+        player->isAlive = false;
+        player->isAttacking = false;
+        player->currentAttack = ATTACK_NONE;
+        player->bufferedAttack = ATTACK_NONE;
+    }
+}
+
+
+// ============================================================
+// 0030 - PLAYER HIT REACTION / KNOCKBACK UPDATE
+// ============================================================
+
+void UpdatePlayerHitReaction(
+    Player *player,
+    float deltaTime,
+    float screenWidth
+)
+{
+    if (!player->isHit)
+    {
+        return;
+    }
+
+    player->rectangle.x +=
+        player->knockbackDirection *
+        player->knockbackSpeed *
+        deltaTime;
+
+    if (player->rectangle.x < 0.0f)
+    {
+        player->rectangle.x = 0.0f;
+    }
+
+    if (
+        player->rectangle.x +
+        player->rectangle.width >
+        screenWidth
+    )
+    {
+        player->rectangle.x =
+            screenWidth -
+            player->rectangle.width;
+    }
+
+    player->hitReactionTimer -= deltaTime;
+
+    if (player->hitReactionTimer <= 0.0f)
+    {
+        player->hitReactionTimer = 0.0f;
+        player->knockbackSpeed = 0.0f;
+        player->knockbackDirection = 0;
+        player->isHit = false;
+    }
 }
