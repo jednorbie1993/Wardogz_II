@@ -1,16 +1,13 @@
 #include "enemy.h"
 
-Enemy InitEnemy(float x, float y)
+
+Enemy InitEnemyBase(void)
 {
     Enemy enemy = {0};
 
-    enemy.hurtbox = (Rectangle) // eto ung lapad at laki ng blue rectangle box
-    {
-        x, // pakaliwa , pakanan
-        y - 200, // - pataas + pababa 
-        148.0f, //taba ng retangle
-        276.0f //taas ng rectangle
-    };
+    // ============================================================
+    // COMMON ENEMY DEFAULTS
+    // ============================================================
 
     enemy.maxHp = 100;
     enemy.hp = enemy.maxHp;
@@ -18,7 +15,7 @@ Enemy InitEnemy(float x, float y)
     enemy.hitByCurrentAttack = false;
 
     // ============================================================
-    // 0019 - HIT REACTION / KNOCKBACK DEFAULTS
+    // HIT REACTION / KNOCKBACK DEFAULTS
     // ============================================================
 
     enemy.isHit = false;
@@ -27,22 +24,22 @@ Enemy InitEnemy(float x, float y)
     enemy.knockbackDirection = 0;
 
     // ============================================================
-    // 0020 - PUNK IDLE TEXTURES
+    // GENERIC IDLE DEFAULTS
     // ============================================================
 
-    enemy.idleTextures[0] =
-        LoadTexture("assets/sprites/enemy/stage_1/punk/punk_idle_1.png");
-
-    enemy.idleTextures[1] =
-        LoadTexture("assets/sprites/enemy/stage_1/punk/punk_idle_2.png");
-
-    enemy.idleTextures[2] =
-        LoadTexture("assets/sprites/enemy/stage_1/punk/punk_idle_3.png");
-
+    enemy.idleFrameCount = 0;
     enemy.idleFrame = 0;
     enemy.idleDirection = 1;
     enemy.idleTimer = 0.0f;
     enemy.idleFrameTime = 0.19f;
+
+    // ============================================================
+    // GENERIC SPRITE DEFAULTS
+    // ============================================================
+
+    enemy.spriteSize = 580.0f;
+    enemy.spriteOffsetX = 0.0f;
+    enemy.spriteOffsetY = 0.0f;
 
     return enemy;
 }
@@ -56,38 +53,41 @@ void UpdateEnemyHit(
 )
 {
     // ============================================================
-    // 0020 - IDLE ANIMATION
+    // GENERIC IDLE ANIMATION
     // ============================================================
 
-    // Kapag patay na ang enemy, hihinto ang idle animation at movement.
+    // Kapag patay na ang enemy, hihinto ang animation at movement.
     if (!enemy->isAlive)
     {
         return;
     }
 
-    enemy->idleTimer += deltaTime;
-
-    if (enemy->idleTimer >= enemy->idleFrameTime)
+    if (enemy->idleFrameCount > 1)
     {
-        enemy->idleTimer -= enemy->idleFrameTime;
-        enemy->idleFrame += enemy->idleDirection;
+        enemy->idleTimer += deltaTime;
 
-        // Animation order:
-        // 0 -> 1 -> 2 -> 1 -> 0 -> repeat
-        if (enemy->idleFrame >= ENEMY_IDLE_FRAME_COUNT - 1)
+        if (enemy->idleTimer >= enemy->idleFrameTime)
         {
-            enemy->idleFrame = ENEMY_IDLE_FRAME_COUNT - 1;
-            enemy->idleDirection = -1;
-        }
-        else if (enemy->idleFrame <= 0)
-        {
-            enemy->idleFrame = 0;
-            enemy->idleDirection = 1;
+            enemy->idleTimer -= enemy->idleFrameTime;
+            enemy->idleFrame += enemy->idleDirection;
+
+            // Ping-pong:
+            // 0 -> 1 -> 2 -> 1 -> 0 -> ...
+            if (enemy->idleFrame >= enemy->idleFrameCount - 1)
+            {
+                enemy->idleFrame = enemy->idleFrameCount - 1;
+                enemy->idleDirection = -1;
+            }
+            else if (enemy->idleFrame <= 0)
+            {
+                enemy->idleFrame = 0;
+                enemy->idleDirection = 1;
+            }
         }
     }
 
     // ============================================================
-    // 0019 - ACTIVE HIT REACTION / KNOCKBACK
+    // ACTIVE HIT REACTION / KNOCKBACK
     // ============================================================
 
     if (enemy->isHit)
@@ -125,6 +125,10 @@ void UpdateEnemyHit(
         }
     }
 
+    // ============================================================
+    // PLAYER ATTACK COLLISION
+    // ============================================================
+
     // Reset once the player's attack is completely finished.
     if (!player->isAttacking)
     {
@@ -149,7 +153,7 @@ void UpdateEnemyHit(
             enemy->hitByCurrentAttack = true;
 
             // ====================================================
-            // 0019 - START HIT REACTION / KNOCKBACK
+            // START HIT REACTION / KNOCKBACK
             // ====================================================
 
             enemy->isHit = true;
@@ -164,6 +168,10 @@ void UpdateEnemyHit(
             {
                 enemy->knockbackDirection = -1;
             }
+
+            // ====================================================
+            // DEATH
+            // ====================================================
 
             if (enemy->hp <= 0)
             {
@@ -184,8 +192,13 @@ void UpdateEnemyHit(
 void DrawEnemy(const Enemy *enemy)
 {
     // ============================================================
-    // 0020 - DRAW PUNK SPRITE
+    // GENERIC ENEMY SPRITE
     // ============================================================
+
+    if (enemy->idleFrameCount <= 0)
+    {
+        return;
+    }
 
     Texture2D currentTexture =
         enemy->idleTextures[enemy->idleFrame];
@@ -198,28 +211,28 @@ void DrawEnemy(const Enemy *enemy)
         (float)currentTexture.height
     };
 
-    // 0020 - Sprite and hurtbox use ONE position source.
-    // enemy->hurtbox is the base position, so knockback moves both together.
-    float spriteSize = 580.0f;
-
-    // Fine-tune only the image relative to the hurtbox.
-    float spriteOffsetX = 0.0f;   // + right, - left
-    float spriteOffsetY = 0.0f;   // + down,  - up
-
+    // The hurtbox is the shared position source.
+    // Character-specific files only provide spriteSize and offsets.
     float hurtboxCenterX =
         enemy->hurtbox.x +
-        enemy->hurtbox.width / 1.70f;
+        enemy->hurtbox.width / 2.0f;
 
     float hurtboxBottomY =
         enemy->hurtbox.y +
-        enemy->hurtbox.height / 0.65f;
+        enemy->hurtbox.height;
 
     Rectangle destination =
     {
-        hurtboxCenterX - spriteSize / 2.0f + spriteOffsetX,
-        hurtboxBottomY - spriteSize + spriteOffsetY,
-        spriteSize,
-        spriteSize
+        hurtboxCenterX -
+            enemy->spriteSize / 2.0f +
+            enemy->spriteOffsetX,
+
+        hurtboxBottomY -
+            enemy->spriteSize +
+            enemy->spriteOffsetY,
+
+        enemy->spriteSize,
+        enemy->spriteSize
     };
 
     Color spriteTint = WHITE;
@@ -230,7 +243,6 @@ void DrawEnemy(const Enemy *enemy)
     }
     else if (enemy->isHit)
     {
-        // Keep the visible hit reaction from 0019.
         spriteTint = ORANGE;
     }
 
@@ -247,7 +259,6 @@ void DrawEnemy(const Enemy *enemy)
     // DEBUG HURTBOX
     // ============================================================
 
-    // Keep BLUE BOX for now so we can align the Punk sprite correctly.
     DrawRectangleLinesEx(
         enemy->hurtbox,
         4.0f,
@@ -294,7 +305,7 @@ void DrawEnemy(const Enemy *enemy)
 
 void UnloadEnemy(Enemy *enemy)
 {
-    for (int i = 0; i < ENEMY_IDLE_FRAME_COUNT; i++)
+    for (int i = 0; i < enemy->idleFrameCount; i++)
     {
         UnloadTexture(enemy->idleTextures[i]);
     }

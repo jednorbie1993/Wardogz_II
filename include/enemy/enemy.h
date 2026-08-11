@@ -4,11 +4,16 @@
 #include "raylib.h"
 #include "player.h"
 
-#define ENEMY_IDLE_FRAME_COUNT 3
+#define MAX_ENEMY_IDLE_FRAMES 8
 
 typedef struct Enemy
 {
+    // ============================================================
+    // COMMON ENEMY DATA
+    // ============================================================
+
     Rectangle hurtbox;
+
     int hp;
     int maxHp;
     bool isAlive;
@@ -16,23 +21,47 @@ typedef struct Enemy
     // Prevents one attack from damaging the enemy more than once.
     bool hitByCurrentAttack;
 
-    // 0019 - Enemy hit reaction / knockback state.
+    // ============================================================
+    // HIT REACTION / KNOCKBACK
+    // ============================================================
+
     bool isHit;
     float hitReactionTimer;
     float knockbackSpeed;
     int knockbackDirection;
 
-    // 0020 - Enemy Punk idle animation.
-    Texture2D idleTextures[ENEMY_IDLE_FRAME_COUNT];
+    // ============================================================
+    // GENERIC IDLE ANIMATION
+    // ============================================================
+
+    Texture2D idleTextures[MAX_ENEMY_IDLE_FRAMES];
+    int idleFrameCount;
+
     int idleFrame;
     int idleDirection;
     float idleTimer;
     float idleFrameTime;
 
+    // ============================================================
+    // GENERIC SPRITE SETTINGS
+    // ============================================================
+
+    float spriteSize;
+
+    // Image adjustment relative to the hurtbox.
+    float spriteOffsetX;
+    float spriteOffsetY;
+
 } Enemy;
 
-Enemy InitEnemy(float x, float y);
 
+// Creates common/default enemy state.
+// Character-specific files such as punk.c customize the returned Enemy.
+Enemy InitEnemyBase(void);
+
+
+// Shared enemy update system.
+// Handles idle animation, hit detection, damage, knockback, and death.
 void UpdateEnemyHit(
     Enemy *enemy,
     const Player *player,
@@ -40,7 +69,13 @@ void UpdateEnemyHit(
     float screenWidth
 );
 
+
+// Shared drawing system.
+// Draws the current enemy sprite, debug hurtbox, and HP display.
 void DrawEnemy(const Enemy *enemy);
+
+
+// Unload textures belonging to the enemy.
 void UnloadEnemy(Enemy *enemy);
 
 #endif
