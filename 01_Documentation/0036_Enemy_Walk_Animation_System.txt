@@ -1,0 +1,149 @@
+WARDOGZ II DOCUMENTATION 0036 - Enemy Walk Animation System
+
+Date: 2026-08-11
+
+============================================================ TITLE
+============================================================
+
+0036_Enemy_Walk_Animation_System
+
+============================================================ PURPOSE
+============================================================
+
+This system adds a dedicated walking animation to the Punk enemy.
+
+Before 0036, Punk could move toward the player, but his sprite did not
+have a proper walking cycle. The enemy could appear to slide while
+chasing or entering the stage.
+
+0036 connects Punk’s movement state to six walking sprite frames.
+
+============================================================ WALKING
+SPRITES ============================================================
+
+Punk uses six walking frames:
+
+punk_walk_1.png punk_walk_2.png punk_walk_3.png punk_walk_4.png
+punk_walk_5.png punk_walk_6.png
+
+The frames are stored with the Punk enemy sprite assets.
+
+============================================================ SYSTEM
+BEHAVIOR ============================================================
+
+When Punk is moving: - The walk animation becomes active. - The system
+cycles through the six walking frames. - The animation repeats while
+Punk continues moving.
+
+When Punk stops: - The walking animation stops. - Punk returns to his
+idle animation.
+
+This means the sprite animation now visually matches the enemy’s
+movement.
+
+============================================================ ENEMY CHASE
+============================================================
+
+The walking animation is used while Punk moves toward the player.
+
+The movement/chase logic remains separate from the animation logic.
+
+0036 does not change: - Aggro behavior - Chase distance - Attack stop
+distance - Enemy boundaries - Player collision - Enemy damage system
+
+It only adds the visual walking state on top of the existing movement
+system.
+
+============================================================ ENEMY
+ENTRANCE ============================================================
+
+The walking animation can also be used while Punk enters the playable
+area.
+
+This allows future enemies to begin outside or near the stage boundary
+and walk naturally into the combat area instead of appearing completely
+static.
+
+============================================================ LEFT /
+RIGHT FACING
+============================================================
+
+Punk continues to face the player based on relative horizontal position.
+
+The existing sprite mirroring/facing system is preserved.
+
+The walking frames therefore do not require a separate second set of
+images for the opposite horizontal direction.
+
+============================================================ ANIMATION
+STRUCTURE ============================================================
+
+The enemy now stores walking animation information separately from idle
+animation information.
+
+The system tracks: - Walk textures - Current walk frame - Walk animation
+timer - Whether the enemy is currently moving
+
+Keeping idle and walk animation data separate makes it easier to add
+more enemy states later.
+
+Examples:
+
+IDLE WALK ATTACK HIT KNOCKDOWN DEATH
+
+============================================================ FILES
+UPDATED ============================================================
+
+include/enemy/enemy.h
+
+Added data required for the enemy walking animation.
+
+src/enemy/enemy.c
+
+Updated the general enemy animation/drawing behavior so the correct
+animation can be selected depending on whether the enemy is moving.
+
+src/enemy/stage_1/punk.c
+
+Added Punk-specific walking sprite loading and walking animation setup.
+
+============================================================ ASSET
+NAMING ============================================================
+
+Use consistent filenames:
+
+punk_walk_1.png punk_walk_2.png punk_walk_3.png punk_walk_4.png
+punk_walk_5.png punk_walk_6.png
+
+Keeping sequential filenames makes the animation easier to maintain and
+expand.
+
+============================================================ RESULT
+============================================================
+
+Punk no longer visually slides toward the player.
+
+He now: 1. Uses idle animation while standing. 2. Uses the six-frame
+walk animation while moving. 3. Faces the correct horizontal direction.
+4. Returns to idle after stopping. 5. Can use the walk cycle during
+enemy movement/entrance.
+
+This creates the foundation for additional enemy animation states.
+
+============================================================ NEXT SYSTEM
+============================================================
+
+0037 - Enemy Attack Animation System
+
+The next step is to give Punk a dedicated attack animation so his combat
+state can visually transition from:
+
+IDLE -> WALK -> ATTACK
+
+Later systems can add:
+
+HIT REACTION KNOCKDOWN DEATH
+
+============================================================ END OF
+DOCUMENTATION
+============================================================

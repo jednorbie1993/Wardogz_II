@@ -5,6 +5,7 @@
 #include "player.h"
 
 #define MAX_ENEMY_IDLE_FRAMES 8
+#define MAX_ENEMY_WALK_FRAMES 8
 
 typedef struct Enemy
 {
@@ -56,12 +57,37 @@ typedef struct Enemy
     float chaseDepthTolerance;
 
     // ============================================================
+    // 0035 - ENEMY STOP / ATTACK RANGE
+    // ============================================================
+    // Distance where the enemy stops advancing horizontally.
+    // Keep this at or below attackRange.
+    float attackStopDistance;
+
+    // True only when Punk is both close enough horizontally
+    // and aligned with the player's ground/depth position.
+    bool isInAttackRange;
+
+    // 0034 - Player detection / aggro distance.
+    // Punk stays idle until the player is close enough on the stage.
+    float aggroRange;
+
+    // ============================================================
     // 0032 - ENEMY STAGE BOUNDARY / WALK AREA
     // ============================================================
     // Y offset from hurtbox.y to the character's stage-position anchor.
     // For Punk, InitPunk(x, y) uses y as the stage position and places
     // the hurtbox 200 px above it, so this value is 200.0f.
     float stageAnchorOffsetY;
+
+    // ============================================================
+    // 0034 - ENEMY ENTRANCE / SPAWN
+    // ============================================================
+    bool isEntering;
+    bool hasEnteredStage;
+
+    float entranceTargetX;
+    float entranceTargetY;
+    float entranceSpeed;
 
     // ============================================================
     // GENERIC IDLE ANIMATION
@@ -74,6 +100,17 @@ typedef struct Enemy
     int idleDirection;
     float idleTimer;
     float idleFrameTime;
+
+    // ============================================================
+    // 0036 - GENERIC WALK ANIMATION
+    // ============================================================
+
+    Texture2D walkTextures[MAX_ENEMY_WALK_FRAMES];
+    int walkFrameCount;
+
+    int walkFrame;
+    float walkTimer;
+    float walkFrameTime;
 
     // ============================================================
     // GENERIC SPRITE SETTINGS
@@ -102,6 +139,16 @@ void UpdateEnemyHit(
     float screenWidth,
     float walkAreaTop,
     float walkAreaBottom
+);
+
+
+// 0034 - Start an enemy entrance from its current InitPunk position.
+// targetStageY uses the same stage-Y coordinate system as InitPunk(x, y).
+void StartEnemyEntrance(
+    Enemy *enemy,
+    float targetX,
+    float targetStageY,
+    float entranceSpeed
 );
 
 

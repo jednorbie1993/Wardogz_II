@@ -186,6 +186,15 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
 {
     AttackType pressedAttack = GetPressedAttack();
 
+    // 0037 - Any punch switches the post-attack idle to battle mode.
+    // Each new punch refreshes the 15-second timer.
+    if (pressedAttack == ATTACK_LEFT_PUNCH ||
+        pressedAttack == ATTACK_RIGHT_PUNCH)
+    {
+        player->battleIdleActive = true;
+        player->battleIdleTimer = player->battleIdleDuration;
+    }
+
     // ============================================================
     // 0027 - COMBO WINDOW TIMER
     // ============================================================

@@ -10,49 +10,60 @@ Player InitPlayer(const char *texturePath)
     player.texture = LoadTexture(texturePath);
 
     // ============================================================
-    // IDLE TEXTURES
+    // 0037 - NORMAL IDLE BREATH + BATTLE IDLE TEXTURES
     // ============================================================
-    player.idleTextures[0] =
-        LoadTexture("assets/sprites/player/player_idle_1.png");
+    for (int i = 0; i < IDLE_BREATH_FRAME_COUNT; i++)
+    {
+        player.idleBreathTextures[i] = LoadTexture(
+            TextFormat("assets/sprites/player/idle_breath/jamber_breath%d.png", i + 1)
+        );
+    }
 
-    player.idleTextures[1] =
-        LoadTexture("assets/sprites/player/player_idle_2.png");
-
-    player.idleTextures[2] =
-        LoadTexture("assets/sprites/player/player_idle_3.png");
+    for (int i = 0; i < IDLE_BATTLE_FRAME_COUNT; i++)
+    {
+        player.idleBattleTextures[i] = LoadTexture(
+            TextFormat("assets/sprites/player/idle_battle/Jamber_idle_%d.png", i + 1)
+        );
+    }
 
     player.idleFrame = 0;
     player.idleDirection = 1;
     player.idleTimer = 0.0f;
-    player.idleFrameTime = 0.18f;
+    player.idleFrameTime = 0.17f;
+
+    // Normal state uses idle_breath.
+    // Pressing A or W activates idle_battle for 15 seconds.
+    player.battleIdleActive = false;
+    player.battleIdleTimer = 0.0f;
+    player.battleIdleDuration = 15.0f;
 
     // ============================================================
     // 12 WALK TEXTURES
     // ============================================================
     player.walkTextures[0] =
-        LoadTexture("assets/sprites/player/step1.png");
+        LoadTexture("assets/sprites/player/walk/step1.png");
     player.walkTextures[1] =
-        LoadTexture("assets/sprites/player/step2.png");
+        LoadTexture("assets/sprites/player/walk/step2.png");
     player.walkTextures[2] =
-        LoadTexture("assets/sprites/player/step3.png");
+        LoadTexture("assets/sprites/player/walk/step3.png");
     player.walkTextures[3] =
-        LoadTexture("assets/sprites/player/step4.png");
+        LoadTexture("assets/sprites/player/walk/step4.png");
     player.walkTextures[4] =
-        LoadTexture("assets/sprites/player/step5.png");
+        LoadTexture("assets/sprites/player/walk/step5.png");
     player.walkTextures[5] =
-        LoadTexture("assets/sprites/player/step6.png");
+        LoadTexture("assets/sprites/player/walk/step6.png");
     player.walkTextures[6] =
-        LoadTexture("assets/sprites/player/step7.png");
+        LoadTexture("assets/sprites/player/walk/step7.png");
     player.walkTextures[7] =
-        LoadTexture("assets/sprites/player/step8.png");
+        LoadTexture("assets/sprites/player/walk/step8.png");
     player.walkTextures[8] =
-        LoadTexture("assets/sprites/player/step9.png");
+        LoadTexture("assets/sprites/player/walk/step9.png");
     player.walkTextures[9] =
-        LoadTexture("assets/sprites/player/step10.png");
+        LoadTexture("assets/sprites/player/walk/step10.png");
     player.walkTextures[10] =
-        LoadTexture("assets/sprites/player/step11.png");
+        LoadTexture("assets/sprites/player/walk/step11.png");
     player.walkTextures[11] =
-        LoadTexture("assets/sprites/player/step12.png");
+        LoadTexture("assets/sprites/player/walk/step12.png");
 
     player.walkFrame = 0;
     player.walkTimer = 0.0f;
@@ -64,35 +75,35 @@ Player InitPlayer(const char *texturePath)
 
     // LEFT PUNCH - A
     player.leftPunchTextures[0] =
-        LoadTexture("assets/sprites/player/left_punch1.png");
+        LoadTexture("assets/sprites/player/battle/left_punch1.png");
     player.leftPunchTextures[1] =
-        LoadTexture("assets/sprites/player/left_punch2.png");
+        LoadTexture("assets/sprites/player/battle/left_punch2.png");
     player.leftPunchTextures[2] =
-        LoadTexture("assets/sprites/player/left_punch3.png");
+        LoadTexture("assets/sprites/player/battle/left_punch3.png");
 
     // RIGHT PUNCH - W
     player.rightPunchTextures[0] =
-        LoadTexture("assets/sprites/player/right_punch1.png");
+        LoadTexture("assets/sprites/player/battle/right_punch1.png");
     player.rightPunchTextures[1] =
-        LoadTexture("assets/sprites/player/right_punch2.png");
+        LoadTexture("assets/sprites/player/battle/right_punch2.png");
     player.rightPunchTextures[2] =
-        LoadTexture("assets/sprites/player/right_punch3.png");
+        LoadTexture("assets/sprites/player/battle/right_punch3.png");
 
     // LEFT KICK - S
     player.leftKickTextures[0] =
-        LoadTexture("assets/sprites/player/left_kick1.png");
+        LoadTexture("assets/sprites/player/battle/left_kick1.png");
     player.leftKickTextures[1] =
-        LoadTexture("assets/sprites/player/left_kick2.png");
+        LoadTexture("assets/sprites/player/battle/left_kick2.png");
     player.leftKickTextures[2] =
-        LoadTexture("assets/sprites/player/left_kick3.png");
+        LoadTexture("assets/sprites/player/battle/left_kick3.png");
 
     // RIGHT KICK - D
     player.rightKickTextures[0] =
-        LoadTexture("assets/sprites/player/right_kick1.png");
+        LoadTexture("assets/sprites/player/battle/right_kick1.png");
     player.rightKickTextures[1] =
-        LoadTexture("assets/sprites/player/right_kick2.png");
+        LoadTexture("assets/sprites/player/battle/right_kick2.png");
     player.rightKickTextures[2] =
-        LoadTexture("assets/sprites/player/right_kick3.png");
+        LoadTexture("assets/sprites/player/battle/right_kick3.png");
 
     player.attackFrame = 0;
     player.attackTimer = 0.0f;
@@ -155,9 +166,14 @@ void UnloadPlayer(Player *player)
 {
     UnloadTexture(player->texture);
 
-    for (int i = 0; i < IDLE_FRAME_COUNT; i++)
+    for (int i = 0; i < IDLE_BREATH_FRAME_COUNT; i++)
     {
-        UnloadTexture(player->idleTextures[i]);
+        UnloadTexture(player->idleBreathTextures[i]);
+    }
+
+    for (int i = 0; i < IDLE_BATTLE_FRAME_COUNT; i++)
+    {
+        UnloadTexture(player->idleBattleTextures[i]);
     }
 
     for (int i = 0; i < WALK_FRAME_COUNT; i++)

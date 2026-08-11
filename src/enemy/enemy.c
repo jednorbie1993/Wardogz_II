@@ -1,4 +1,5 @@
 #include "enemy.h"
+#include <math.h>
 
 
 Enemy InitEnemyBase(void)
@@ -45,13 +46,33 @@ Enemy InitEnemyBase(void)
     enemy.facingRight = false;
     enemy.isChasing = false;
     enemy.chaseSpeed = 115.0f;
-    enemy.chaseStopDistance = 155.0f;
+    enemy.chaseStopDistance = 155.0f; // Legacy 0031 value kept for compatibility.
     enemy.chaseDepthTolerance = 8.0f;
+
+    // ============================================================
+    // 0035 - ENEMY STOP / ATTACK RANGE DEFAULTS
+    // ============================================================
+    // Punk stops advancing once he is inside this horizontal range.
+    // This matches the current attackRange so he does not walk into
+    // the player's body before starting an attack.
+    enemy.attackStopDistance = 210.0f;
+    enemy.isInAttackRange = false;
+
+    enemy.aggroRange = 500.0f;
 
     // ============================================================
     // 0032 - ENEMY STAGE BOUNDARY DEFAULTS
     // ============================================================
     enemy.stageAnchorOffsetY = 0.0f;
+
+    // ============================================================
+    // 0034 - ENEMY ENTRANCE / SPAWN DEFAULTS
+    // ============================================================
+    enemy.isEntering = false;
+    enemy.hasEnteredStage = true;
+    enemy.entranceTargetX = 0.0f;
+    enemy.entranceTargetY = 0.0f;
+    enemy.entranceSpeed = 140.0f;
 
     // ============================================================
     // GENERIC IDLE DEFAULTS
@@ -62,6 +83,15 @@ Enemy InitEnemyBase(void)
     enemy.idleDirection = 1;
     enemy.idleTimer = 0.0f;
     enemy.idleFrameTime = 0.19f;
+
+    // ============================================================
+    // 0036 - GENERIC WALK DEFAULTS
+    // ============================================================
+
+    enemy.walkFrameCount = 0;
+    enemy.walkFrame = 0;
+    enemy.walkTimer = 0.0f;
+    enemy.walkFrameTime = 0.11f;
 
     // ============================================================
     // GENERIC SPRITE DEFAULTS
@@ -149,6 +179,134 @@ static Rectangle GetEnemyScaledHurtbox(const Enemy *enemy)
 
 
 // ============================================================
+// 0034 - ENEMY ENTRANCE / SPAWN SYSTEM
+// ============================================================
+//
+// Spawn position still comes from InitPunk(x, y).
+// This function tells the enemy where to WALK TO before normal combat
+// AI starts. While isEntering is true, 0032 stage clamping and combat
+// are temporarily disabled so the enemy may begin off-screen.
+
+void StartEnemyEntrance(
+    Enemy *enemy,
+    float targetX,
+    float targetStageY,
+    float entranceSpeed
+)
+{
+    enemy->isEntering = true;
+    enemy->hasEnteredStage = false;
+
+    enemy->entranceTargetX = targetX;
+    enemy->entranceTargetY =
+        targetStageY -
+        enemy->stageAnchorOffsetY;
+
+    enemy->entranceSpeed = entranceSpeed;
+
+    enemy->isChasing = false;
+    enemy->isAttacking = false;
+    enemy->attackTimer = 0.0f;
+    enemy->hitPlayerThisAttack = false;
+}
+
+
+static bool UpdateEnemyEntrance(
+    Enemy *enemy,
+    float deltaTime
+)
+{
+    if (!enemy->isEntering)
+    {
+        return true;
+    }
+
+    float differenceX =
+        enemy->entranceTargetX -
+        enemy->hurtbox.x;
+
+    float differenceY =
+        enemy->entranceTargetY -
+        enemy->hurtbox.y;
+
+    float absoluteX = differenceX;
+    float absoluteY = differenceY;
+
+    if (absoluteX < 0.0f)
+        absoluteX = -absoluteX;
+
+    if (absoluteY < 0.0f)
+        absoluteY = -absoluteY;
+
+    const float arrivalDistance = 3.0f;
+
+    if (
+        absoluteX <= arrivalDistance &&
+        absoluteY <= arrivalDistance
+    )
+    {
+        enemy->hurtbox.x = enemy->entranceTargetX;
+        enemy->hurtbox.y = enemy->entranceTargetY;
+
+        enemy->isEntering = false;
+        enemy->hasEnteredStage = true;
+        enemy->isChasing = false;
+
+        return true;
+    }
+
+    float moveX = 0.0f;
+    float moveY = 0.0f;
+
+    if (absoluteX > arrivalDistance)
+        moveX = (differenceX > 0.0f) ? 1.0f : -1.0f;
+
+    if (absoluteY > arrivalDistance)
+        moveY = (differenceY > 0.0f) ? 1.0f : -1.0f;
+
+    if (moveX != 0.0f && moveY != 0.0f)
+    {
+        const float diagonalFactor = 0.70710678f;
+        moveX *= diagonalFactor;
+        moveY *= diagonalFactor;
+    }
+
+    enemy->hurtbox.x +=
+        moveX *
+        enemy->entranceSpeed *
+        deltaTime;
+
+    enemy->hurtbox.y +=
+        moveY *
+        enemy->entranceSpeed *
+        deltaTime;
+
+    if (
+        (differenceX > 0.0f && enemy->hurtbox.x > enemy->entranceTargetX) ||
+        (differenceX < 0.0f && enemy->hurtbox.x < enemy->entranceTargetX)
+    )
+    {
+        enemy->hurtbox.x = enemy->entranceTargetX;
+    }
+
+    if (
+        (differenceY > 0.0f && enemy->hurtbox.y > enemy->entranceTargetY) ||
+        (differenceY < 0.0f && enemy->hurtbox.y < enemy->entranceTargetY)
+    )
+    {
+        enemy->hurtbox.y = enemy->entranceTargetY;
+    }
+
+    if (moveX > 0.0f)
+        enemy->facingRight = true;
+    else if (moveX < 0.0f)
+        enemy->facingRight = false;
+
+    return false;
+}
+
+
+// ============================================================
 // 0032 - ENEMY STAGE BOUNDARY / WALK AREA CLAMP
 // ============================================================
 //
@@ -184,10 +342,16 @@ static void ClampEnemyToStage(
         enemy->hurtbox.y +
         enemy->stageAnchorOffsetY;
 
-    if (stageY < walkAreaTop)
+    // 0035 - Allow Punk to move higher than Player top boundary.
+    const float enemyTopExtra = 30.0f;
+
+    float enemyWalkAreaTop =
+        walkAreaTop - enemyTopExtra;
+
+    if (stageY < enemyWalkAreaTop)
     {
         enemy->hurtbox.y =
-            walkAreaTop -
+            enemyWalkAreaTop -
             enemy->stageAnchorOffsetY;
     }
 
@@ -284,24 +448,37 @@ static bool IsSameGroundDepth(
     );
 }
 
-void UpdateEnemyHit(
+// ============================================================
+// 0036 - ENEMY IDLE / WALK ANIMATION UPDATE
+// ============================================================
+
+static void UpdateEnemyAnimation(
     Enemy *enemy,
-    Player *player,
     float deltaTime,
-    float screenWidth,
-    float walkAreaTop,
-    float walkAreaBottom
+    bool isWalking
 )
 {
-    // ============================================================
-    // GENERIC IDLE ANIMATION
-    // ============================================================
-
-    // Kapag patay na ang enemy, hihinto ang animation at movement.
-    if (!enemy->isAlive)
+    if (isWalking && enemy->walkFrameCount > 0)
     {
+        enemy->walkTimer += deltaTime;
+
+        while (enemy->walkTimer >= enemy->walkFrameTime)
+        {
+            enemy->walkTimer -= enemy->walkFrameTime;
+            enemy->walkFrame++;
+
+            if (enemy->walkFrame >= enemy->walkFrameCount)
+            {
+                enemy->walkFrame = 0;
+            }
+        }
+
         return;
     }
+
+    // Restart the next walk cycle from frame 1.
+    enemy->walkFrame = 0;
+    enemy->walkTimer = 0.0f;
 
     if (enemy->idleFrameCount > 1)
     {
@@ -312,8 +489,6 @@ void UpdateEnemyHit(
             enemy->idleTimer -= enemy->idleFrameTime;
             enemy->idleFrame += enemy->idleDirection;
 
-            // Ping-pong:
-            // 0 -> 1 -> 2 -> 1 -> 0 -> ...
             if (enemy->idleFrame >= enemy->idleFrameCount - 1)
             {
                 enemy->idleFrame = enemy->idleFrameCount - 1;
@@ -325,6 +500,56 @@ void UpdateEnemyHit(
                 enemy->idleDirection = 1;
             }
         }
+    }
+}
+
+
+void UpdateEnemyHit(
+    Enemy *enemy,
+    Player *player,
+    float deltaTime,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    // Kapag patay na ang enemy, hihinto ang animation at movement.
+    if (!enemy->isAlive)
+    {
+        return;
+    }
+
+    // ============================================================
+    // 0034 - ENEMY ENTRANCE UPDATE
+    // ============================================================
+    //
+    // During entrance:
+    // - enemy may remain outside the 0032 boundary
+    // - normal chase is disabled
+    // - attacks / damage collision are disabled
+    //
+    // Once the target is reached, normal combat resumes.
+    if (enemy->isEntering)
+    {
+        bool entranceFinished =
+            UpdateEnemyEntrance(
+                enemy,
+                deltaTime
+            );
+
+        if (!entranceFinished)
+        {
+            // 0036 - Entrance movement uses the walk animation.
+            UpdateEnemyAnimation(enemy, deltaTime, true);
+            return;
+        }
+
+        ClampEnemyToStage(
+            enemy,
+            screenWidth,
+            walkAreaTop,
+            walkAreaBottom
+        );
     }
 
     // ============================================================
@@ -421,24 +646,57 @@ void UpdateEnemyHit(
         absoluteDepthDifference = -absoluteDepthDifference;
     }
 
+    // ============================================================
+    // 0034 - PLAYER DETECTION / AGGRO RANGE
+    // ============================================================
+    // Use both horizontal distance and stage-depth distance.
+    // This prevents Punk from chasing when the player is still far away.
+    float aggroDistance =
+        sqrtf(
+            (distanceX * distanceX) +
+            (depthDifference * depthDifference)
+        );
+
+    bool playerDetected =
+        aggroDistance <= enemy->aggroRange;
+
+    // ============================================================
+    // 0035 - ENEMY STOP / ATTACK RANGE
+    // ============================================================
+    //
+    // Punk must satisfy BOTH conditions before he fully stops:
+    // 1. Close enough on X.
+    // 2. Feet/depth aligned with the player.
+    //
+    // This prevents Punk from walking into the player's body and also
+    // prevents him from stopping too early while still on another lane.
+    enemy->isInAttackRange =
+        playerDetected &&
+        player->isAlive &&
+        absoluteDistanceX <= enemy->attackStopDistance &&
+        absoluteDepthDifference <= enemy->chaseDepthTolerance;
+
     enemy->isChasing = false;
 
     if (
         !enemy->isAttacking &&
         !enemy->isHit &&
-        player->isAlive
+        player->isAlive &&
+        playerDetected &&
+        !enemy->isInAttackRange
     )
     {
         float moveX = 0.0f;
         float moveY = 0.0f;
 
-        // Move horizontally until close enough to attack.
-        if (absoluteDistanceX > enemy->chaseStopDistance)
+        // 0035:
+        // Stop horizontal advance at attackStopDistance.
+        if (absoluteDistanceX > enemy->attackStopDistance)
         {
             moveX = (distanceX > 0.0f) ? 1.0f : -1.0f;
         }
 
-        // Move on the depth axis until both foot markers line up.
+        // Continue aligning on the depth axis until the feet match.
         if (absoluteDepthDifference > enemy->chaseDepthTolerance)
         {
             moveY = (depthDifference > 0.0f) ? 1.0f : -1.0f;
@@ -467,29 +725,57 @@ void UpdateEnemyHit(
                 walkAreaBottom
             );
 
-            // Recalculate after movement so attack logic uses fresh distance.
+            // Recalculate after movement so 0035 and attack logic
+            // use the enemy's fresh position this frame.
             scaledEnemyHurtbox = GetEnemyScaledHurtbox(enemy);
-            enemyCenterX = scaledEnemyHurtbox.x + scaledEnemyHurtbox.width / 2.0f;
+            enemyCenterX =
+                scaledEnemyHurtbox.x +
+                scaledEnemyHurtbox.width / 2.0f;
+
             distanceX = playerCenterX - enemyCenterX;
             absoluteDistanceX = distanceX;
+
             if (absoluteDistanceX < 0.0f)
             {
                 absoluteDistanceX = -absoluteDistanceX;
             }
+
+            enemyFeet = GetEnemyFootMarker(enemy);
+            enemyGroundY =
+                enemyFeet.y +
+                enemyFeet.height / 2.0f;
+
+            depthDifference =
+                playerGroundY -
+                enemyGroundY;
+
+            absoluteDepthDifference = depthDifference;
+
+            if (absoluteDepthDifference < 0.0f)
+            {
+                absoluteDepthDifference = -absoluteDepthDifference;
+            }
+
+            enemy->isInAttackRange =
+                absoluteDistanceX <= enemy->attackStopDistance &&
+                absoluteDepthDifference <= enemy->chaseDepthTolerance;
 
             enemy->attackDirection = (distanceX >= 0.0f) ? 1 : -1;
             enemy->facingRight = (distanceX >= 0.0f);
         }
     }
 
-    // Start a basic attack when the player is close enough.
+    // Start a basic attack only after Punk has reached the 0035
+    // stop/attack position.
     if (
         !enemy->isAttacking &&
         !enemy->isHit &&
         enemy->attackCooldownTimer <= 0.0f &&
+        enemy->isInAttackRange &&
         absoluteDistanceX <= enemy->attackRange &&
         IsPlayerInEnemyVerticalRange(enemy, player) &&
-        player->isAlive
+        player->isAlive &&
+        playerDetected
     )
     {
         enemy->isAttacking = true;
@@ -533,6 +819,17 @@ void UpdateEnemyHit(
             enemy->hitPlayerThisAttack = false;
         }
     }
+
+    // ============================================================
+    // 0036 - IDLE / WALK ANIMATION STATE
+    // ============================================================
+    UpdateEnemyAnimation(
+        enemy,
+        deltaTime,
+        enemy->isChasing &&
+        !enemy->isAttacking &&
+        !enemy->isHit
+    );
 
     // ============================================================
     // 0032 - FINAL NORMAL-COMBAT BOUNDARY SAFETY
@@ -677,8 +974,16 @@ void DrawEnemy(const Enemy *enemy)
         return;
     }
 
-    Texture2D currentTexture =
-        enemy->idleTextures[enemy->idleFrame];
+    // 0036 - Draw walking frames while Punk is moving.
+    bool drawWalk =
+        (enemy->isEntering || enemy->isChasing) &&
+        !enemy->isAttacking &&
+        !enemy->isHit &&
+        enemy->walkFrameCount > 0;
+
+    Texture2D currentTexture = drawWalk
+        ? enemy->walkTextures[enemy->walkFrame]
+        : enemy->idleTextures[enemy->idleFrame];
 
     Rectangle source =
     {
@@ -844,5 +1149,11 @@ void UnloadEnemy(Enemy *enemy)
     for (int i = 0; i < enemy->idleFrameCount; i++)
     {
         UnloadTexture(enemy->idleTextures[i]);
+    }
+
+    // 0036 - Unload walking textures too.
+    for (int i = 0; i < enemy->walkFrameCount; i++)
+    {
+        UnloadTexture(enemy->walkTextures[i]);
     }
 }

@@ -24,8 +24,26 @@ int main(void)
     Player player =
         InitPlayer("assets/sprites/player/player.png");
 
-    // 0018 - Stationary enemy dummy
-    Enemy enemy = InitPunk(1850.0f, 470.0f);
+    // ============================================================
+    // 0034 - PUNK ENTRANCE / SPAWN
+    // ============================================================
+    //
+    // InitPunk(x, y) = START / SPAWN LOCATION.
+    //
+    // Current setup:
+    // 1380 = outside the RIGHT side of the 1280 screen.
+    // 470  = stage/depth Y.
+    //
+    Enemy enemy = InitPunk(1380.0f, 470.0f);
+
+    // Entrance target inside the stage:
+    // targetX, targetStageY, entranceSpeed
+    StartEnemyEntrance(
+        &enemy,
+        1000.0f,
+        470.0f,
+        140.0f
+    );
 
     Texture2D background =
         LoadTexture("assets/background/back_alley.png");

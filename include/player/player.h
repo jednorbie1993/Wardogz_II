@@ -3,7 +3,8 @@
 
 #include "raylib.h"
 
-#define IDLE_FRAME_COUNT 3
+#define IDLE_BREATH_FRAME_COUNT 4
+#define IDLE_BATTLE_FRAME_COUNT 8
 #define WALK_FRAME_COUNT 12
 #define ATTACK_FRAME_COUNT 3
 
@@ -29,11 +30,17 @@ typedef struct Player
     float speed;
 
     // IDLE ANIMATION
-    Texture2D idleTextures[IDLE_FRAME_COUNT];
+    Texture2D idleBreathTextures[IDLE_BREATH_FRAME_COUNT];
+    Texture2D idleBattleTextures[IDLE_BATTLE_FRAME_COUNT];
     int idleFrame;
     int idleDirection;
     float idleTimer;
     float idleFrameTime;
+
+    // 0037 - NORMAL/BATTLE IDLE MODE
+    bool battleIdleActive;
+    float battleIdleTimer;
+    float battleIdleDuration;
 
     // WALKING ANIMATION
     Texture2D walkTextures[WALK_FRAME_COUNT];

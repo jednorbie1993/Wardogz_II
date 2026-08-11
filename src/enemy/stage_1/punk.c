@@ -32,7 +32,7 @@ Enemy InitPunk(float x, float y)
     enemy.facingRight = false;
     enemy.chaseSpeed = 115.0f;
     enemy.chaseStopDistance = 155.0f;
-    enemy.chaseDepthTolerance = 8.0f;
+    enemy.chaseDepthTolerance = 8.00f;
 
     // ============================================================
     // 0032 - PUNK STAGE POSITION ANCHOR
@@ -40,7 +40,7 @@ Enemy InitPunk(float x, float y)
     // InitPunk(x, y) stores the Punk hurtbox at y - 200.
     // This converts hurtbox.y back to the same logical stage Y used
     // by walkAreaTop / walkAreaBottom in main.c.
-    enemy.stageAnchorOffsetY = 200.0f;
+    enemy.stageAnchorOffsetY = 220.0f;
 
     // ============================================================
     // PUNK - IDLE TEXTURES
@@ -67,6 +67,40 @@ Enemy InitPunk(float x, float y)
     enemy.idleDirection = 1;
     enemy.idleTimer = 0.0f;
     enemy.idleFrameTime = 0.19f;
+
+    // ============================================================
+    // 0036 - PUNK WALK TEXTURES
+    // ============================================================
+
+    enemy.walkFrameCount = 6;
+
+    enemy.walkTextures[0] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punk_walk_1.png"
+    );
+
+    enemy.walkTextures[1] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punk_walk_2.png"
+    );
+
+    enemy.walkTextures[2] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punk_walk_3.png"
+    );
+
+    enemy.walkTextures[3] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punk_walk_4.png"
+    );
+
+    enemy.walkTextures[4] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punk_walk_5.png"
+    );
+
+    enemy.walkTextures[5] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punk_walk_6.png"
+    );
+
+    enemy.walkFrame = 0;
+    enemy.walkTimer = 0.0f;
+    enemy.walkFrameTime = 0.11f;
 
     // ============================================================
     // PUNK - SPRITE SIZE / ALIGNMENT

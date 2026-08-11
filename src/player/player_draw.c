@@ -69,8 +69,16 @@ void DrawPlayer(const Player *player)
     }
     else
     {
-        currentTexture =
-            player->idleTextures[player->idleFrame];
+        if (player->battleIdleActive)
+        {
+            currentTexture =
+                player->idleBattleTextures[player->idleFrame];
+        }
+        else
+        {
+            currentTexture =
+                player->idleBreathTextures[player->idleFrame];
+        }
     }
 
     // ============================================================
@@ -108,6 +116,13 @@ void DrawPlayer(const Player *player)
         scaledHeight
     };
 
+    // Adjust idle breath position only
+    if (!player->isAttacking &&
+        !player->isWalking &&
+        !player->battleIdleActive)
+    {
+        destination.y += 20.0f;
+    }
     // ============================================================
     // ORIGIN
     // ============================================================

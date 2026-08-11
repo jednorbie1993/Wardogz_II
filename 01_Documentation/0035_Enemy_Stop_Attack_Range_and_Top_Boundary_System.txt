@@ -1,0 +1,234 @@
+WARDOGZ II DOCUMENTATION
+0035 - Enemy Stop / Attack Range + Top Boundary Adjustment System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+=====
+
+0035_Enemy_Stop_Attack_Range_and_Top_Boundary_System
+
+============================================================
+PURPOSE
+=======
+
+Ang purpose ng 0035 ay ayusin ang behavior ng Punk kapag hinahabol niya ang Player.
+
+Sa previous system, marunong nang mag-detect at humabol si Punk sa Player.
+
+Sa 0035, dinagdagan at inayos ang:
+
+* Enemy stop distance
+* Enemy attack range
+* Depth alignment
+* Top stage boundary
+* Enemy-only top allowance
+
+============================================================
+ENEMY STOP / ATTACK RANGE
+=========================
+
+Kapag malayo ang Player:
+
+```
+Punk -> hahabol sa Player
+```
+
+Kapag malapit na:
+
+```
+Punk -> titigil sa tamang distance
+```
+
+Kapag nasa tamang attack position:
+
+```
+Punk -> puwedeng mag-attack
+```
+
+Main setting:
+
+```
+enemy.attackStopDistance = 210.0f;
+```
+
+Ito ang horizontal distance kung saan titigil na ang Punk sa paglapit.
+
+============================================================
+DEPTH TOLERANCE
+===============
+
+Setting:
+
+```
+enemy.chaseDepthTolerance = 8.0f;
+```
+
+Ginagamit ito para malaman kung sufficiently aligned na ang Player at Punk sa stage depth.
+
+============================================================
+TOP BOUNDARY PROBLEM
+====================
+
+Napansin sa testing na kapag pumunta ang Player sa pinakataas ng playable area, hindi sapat ang taas na naaabot ng Punk.
+
+Result:
+
+* Player nasa top
+* Punk sumusubok humabol
+* Punk naaabot ang sariling top boundary
+* Hindi sila maayos na pumapantay
+* Nagkakaroon ng problema sa attack positioning
+
+============================================================
+ENEMY TOP EXTRA FIX
+===================
+
+Sa:
+
+```
+src\enemy\enemy.c
+```
+
+Function:
+
+```
+ClampEnemyToStage()
+```
+
+Dinagdagan ng enemy-only top allowance.
+
+Code:
+
+```
+const float enemyTopExtra = 30.0f;
+
+float enemyWalkAreaTop =
+    walkAreaTop - enemyTopExtra;
+```
+
+Then ang enemy top clamp ay gumagamit ng:
+
+```
+if (stageY < enemyWalkAreaTop)
+{
+    enemy->hurtbox.y =
+        enemyWalkAreaTop -
+        enemy->stageAnchorOffsetY;
+}
+```
+
+============================================================
+HOW ENEMY TOP EXTRA WORKS
+=========================
+
+Example:
+
+```
+walkAreaTop = 410.0f;
+enemyTopExtra = 30.0f;
+```
+
+Calculation:
+
+```
+410 - 30 = 380
+```
+
+Therefore:
+
+```
+Player top boundary = 410
+Enemy top boundary  = 380
+```
+
+Mas maliit na Y value = mas mataas sa screen.
+
+Ito ay nagbibigay sa Punk ng additional space para maka-align sa Player malapit sa top portion ng stage.
+
+============================================================
+MAIN ADJUSTMENT
+===============
+
+Main value na maaaring i-tune:
+
+```
+const float enemyTopExtra = 30.0f;
+```
+
+Examples:
+
+```
+20.0f = less extra movement upward
+30.0f = current setting
+40.0f = more movement upward
+50.0f = even more movement upward
+```
+
+Adjust lamang kung kinakailangan pagkatapos ng gameplay testing.
+
+============================================================
+IMPORTANT
+=========
+
+Huwag gamitin ang:
+
+```
+enemy.spriteOffsetY
+```
+
+para ayusin ang actual movement boundary.
+
+Ang spriteOffsetY ay visual sprite position lamang.
+
+Para sa stage movement at maximum top position, gamitin ang:
+
+```
+enemyTopExtra
+```
+
+============================================================
+FILES INVOLVED
+==============
+
+Main file:
+
+```
+src\enemy\enemy.c
+```
+
+Related enemy configuration:
+
+```
+src\enemy\stage_1\punk.c
+```
+
+Related header:
+
+```
+include\enemy\enemy.h
+```
+
+============================================================
+RESULT
+======
+
+After 0035:
+
+* Punk detects the Player.
+* Punk chases the Player.
+* Punk stops near attack range.
+* Punk follows the Player's stage depth.
+* Punk can move farther upward when necessary.
+* Top boundary behavior is improved.
+* Enemy top allowance can be tuned independently from the Player.
+* Player's existing walkAreaTop does not need to be changed.
+
+============================================================
+STATUS
+======
+
+0035 - COMPLETED
+
+Next development continues from this enemy chase / positioning system.

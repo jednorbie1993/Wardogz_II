@@ -21,6 +21,25 @@ void UpdatePlayer(
     // ============================================================
     UpdatePlayerAttack(player, deltaTime);
 
+    // ============================================================
+    // 0037 - BATTLE IDLE TIMER
+    // ============================================================
+    if (player->battleIdleActive)
+    {
+        player->battleIdleTimer -= deltaTime;
+
+        if (player->battleIdleTimer <= 0.0f)
+        {
+            player->battleIdleTimer = 0.0f;
+            player->battleIdleActive = false;
+
+            // Restart the normal breathing loop cleanly.
+            player->idleFrame = 0;
+            player->idleDirection = 1;
+            player->idleTimer = 0.0f;
+        }
+    }
+
     // Walking only works when the player is not attacking.
     player->isWalking =
         !player->isAttacking &&
@@ -117,11 +136,16 @@ void UpdatePlayer(
         if (player->idleTimer >= player->idleFrameTime)
         {
             player->idleTimer -= player->idleFrameTime;
+            int idleFrameCount =
+                player->battleIdleActive
+                    ? IDLE_BATTLE_FRAME_COUNT
+                    : IDLE_BREATH_FRAME_COUNT;
+
             player->idleFrame += player->idleDirection;
 
-            if (player->idleFrame >= IDLE_FRAME_COUNT - 1)
+            if (player->idleFrame >= idleFrameCount - 1)
             {
-                player->idleFrame = IDLE_FRAME_COUNT - 1;
+                player->idleFrame = idleFrameCount - 1;
                 player->idleDirection = -1;
             }
 
