@@ -1,0 +1,187 @@
+WARDOGZ II DOCUMENTATION
+0023 - Player Attack Data / Move Definition System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0023_Player_Attack_Data_Move_Definition_System
+
+============================================================
+GOAL
+============================================================
+
+Create one central data system for all current player attacks.
+
+Before 0023, attack settings were hardcoded in different places:
+
+- Hitbox sizes and offsets were inside player_attack.c
+- Damage was hardcoded in enemy.c
+- Knockback speed was hardcoded in enemy.c
+- Hit reaction time was hardcoded in enemy.c
+- Attack frame timing came from one shared Player value
+
+This worked for the first prototype, but it would become difficult to
+manage once Wardogz II has more moves, combos, special attacks, and
+per-move balance values.
+
+0023 creates a reusable move definition structure so every attack can
+be configured from one central location.
+
+============================================================
+NEW FILES
+============================================================
+
+include/player/player_attack_data.h
+src/player/player_attack_data.c
+
+============================================================
+PLAYER ATTACK DATA STRUCTURE
+============================================================
+
+Each move now has a PlayerAttackData definition containing:
+
+- frameTime
+- activeStartFrame
+- activeEndFrame
+- hitboxWidthScale
+- hitboxHeightScale
+- hitboxOffsetXScale
+- hitboxOffsetYScale
+- damage
+- knockbackSpeed
+- hitReactionTime
+
+The four current attacks are:
+
+A = Left Punch
+W = Right Punch
+S = Left Kick
+D = Right Kick
+
+============================================================
+CENTRAL MOVE DEFINITIONS
+============================================================
+
+All attack settings are now stored in:
+
+src/player/player_attack_data.c
+
+This means future attack balancing can be done by editing the move
+values in one place instead of searching through collision and enemy
+code.
+
+For 0023, the gameplay behavior is intentionally preserved.
+
+Current shared combat values remain:
+
+Damage: 10
+Knockback Speed: 360.0f
+Hit Reaction Time: 0.12f
+Attack Frame Time: 0.10f
+
+The existing individual hitbox sizes and positions were also preserved.
+
+============================================================
+ATTACK HITBOX UPDATE
+============================================================
+
+player_attack.c no longer contains separate hardcoded hitbox blocks for
+every attack.
+
+GetPlayerAttackHitbox() now reads the active move's data and calculates
+the rectangle using the stored width, height, X offset, and Y offset.
+
+Facing left/right is still mirrored automatically.
+
+============================================================
+ACTIVE FRAME SUPPORT
+============================================================
+
+The system now supports:
+
+activeStartFrame
+activeEndFrame
+
+For 0023 all current attacks remain active through frames 0 to 2 so the
+behavior matches the previous debug-style hit detection.
+
+Later, these values can be changed so only the actual impact frame can
+damage an enemy.
+
+============================================================
+ENEMY DAMAGE / KNOCKBACK UPDATE
+============================================================
+
+enemy.c no longer directly uses:
+
+enemy->hp -= 10;
+enemy->hitReactionTimer = 0.12f;
+enemy->knockbackSpeed = 360.0f;
+
+It now gets those values from the player's active move through:
+
+GetPlayerAttackDamage()
+GetPlayerAttackKnockbackSpeed()
+GetPlayerAttackHitReactionTime()
+
+This keeps the enemy collision system generic.
+
+============================================================
+BUILD SCRIPT UPDATE
+============================================================
+
+build.bat and build_and_run.bat now compile:
+
+src\player\player_attack_data.c
+
+Without this new source file in the build command, the linker would not
+find GetPlayerAttackData().
+
+============================================================
+WHY THIS SYSTEM IS IMPORTANT
+============================================================
+
+0023 is a foundation system.
+
+Future features can now build on the same move data architecture:
+
+- Different damage per attack
+- Different knockback per attack
+- Real active hit frames
+- Recovery timing
+- Combo chains
+- Input buffering
+- Direction + attack commands
+- Special attacks
+- Move properties
+
+Instead of rewriting the combat system, those systems can extend the
+PlayerAttackData structure.
+
+============================================================
+CURRENT RESULT
+============================================================
+
+Player controls remain:
+
+Arrow Keys = Movement
+A = Left Punch
+W = Right Punch
+S = Left Kick
+D = Right Kick
+
+The visible gameplay should behave the same as before 0023, but the
+attack system is now data-driven and easier to expand.
+
+============================================================
+STATUS
+============================================================
+
+0023 - COMPLETE
+
+Next logical step:
+0024 - Per-Move Damage Values
+============================================================

@@ -1,0 +1,178 @@
+WARDOGZ II DOCUMENTATION
+0025 - Per-Move Knockback Values
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0025_Per_Move_Knockback_Values
+
+============================================================
+PURPOSE
+============================================================
+
+Give each basic player attack its own knockback strength using
+the Player Attack Data / Move Definition System created in 0023.
+
+0024 gave each move its own damage.
+0025 now gives each move its own knockback speed.
+
+============================================================
+CURRENT MOVE VALUES
+============================================================
+
+A - Left Punch
+Damage: 8
+Knockback Speed: 220
+
+W - Right Punch
+Damage: 12
+Knockback Speed: 280
+
+S - Left Kick
+Damage: 16
+Knockback Speed: 360
+
+D - Right Kick
+Damage: 20
+Knockback Speed: 440
+
+============================================================
+PLAYER ATTACK DATA FIELD GUIDE
+============================================================
+
+Example: A - Left Punch
+
+0.10f
+- Animation frame time.
+- Gaano kabilis magpalit ang attack animation frame.
+
+0
+- Active start frame.
+- Frame kung kailan nagsisimulang active ang hit.
+
+2
+- Active end frame.
+- Frame kung kailan natatapos ang active hit.
+
+0.25f
+- Hitbox width scale.
+- Lapad ng attack hitbox.
+
+0.10f
+- Hitbox height scale.
+- Taas ng attack hitbox.
+
+0.04f
+- Hitbox X offset.
+- Horizontal/X position adjustment ng hitbox.
+
+0.32f
+- Hitbox Y offset.
+- Vertical/Y position adjustment ng hitbox.
+
+8
+- Damage.
+- Damage ng Left Punch.
+- Per-move damage system added in 0024.
+
+220.0f
+- Knockback speed.
+- Lakas/bilis ng pagtulak sa enemy.
+- Per-move knockback system added in 0025.
+
+0.12f
+- Hit reaction time.
+- Gaano katagal ang enemy hit reaction.
+
+============================================================
+DESIGN
+============================================================
+
+A - Left Punch
+Lowest knockback.
+
+W - Right Punch
+Medium-low knockback.
+
+S - Left Kick
+Strong knockback.
+
+D - Right Kick
+Highest knockback.
+
+============================================================
+HOW IT WORKS
+============================================================
+
+Knockback values are stored in:
+
+src/player/player_attack_data.c
+
+When an enemy is hit, enemy.c calls:
+
+GetPlayerAttackKnockbackSpeed(player)
+
+The function reads the knockbackSpeed value from the currently
+active player's move definition.
+
+No new enemy-specific knockback logic is required.
+
+============================================================
+WHY THIS MATTERS
+============================================================
+
+Different moves can now have different physical impact.
+
+This prepares future Tekken-style moves for independent:
+
+- Damage
+- Knockback
+- Hit reaction
+- Hitbox
+- Active frames
+- Recovery
+- Command input
+- Combo behavior
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+src/player/player_attack_data.c
+
+NEW DOCUMENTATION:
+00_Documentation/0025_Per_Move_Knockback_Values.txt
+
+============================================================
+TEST
+============================================================
+
+Build and run Wardogz II.
+
+Expected knockback:
+
+A = 220
+W = 280
+S = 360
+D = 440
+
+Expected damage remains:
+
+A = 8
+W = 12
+S = 16
+D = 20
+
+Visually:
+A should push the enemy the least.
+D should push the enemy the farthest.
+
+============================================================
+STATUS
+============================================================
+
+0025 - COMPLETE

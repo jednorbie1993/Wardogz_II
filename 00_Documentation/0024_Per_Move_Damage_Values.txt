@@ -1,0 +1,107 @@
+WARDOGZ II DOCUMENTATION
+0024 - Per-Move Damage Values
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0024_Per_Move_Damage_Values
+
+============================================================
+PURPOSE
+============================================================
+
+Give each basic player attack its own damage value using the
+Player Attack Data / Move Definition System created in 0023.
+
+This is the first gameplay use of the centralized move data.
+
+============================================================
+DAMAGE VALUES
+============================================================
+
+A - Left Punch
+Damage: 8
+
+W - Right Punch
+Damage: 12
+
+S - Left Kick
+Damage: 16
+
+D - Right Kick
+Damage: 20
+
+============================================================
+HOW IT WORKS
+============================================================
+
+The damage values are stored in:
+
+src/player/player_attack_data.c
+
+enemy.c does not need separate damage logic for every move.
+
+When an attack hits, enemy.c calls:
+
+GetPlayerAttackDamage(player)
+
+The function reads the damage of the player's current attack
+from the move definition data.
+
+============================================================
+WHY THIS SYSTEM IS IMPORTANT
+============================================================
+
+Each future move can have independent combat data.
+
+Example future properties:
+
+- Damage
+- Knockback
+- Hit reaction
+- Hitbox size
+- Hitbox position
+- Active frames
+- Animation speed
+- Recovery
+- Combo / command information
+
+This prepares Wardogz II for a larger Tekken-style move system.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+src/player/player_attack_data.c
+
+NEW DOCUMENTATION:
+00_Documentation/0024_Per_Move_Damage_Values.txt
+
+============================================================
+TEST
+============================================================
+
+Attack the enemy using A, W, S, and D.
+
+Expected damage:
+
+A = 8
+W = 12
+S = 16
+D = 20
+
+The enemy should still:
+- react to hits
+- receive knockback
+- lose HP
+- stop at 0 HP
+
+============================================================
+STATUS
+============================================================
+
+0024 - COMPLETE
