@@ -21,18 +21,22 @@ int main(void)
     SetTargetFPS(60);
 
     // Load player and background
-    Player player = InitPlayer("assets/sprites/player/player.png");
+    Player player =
+        InitPlayer("assets/sprites/player/player.png");
 
     // 0018 - Stationary enemy dummy
     Enemy enemy = InitPunk(850.0f, 470.0f);
 
-    Texture2D background = LoadTexture("assets/background/back_alley.png");
+    Texture2D background =
+        LoadTexture("assets/background/back_alley.png");
 
     while (!WindowShouldClose())
     {
         float deltaTime = GetFrameTime();
 
-        // Update player movement and boundaries
+        // ========================================================
+        // UPDATE
+        // ========================================================
         UpdatePlayer(
             &player,
             deltaTime,
@@ -49,20 +53,23 @@ int main(void)
             (float)screenWidth
         );
 
+        // ========================================================
+        // DRAW
+        // ========================================================
         BeginDrawing();
 
-        // Clear first, then draw the background
         ClearBackground(BLACK);
 
-        // Scale background to exactly fit 1280x720
-        Rectangle source = {
+        Rectangle source =
+        {
             0.0f,
             0.0f,
             (float)background.width,
             (float)background.height
         };
 
-        Rectangle destination = {
+        Rectangle destination =
+        {
             0.0f,
             0.0f,
             (float)screenWidth,
@@ -78,10 +85,7 @@ int main(void)
             WHITE
         );
 
-        // 0019 - Draw enemy dummy, hurtbox, HP, and hit reaction.
         DrawEnemy(&enemy);
-
-        // Draw player on top of the background
         DrawPlayer(&player);
 
         DrawText(
@@ -95,7 +99,9 @@ int main(void)
         EndDrawing();
     }
 
-    // Unload textures from memory
+    // ============================================================
+    // UNLOAD
+    // ============================================================
     UnloadTexture(background);
     UnloadPlayer(&player);
 

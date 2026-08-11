@@ -1,0 +1,421 @@
+WARDOGZ II DOCUMENTATION 0022 - Player Code Architecture / System
+Separation
+
+Date: 2026-08-11
+
+============================================================ TITLE
+============================================================
+
+0022_Player_Code_Architecture_System_Separation
+
+============================================================ OBJECTIVE
+============================================================
+
+Reorganize the growing player system into separate source and header
+files without removing or replacing the player systems completed in
+Documentation 0013 through 0017.
+
+The player code previously placed most player behavior inside:
+
+src.c include.h
+
+The system is now separated by responsibility so future combat, combo,
+and move systems can grow without turning player.c into one very large
+file.
+
+============================================================ IMPORTANT
+DOCUMENTATION RULE
+============================================================
+
+Documentation 0013 through 0021 is NOT deleted or invalidated.
+
+Those files remain the development history of Wardogz II.
+
+0022 records a CODE ARCHITECTURE / REFACTOR update.
+
+Existing systems such as:
+
+-   Walking animation
+-   Arrow Key movement
+-   Diagonal movement speed correction
+-   Basic attacks
+-   Attack movement lock
+-   Attack hitboxes
+-   Enemy damage
+-   Enemy knockback
+-   Punk sprite / idle animation
+-   Enemy/Punk code separation
+
+remain part of the project.
+
+Only the LOCATION and ORGANIZATION of some player code changed.
+
+============================================================ PREVIOUS
+PLAYER STRUCTURE
+============================================================
+
+Before 0022:
+
+src | +– player +– player.c
+
+include | +– player +– player.h
+
+player.c contained several different responsibilities:
+
+-   Player initialization
+-   Texture loading
+-   Movement input
+-   Facing direction
+-   Diagonal movement correction
+-   Walking animation
+-   Idle animation
+-   Attack input
+-   Attack animation
+-   Attack movement lock
+-   Attack hitbox calculation
+-   Player drawing
+-   Depth scaling
+-   Sprite mirroring
+-   Debug attack hitbox drawing
+-   Texture unloading
+
+============================================================ NEW PLAYER
+STRUCTURE ============================================================
+
+After 0022:
+
+src | +– player | +– player.c +– player_move.c +– player_attack.c +–
+player_draw.c
+
+include | +– player | +– player.h +– player_move.h +– player_attack.h +–
+player_draw.h
+
+============================================================ PLAYER.C /
+PLAYER.H ============================================================
+
+Files:
+
+src.c include.h
+
+Purpose:
+
+These remain the CORE player files.
+
+player.h contains the main Player structure and shared player
+definitions required by the separated player systems.
+
+The Player structure continues to store the player’s shared state,
+including:
+
+-   Position / rectangle
+-   Speed
+-   Idle animation state
+-   Walking animation state
+-   Attack animation state
+-   Current attack
+-   isAttacking
+-   isWalking
+-   Facing direction
+-   Player textures
+
+player.c handles the core player initialization and cleanup, including
+loading and unloading the player textures.
+
+============================================================
+PLAYER_MOVE.C / PLAYER_MOVE.H
+============================================================
+
+Files:
+
+src_move.c include_move.h
+
+Purpose:
+
+Handles player movement and non-attack movement animation logic.
+
+Systems moved into this section include:
+
+-   Arrow Key movement
+-   LEFT / RIGHT facing updates
+-   UP / DOWN movement
+-   Movement lock while attacking
+-   Diagonal Vector2 speed correction
+-   Player position updates using deltaTime
+-   Walking animation
+-   Idle animation
+-   Walkable area boundaries
+-   Horizontal screen boundaries
+
+Related previous documentation:
+
+0013 - Walking Animation System 0014 - Attack Controls and Arrow Key
+Movement 0015 - Diagonal Movement Vector Speed Fix 0016 - Basic Attack
+Movement Lock System
+
+The systems remain active. Their implementation is now organized inside
+the separated player movement code where appropriate.
+
+============================================================
+PLAYER_ATTACK.C / PLAYER_ATTACK.H
+============================================================
+
+Files:
+
+src_attack.c include_attack.h
+
+Purpose:
+
+Handles the player’s combat attack logic.
+
+Current basic attacks remain:
+
+A = Left Punch W = Right Punch S = Left Kick D = Right Kick
+
+Attack states remain:
+
+ATTACK_NONE ATTACK_LEFT_PUNCH ATTACK_RIGHT_PUNCH ATTACK_LEFT_KICK
+ATTACK_RIGHT_KICK
+
+The attack section handles:
+
+-   Attack button input
+-   Starting an attack
+-   isAttacking state
+-   currentAttack state
+-   Attack frame timing
+-   Attack animation progression
+-   Returning to normal state after an attack
+-   Attack hitbox activation
+-   Individual attack hitbox calculation
+-   Left/right hitbox positioning
+
+Related previous documentation:
+
+0014 - Attack Controls and Arrow Key Movement 0016 - Basic Attack
+Movement Lock System 0017 - Attack Hitbox System
+
+This file is also the main foundation for future combat expansion.
+
+Possible future systems include:
+
+-   Combo input sequences
+-   Direction + attack commands
+-   Additional punches and kicks
+-   Special moves
+-   Different damage values
+-   Different knockback values
+-   Different active hit frames
+-   Recovery frames
+-   Stun
+-   Launchers
+-   Move cancel rules
+-   Tekken-style command list behavior
+
+============================================================
+PLAYER_DRAW.C / PLAYER_DRAW.H
+============================================================
+
+Files:
+
+src_draw.c include_draw.h
+
+Purpose:
+
+Handles visual rendering of the player.
+
+This section contains:
+
+-   Player depth scaling
+-   Current texture selection
+-   Attack texture selection
+-   Walking texture selection
+-   Idle texture selection
+-   Horizontal sprite mirroring
+-   Destination rectangle calculation
+-   Bottom-center sprite origin
+-   DrawTexturePro()
+-   Red attack hitbox debug drawing
+
+Separating drawing from movement and combat makes the player rendering
+code easier to maintain independently.
+
+============================================================
+UPDATEPLAYER CONNECTION
+============================================================
+
+The main game loop can continue using:
+
+UpdatePlayer(…)
+
+The internal player systems are separated, but main.c does not need to
+manually control every movement and attack subsystem.
+
+This keeps main.c focused on the high-level game loop.
+
+============================================================ MAIN.C ROLE
+============================================================
+
+main.c remains responsible for high-level game flow.
+
+Current important flow:
+
+UpdatePlayer(…)
+
+UpdateEnemyHit(…)
+
+DrawEnemy(…)
+
+DrawPlayer(…)
+
+The detailed player behavior is handled by the player subsystem files
+instead of being written directly inside main.c.
+
+============================================================ BUILD
+SYSTEM UPDATE
+============================================================
+
+Because the player implementation now uses multiple .c files, the build
+scripts must compile all player source files.
+
+Player source files required by the build:
+
+src.c src_move.c src_attack.c src_draw.c
+
+Enemy source files remain:
+
+src.c src_1.c
+
+main.c remains:
+
+src.c
+
+The executable remains:
+
+build_II.exe
+
+run.bat can continue running the same executable.
+
+============================================================ CURRENT
+PROJECT STRUCTURE
+============================================================
+
+Wardogz_II | +– assets | +– build | +– Wardogz_II.exe | +– include | | |
++– player | | +– player.h | | +– player_move.h | | +– player_attack.h |
+| +– player_draw.h | | | +– enemy | +– enemy.h | | | +– stage_1 | +–
+punk.h | +– src | | | +– main.c | | | +– player | | +– player.c | | +–
+player_move.c | | +– player_attack.c | | +– player_draw.c | | | +– enemy
+| +– enemy.c | | | +– stage_1 | +– punk.c | +– build.bat +–
+build_and_run.bat +– run.bat +– how to run.txt
+
+============================================================ RELATION TO
+PREVIOUS DOCUMENTATION
+============================================================
+
+0013 - Walking Animation System -> Player walking/idle behavior is now
+organized under the separated player movement/drawing architecture.
+
+0014 - Attack Controls and Arrow Key Movement -> Movement and attack
+responsibilities are now separated.
+
+0015 - Diagonal Movement Vector Speed Fix -> Remains part of the player
+movement system.
+
+0016 - Basic Attack Movement Lock System -> Remains active across
+movement and attack state logic.
+
+0017 - Attack Hitbox System -> Attack/hitbox logic is now organized
+under player_attack.
+
+0018 - Enemy Dummy + Hurtbox System -> Enemy system remains separate and
+continues using the player’s attack hitbox interface.
+
+0019 - Enemy Hit Reaction / Knockback System -> Enemy reaction and
+knockback behavior remains unchanged.
+
+0020 - Enemy Sprite / Idle Animation System -> Punk sprite/idle system
+remains unchanged.
+
+0021 - Enemy Code Architecture / Punk Separation System -> Enemy
+architecture remains separated into shared enemy code and Punk-specific
+code.
+
+0022 does not replace these systems.
+
+It documents the new PLAYER architecture built on top of them.
+
+============================================================ WHY THIS
+SEPARATION IS IMPORTANT
+============================================================
+
+The player combat system is expected to grow.
+
+Keeping all future moves inside one player.c would make the file
+increasingly difficult to read, debug, and maintain.
+
+The separated structure allows each area to grow independently:
+
+player.c Core player data / initialization / cleanup
+
+player_move.c Movement / facing / idle / walking / boundaries
+
+player_attack.c Basic attacks / hitboxes / future combos and command
+moves
+
+player_draw.c Player sprite rendering / scaling / mirroring / debug
+drawing
+
+This creates a cleaner foundation for a larger beat-’em-up combat system
+and future Tekken-style move expansion.
+
+============================================================
+DOCUMENTATION HISTORY NOTE
+============================================================
+
+Some older documentation describes the project exactly as it existed at
+that earlier development step.
+
+For example, earlier documents may mention older file locations, older
+walking frame counts, or features that had not yet been implemented at
+that time.
+
+Those documents should remain unchanged as historical records.
+
+When the current implementation differs from an older document, the
+newer numbered documentation should be treated as the later project
+state.
+
+This preserves the development history instead of rewriting it.
+
+============================================================ STATUS
+============================================================
+
+0022 - Player Code Architecture / System Separation
+
+STATUS: COMPLETE
+
+============================================================ CURRENT
+ARCHITECTURE STATUS
+============================================================
+
+[OK] Core player files retained [OK] Movement system separated [OK]
+Attack system separated [OK] Player drawing separated [OK] Existing
+Player structure retained [OK] Existing basic attacks retained [OK]
+Existing attack hitbox system retained [OK] Existing movement lock
+retained [OK] Existing diagonal speed fix retained [OK] Existing enemy
+systems remain compatible [OK] Existing Punk separation remains intact
+[OK] Build system updated for multiple player source files [OK] Project
+prepared for future combo / move expansion
+
+============================================================ NEXT
+DEVELOPMENT STEP
+============================================================
+
+The player architecture is now ready for additional combat systems.
+
+Future development can add new moves and combo behavior primarily
+through the player attack system without placing all new combat logic
+back into player.c.
+
+============================================================ END OF
+DOCUMENTATION
+============================================================

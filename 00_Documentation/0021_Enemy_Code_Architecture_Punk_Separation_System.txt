@@ -1,0 +1,256 @@
+WARDOGZ II DOCUMENTATION 0021 - Enemy Code Architecture / Punk
+Separation System
+
+Date: 2026-08-10
+
+============================================================ TITLE
+============================================================
+
+0021_Enemy_Code_Architecture_Punk_Separation_System
+
+============================================================ OBJECTIVE
+============================================================
+
+Separate the general enemy system from the Stage 1 Punk-specific
+settings.
+
+The goal is to avoid copying the complete enemy code for every future
+enemy character.
+
+enemy.c / enemy.h now contain the systems shared by all enemies.
+
+punk.c / punk.h contain only the Stage 1 Punk-specific setup.
+
+============================================================ WHY THE
+SYSTEM WAS SEPARATED
+============================================================
+
+Before 0021, enemy.c contained both:
+
+1.  General enemy systems
+2.  Punk-specific values and textures
+
+This would become difficult to maintain when more enemy types are added.
+
+Instead of creating a complete copy of enemy.c for Punk, Gangster,
+Yankee, and future enemies, the shared systems are written once.
+
+Each enemy type can then have its own small setup file.
+
+============================================================ SHARED
+ENEMY SYSTEM
+============================================================
+
+Files:
+
+src.c include.h
+
+These are used by ALL enemy types.
+
+Shared systems include:
+
+-   Enemy HP
+-   Damage
+-   Player attack collision
+-   One-hit-per-attack protection
+-   Hit reaction
+-   Left/right knockback
+-   Death state
+-   Generic idle animation logic
+-   Generic enemy sprite drawing
+-   Debug blue hurtbox drawing
+-   HP bar drawing
+-   Texture unloading
+
+============================================================ STAGE 1
+PUNK SYSTEM ============================================================
+
+Files:
+
+src_1.c include_1.h
+
+punk.c contains the settings unique to the Punk enemy.
+
+These include:
+
+-   Punk hurtbox measurements
+-   Punk HP setup
+-   Punk idle texture paths
+-   Punk idle frame count
+-   Punk idle animation speed
+-   Punk sprite size
+-   Punk sprite alignment offsets
+
+============================================================ PUNK
+INITIALIZATION
+============================================================
+
+The Punk now uses:
+
+Enemy InitPunk(float x, float y);
+
+InitPunk() first creates the common enemy defaults using:
+
+Enemy enemy = InitEnemyBase();
+
+After that, Punk-specific settings are applied.
+
+This allows the shared enemy behavior to remain inside enemy.c while
+punk.c only describes what makes the Punk different.
+
+============================================================ PUNK FINAL
+HURTBOX ============================================================
+
+Final measured Punk hurtbox:
+
+Y offset: -200 Width: 148 Height: 276
+
+The Punk keeps its own hurtbox measurements without hardcoding those
+measurements into the shared enemy system.
+
+============================================================ PUNK SPRITE
+SETTINGS ============================================================
+
+Punk sprite size:
+
+580
+
+The Punk-specific alignment values are stored in:
+
+spriteOffsetX spriteOffsetY
+
+The shared DrawEnemy() function uses these values when drawing the
+enemy.
+
+This means future enemies can use different sizes and alignment without
+creating another DrawEnemy() function.
+
+============================================================ GENERIC
+ENEMY DATA ============================================================
+
+The Enemy structure now stores reusable character data such as:
+
+hurtbox hp maxHp isAlive
+
+hitByCurrentAttack
+
+isHit hitReactionTimer knockbackSpeed knockbackDirection
+
+idleTextures[] idleFrameCount idleFrame idleDirection idleTimer
+idleFrameTime
+
+spriteSize spriteOffsetX spriteOffsetY
+
+============================================================ MAIN.C
+UPDATE ============================================================
+
+main.c now includes the Punk header:
+
+#include “punk.h”
+
+The Punk enemy is created using:
+
+Enemy enemy = InitPunk(850.0f, 470.0f);
+
+The old InitEnemy() Punk initialization is no longer used.
+
+============================================================ BUILD
+SYSTEM UPDATE
+============================================================
+
+Because the source code is now organized into folders, the build scripts
+were updated.
+
+Current source files compiled:
+
+src.c src.c src.c src_1.c
+
+Current include folders:
+
+include include include include_1
+
+============================================================ UPDATED BAT
+FILES ============================================================
+
+The following build/run files were updated for the new structure:
+
+build.bat build_and_run.bat run.bat
+
+The HOW TO RUN documentation was also updated with the current project
+structure and PowerShell commands.
+
+============================================================ CURRENT
+PROJECT STRUCTURE
+============================================================
+
+Wardogz_II | +– assets | +– build | +– Wardogz_II.exe | +– include | | |
++– player | | +– player.h | | | +– enemy | +– enemy.h | | | +– stage_1 |
++– punk.h | +– src | | | +– main.c | | | +– player | | +– player.c | | |
++– enemy | +– enemy.c | | | +– stage_1 | +– punk.c | +– build.bat +–
+build_and_run.bat +– run.bat +– how to run.txt
+
+============================================================ FUTURE
+ENEMY EXPANSION
+============================================================
+
+Future enemies should NOT copy the complete enemy.c system.
+
+Example:
+
+src_1.c src_1.c
+
+include_1.h include_1.h
+
+Each enemy-specific file can define its own:
+
+-   HP
+-   Hurtbox size
+-   Sprite size
+-   Sprite alignment
+-   Texture paths
+-   Animation settings
+
+while continuing to use the shared enemy.c systems.
+
+============================================================ BENEFIT
+============================================================
+
+This structure prevents duplicated combat code.
+
+For example, if knockback needs to be changed later, the change can be
+made once in enemy.c instead of separately editing Punk, Gangster,
+Yankee, and every other enemy.
+
+Different enemy sizes are supported because each enemy instance keeps
+its own hurtbox and sprite settings.
+
+============================================================ TEST RESULT
+============================================================
+
+PASSED
+
+Confirmed after restructuring:
+
+-   enemy.c and enemy.h are the shared enemy system.
+-   punk.c and punk.h are separated from the shared system.
+-   Punk still uses its own measured hurtbox.
+-   Punk still uses its 3 idle textures.
+-   Shared damage system remains available.
+-   Shared hit reaction and knockback remain available.
+-   Shared blue hurtbox and HP display remain available.
+-   Build scripts include the new source paths.
+-   Project can continue adding new enemy types without copying the
+    complete enemy system.
+
+============================================================ STATUS
+============================================================
+
+0021 - Enemy Code Architecture / Punk Separation System
+
+COMPLETE
+
+============================================================ NEXT
+============================================================
+
+The project is ready for the next enemy feature while keeping Punk
+settings separate from the reusable enemy system.
