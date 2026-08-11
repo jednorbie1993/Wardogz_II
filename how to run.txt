@@ -89,40 +89,46 @@ PROJECT STRUCTURE
 ===========================================================
 
 Wardogz_II
-|
-+-- assets
-|
-+-- build
-|   +-- Wardogz_II.exe
-|
-+-- include
-|   |
-|   +-- player
-|   |   +-- player.h
-|   |
-|   +-- enemy
-|       +-- enemy.h
-|       |
-|       +-- stage_1
-|           +-- punk.h
-|
-+-- src
-|   |
-|   +-- main.c
-|   |
-|   +-- player
-|   |   +-- player.c
-|   |
-|   +-- enemy
-|       +-- enemy.c
-|       |
-|       +-- stage_1
-|           +-- punk.c
-|
-+-- build.bat
-+-- build_and_run.bat
-+-- run.bat
-+-- how to run.txt
+│
+├── assets
+│
+├── build
+│   └── Wardogz_II.exe
+│
+├── include
+│   │
+│   ├── player
+│   │   ├── player.h
+│   │   ├── player_move.h
+│   │   ├── player_attack.h
+│   │   └── player_draw.h
+│   │
+│   └── enemy
+│       ├── enemy.h
+│       │
+│       └── stage_1
+│           └── punk.h
+│
+├── src
+│   │
+│   ├── main.c
+│   │
+│   ├── player
+│   │   ├── player.c
+│   │   ├── player_move.c
+│   │   ├── player_attack.c
+│   │   └── player_draw.c
+│   │
+│   └── enemy
+│       ├── enemy.c
+│       │
+│       └── stage_1
+│           └── punk.c
+│
+├── build.bat
+├── build_and_run.bat
+├── run.bat
+└── how to run.txt
 
 
 ===========================================================
