@@ -104,6 +104,10 @@ Player InitPlayer(const char *texturePath)
     // ============================================================
     player.isWalking = false;
     player.currentAttack = ATTACK_NONE;
+
+    // 0026 - No buffered attack when the player is created.
+    player.bufferedAttack = ATTACK_NONE;
+
     player.facingRight = true;
 
     // ============================================================

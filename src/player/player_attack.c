@@ -1,43 +1,83 @@
 #include "player_attack.h"
 #include "player_attack_data.h"
 
+// ============================================================
+// 0026 - COMBO INPUT BUFFER
+// ============================================================
+// This is NOT the final combo-chain system yet.
+//
+// Purpose:
+// - If the player presses A/W/S/D during an attack,
+//   remember ONE next attack.
+// - When the current 3-frame attack finishes,
+//   automatically start the buffered attack.
+//
+// Example:
+// Press A.
+// Before A finishes, press W.
+// A finishes -> W starts automatically.
+//
+// This makes fast command input possible later for Tekken-style
+// move strings and combo chains.
+
+static AttackType GetPressedAttack(void)
+{
+    if (IsKeyPressed(KEY_A))
+    {
+        return ATTACK_LEFT_PUNCH;
+    }
+
+    if (IsKeyPressed(KEY_W))
+    {
+        return ATTACK_RIGHT_PUNCH;
+    }
+
+    if (IsKeyPressed(KEY_S))
+    {
+        return ATTACK_LEFT_KICK;
+    }
+
+    if (IsKeyPressed(KEY_D))
+    {
+        return ATTACK_RIGHT_KICK;
+    }
+
+    return ATTACK_NONE;
+}
+
+static void StartPlayerAttack(Player *player, AttackType attack)
+{
+    if (attack == ATTACK_NONE)
+    {
+        return;
+    }
+
+    player->currentAttack = attack;
+    player->isAttacking = true;
+    player->attackFrame = 0;
+    player->attackTimer = 0.0f;
+}
+
 void UpdatePlayerAttack(Player *player, float deltaTime)
 {
+    AttackType pressedAttack = GetPressedAttack();
+
     // ============================================================
-    // ATTACK INPUT
+    // ATTACK INPUT / BUFFER
     // ============================================================
-    // Habang uma-attack, hindi muna puwedeng mag-start
-    // ng panibagong attack hanggang matapos ang 3 frames.
     if (!player->isAttacking)
     {
-        if (IsKeyPressed(KEY_A))
-        {
-            player->currentAttack = ATTACK_LEFT_PUNCH;
-            player->isAttacking = true;
-            player->attackFrame = 0;
-            player->attackTimer = 0.0f;
-        }
-        else if (IsKeyPressed(KEY_W))
-        {
-            player->currentAttack = ATTACK_RIGHT_PUNCH;
-            player->isAttacking = true;
-            player->attackFrame = 0;
-            player->attackTimer = 0.0f;
-        }
-        else if (IsKeyPressed(KEY_S))
-        {
-            player->currentAttack = ATTACK_LEFT_KICK;
-            player->isAttacking = true;
-            player->attackFrame = 0;
-            player->attackTimer = 0.0f;
-        }
-        else if (IsKeyPressed(KEY_D))
-        {
-            player->currentAttack = ATTACK_RIGHT_KICK;
-            player->isAttacking = true;
-            player->attackFrame = 0;
-            player->attackTimer = 0.0f;
-        }
+        // No attack is playing, so start the input immediately.
+        StartPlayerAttack(player, pressedAttack);
+    }
+    else if (
+        pressedAttack != ATTACK_NONE &&
+        player->bufferedAttack == ATTACK_NONE
+    )
+    {
+        // One attack is already playing.
+        // Save ONE next attack instead of ignoring the input.
+        player->bufferedAttack = pressedAttack;
     }
 
     // ============================================================
@@ -57,10 +97,22 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
 
             if (player->attackFrame >= ATTACK_FRAME_COUNT)
             {
-                player->attackFrame = 0;
-                player->attackTimer = 0.0f;
-                player->isAttacking = false;
-                player->currentAttack = ATTACK_NONE;
+                // Current attack finished.
+                // If 0026 stored another attack, consume it now.
+                if (player->bufferedAttack != ATTACK_NONE)
+                {
+                    AttackType nextAttack = player->bufferedAttack;
+
+                    player->bufferedAttack = ATTACK_NONE;
+                    StartPlayerAttack(player, nextAttack);
+                }
+                else
+                {
+                    player->attackFrame = 0;
+                    player->attackTimer = 0.0f;
+                    player->isAttacking = false;
+                    player->currentAttack = ATTACK_NONE;
+                }
             }
         }
     }

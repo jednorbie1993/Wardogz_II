@@ -56,6 +56,10 @@ typedef struct Player
     bool isWalking;
     AttackType currentAttack;
 
+    // 0026 - COMBO INPUT BUFFER
+    // Stores one attack pressed while another attack is still playing.
+    AttackType bufferedAttack;
+
     // false = LEFT
     // true  = RIGHT
     bool facingRight;

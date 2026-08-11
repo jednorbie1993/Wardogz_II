@@ -1,0 +1,169 @@
+WARDOGZ II DOCUMENTATION
+0026 - Combo Input Buffer
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0026_Combo_Input_Buffer
+
+============================================================
+PURPOSE
+============================================================
+
+Allow the player to press the NEXT attack before the current
+attack animation has completely finished.
+
+Before 0026:
+If A was attacking and W was pressed too early, W was ignored.
+
+After 0026:
+If A is attacking and W is pressed before A finishes,
+W is stored in bufferedAttack.
+
+When A finishes:
+W starts automatically.
+
+============================================================
+EXAMPLE
+============================================================
+
+Input:
+
+A -> W
+
+Player behavior:
+
+1. A starts immediately.
+2. While A is still animating, W is pressed.
+3. W is stored in bufferedAttack.
+4. A finishes.
+5. bufferedAttack is consumed.
+6. W starts automatically.
+
+============================================================
+IMPORTANT
+============================================================
+
+0026 is only a ONE-SLOT attack input buffer.
+
+It does NOT yet define real combo recipes such as:
+
+A, W, A = special combo
+
+That comes in the combo-chain system later.
+
+0026 is the foundation that prevents fast attack inputs from
+being lost while another attack is playing.
+
+============================================================
+NEW PLAYER DATA
+============================================================
+
+AttackType bufferedAttack;
+
+Meaning:
+
+ATTACK_NONE
+- No next attack is waiting.
+
+ATTACK_LEFT_PUNCH
+- A is waiting.
+
+ATTACK_RIGHT_PUNCH
+- W is waiting.
+
+ATTACK_LEFT_KICK
+- S is waiting.
+
+ATTACK_RIGHT_KICK
+- D is waiting.
+
+============================================================
+NEW INTERNAL FUNCTIONS
+============================================================
+
+GetPressedAttack()
+
+Checks A/W/S/D and converts the pressed key into an AttackType.
+
+StartPlayerAttack()
+
+Starts an attack in one place so attack initialization does not
+need to be repeated for A, W, S, and D.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/player/player.h
+
+UPDATED:
+src/player/player.c
+
+UPDATED:
+src/player/player_attack.c
+
+NEW DOCUMENTATION:
+00_Documentation/0026_Combo_Input_Buffer.txt
+
+============================================================
+TEST
+============================================================
+
+Test 1:
+Press A once.
+Expected:
+Normal Left Punch.
+
+Test 2:
+Press A then quickly press W before A finishes.
+Expected:
+Left Punch finishes, then Right Punch starts automatically.
+
+Test 3:
+Press S then quickly press D.
+Expected:
+Left Kick finishes, then Right Kick starts automatically.
+
+Test 4:
+Press A, W, S extremely quickly.
+Expected:
+Only one waiting attack is stored.
+This version intentionally has a one-slot buffer.
+
+Damage remains:
+A = 8
+W = 12
+S = 16
+D = 20
+
+Knockback remains:
+A = 220
+W = 280
+S = 360
+D = 440
+
+============================================================
+WHY THIS MATTERS FOR TEKKEN-STYLE MOVES
+============================================================
+
+Players often press the next command before the current move
+animation has fully ended.
+
+The input buffer remembers that next attack.
+
+Later systems can use this foundation for:
+- combo chains
+- command sequences
+- directional attacks
+- recovery/cancel windows
+
+============================================================
+STATUS
+============================================================
+
+0026 - COMPLETE
