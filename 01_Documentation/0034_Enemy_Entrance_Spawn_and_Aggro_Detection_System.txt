@@ -1,0 +1,962 @@
+
+0034_Enemy_Entrance_Spawn_and_Aggro_Detection_System.txt
+WARDOGZ II DOCUMENTATION
+0034 - Enemy Entrance / Spawn + Aggro Detection System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0034_Enemy_Entrance_Spawn_and_Aggro_Detection_System
+
+============================================================
+PURPOSE
+============================================================
+
+Add controlled enemy entrance behavior and player detection range.
+
+Before 0034:
+- Punk could already face the player.
+- Punk could chase the player.
+- Punk could attack the player.
+- Punk used stage boundaries and depth scaling.
+- Punk could begin normal combat immediately.
+
+After 0034:
+- Punk can spawn outside the normal combat area.
+- Punk can walk into a chosen entrance position.
+- Punk does not attack while entering.
+- Punk can remain idle until the player comes close enough.
+- Punk begins chasing only after the player enters the aggro range.
+- Normal 0031-0033 combat systems resume after entrance.
+
+============================================================
+PART 1 - ENEMY SPAWN LOCATION
+============================================================
+
+The Punk starting position is created in main.c using:
+
+Enemy enemy = InitPunk(X, Y);
+
+Meaning:
+
+X
+- Horizontal spawn position.
+- Smaller value = farther LEFT.
+- Larger value = farther RIGHT.
+
+Y
+- Stage / depth position.
+- Smaller value = TOP / farther back.
+- Larger value = BOTTOM / closer to the camera.
+
+Example:
+
+Enemy enemy = InitPunk(1380.0f, 470.0f);
+
+This means Punk begins around:
+
+X = 1380
+Y = 470
+
+The X value may intentionally place Punk outside the visible/right side
+of the normal combat area.
+
+============================================================
+PART 2 - ENEMY ENTRANCE TARGET
+============================================================
+
+The entrance is started using:
+
+StartEnemyEntrance(
+    &enemy,
+    targetX,
+    targetY,
+    entranceSpeed
+);
+
+Example:
+
+StartEnemyEntrance(
+    &enemy,
+    1000.0f,
+    470.0f,
+    140.0f
+);
+
+Meaning:
+
+1000.0f
+- Entrance target X.
+
+470.0f
+- Entrance target stage/depth Y.
+
+140.0f
+- Entrance movement speed.
+
+Flow:
+
+SPAWN POSITION
+->
+WALK TO ENTRANCE TARGET
+->
+ENTRANCE COMPLETE
+->
+NORMAL ENEMY STATE
+
+============================================================
+NEW ENEMY STATE
+============================================================
+
+bool isEntering;
+
+Meaning:
+True while the enemy is still walking toward the entrance target.
+
+bool hasEnteredStage;
+
+Meaning:
+True after the entrance movement is complete.
+
+float entranceTargetX;
+
+Meaning:
+Target horizontal entrance position.
+
+float entranceTargetY;
+
+Meaning:
+Target vertical/depth entrance position.
+
+float entranceSpeed;
+
+Meaning:
+Movement speed used during the entrance.
+
+============================================================
+ENTRANCE RULES
+============================================================
+
+While:
+
+isEntering == true
+
+Punk:
+
+- Moves toward the entrance target.
+- Uses entranceSpeed.
+- Can temporarily exist outside the normal 0032 stage boundary.
+- Does not use normal chase AI.
+- Does not attack the player.
+
+When Punk reaches the target:
+
+isEntering = false
+
+hasEnteredStage = true
+
+Then:
+
+- 0032 stage boundary becomes active.
+- 0031 facing/chase behavior becomes available.
+- Normal enemy combat can begin.
+
+============================================================
+PART 3 - PLAYER DETECTION / AGGRO RANGE
+============================================================
+
+0034 also adds a player detection distance.
+
+New value:
+
+float aggroRange;
+
+Default:
+
+enemy.aggroRange = 500.0f;
+
+Meaning:
+
+Punk will not immediately chase the player after entering.
+
+Punk stays idle while the player is farther than the detection range.
+
+When the player becomes close enough:
+
+Player detected
+->
+Punk starts normal chase behavior
+
+============================================================
+AGGRO DISTANCE
+============================================================
+
+Detection uses both:
+
+- Horizontal X distance.
+- Stage/depth Y distance.
+
+The system calculates the distance between the player and Punk on the
+playable stage.
+
+This is better than using X distance alone.
+
+Example:
+
+Player is horizontally close but very far away on the depth axis:
+
+Punk should still remain idle.
+
+Player becomes close on both stage axes:
+
+Punk detects the player.
+
+============================================================
+AGGRO RANGE EXAMPLES
+============================================================
+
+enemy.aggroRange = 300.0f;
+
+Meaning:
+Player must come closer before Punk notices.
+
+enemy.aggroRange = 500.0f;
+
+Meaning:
+Default moderate detection distance.
+
+enemy.aggroRange = 700.0f;
+
+Meaning:
+Punk notices the player from farther away.
+
+RULE:
+
+Smaller number
+=
+shorter detection range.
+
+Larger number
+=
+longer detection range.
+
+============================================================
+FULL 0034 ENEMY FLOW
+============================================================
+
+1. Punk spawns.
+
+2. Punk may begin outside the normal stage area.
+
+3. Punk walks toward the entrance target.
+
+4. Punk reaches the entrance target.
+
+5. Normal boundary rules activate.
+
+6. Punk waits / remains idle.
+
+7. Player enters aggroRange.
+
+8. Punk detects Player.
+
+9. Punk faces Player.
+
+10. Punk chases Player.
+
+11. Punk aligns on the depth axis.
+
+12. Punk reaches attack range.
+
+13. Punk attacks.
+
+============================================================
+SYSTEM FLOW
+============================================================
+
+SPAWN
+->
+ENTRANCE
+->
+IDLE
+->
+PLAYER DETECTED
+->
+CHASE
+->
+ATTACK RANGE
+->
+ATTACK
+
+============================================================
+0031 SYSTEMS PRESERVED
+============================================================
+
+0031:
+- Enemy facing
+- Horizontal chase
+- Vertical/depth chase
+- Diagonal speed normalization
+- Chase stop distance
+- Enemy attack behavior
+
+============================================================
+0032 SYSTEMS PRESERVED
+============================================================
+
+0032:
+- Enemy stage boundary
+- Top walk limit
+- Bottom walk limit
+- Horizontal screen boundary
+- Normal combat clamp
+
+IMPORTANT:
+
+0032 boundary is temporarily skipped while Punk is entering.
+
+After entrance:
+0032 boundary works normally again.
+
+============================================================
+0033 SYSTEMS PRESERVED
+============================================================
+
+0033:
+- Enemy depth scaling
+- Scaled Punk sprite
+- Scaled enemy hurtbox
+- Scaled foot marker
+- Scaled attack hitbox
+- Scaled player-to-enemy collision target
+
+Entrance and aggro logic do not remove the depth-scaling system.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+
+include/enemy/enemy.h
+
+src/enemy/enemy.c
+
+src/main.c
+
+============================================================
+MAIN.C SETTINGS
+============================================================
+
+Spawn position example:
+
+Enemy enemy = InitPunk(
+    1380.0f,
+    470.0f
+);
+
+Entrance target example:
+
+StartEnemyEntrance(
+    &enemy,
+    1000.0f,
+    470.0f,
+    140.0f
+);
+
+============================================================
+AGGRO SETTING
+============================================================
+
+Default:
+
+enemy.aggroRange = 500.0f;
+
+This value is initialized in the common enemy defaults.
+
+It can later be moved to Punk-specific data if different enemy types
+need different detection ranges.
+
+============================================================
+TEST
+============================================================
+
+TEST 1 - ENTRANCE
+
+Start the game.
+
+Expected:
+- Punk starts from its spawn position.
+- Punk walks toward the entrance target.
+- Punk does not attack during entrance.
+
+
+TEST 2 - ENTRANCE BOUNDARY
+
+Spawn Punk outside the normal combat area.
+
+Expected:
+- Punk is allowed to move from outside the stage while entering.
+- Punk is not immediately clamped by 0032.
+
+
+TEST 3 - AFTER ENTRANCE
+
+Wait until Punk reaches the target.
+
+Expected:
+- Entrance stops.
+- Normal stage boundary becomes active.
+
+
+TEST 4 - PLAYER FAR AWAY
+
+Keep Player farther than aggroRange.
+
+Expected:
+- Punk stays idle.
+- Punk does not chase.
+
+
+TEST 5 - PLAYER APPROACHES
+
+Walk toward Punk until inside aggroRange.
+
+Expected:
+- Punk detects Player.
+- Punk faces Player.
+- Punk begins chasing.
+
+
+TEST 6 - DEPTH DETECTION
+
+Stay horizontally near Punk but move far away on the stage depth axis.
+
+Expected:
+- Detection uses both X and depth distance.
+- Punk should not behave as if only horizontal distance matters.
+
+
+TEST 7 - ATTACK
+
+Enter Punk attack range.
+
+Expected:
+- Existing enemy attack behavior still works.
+- Existing hitbox and depth validation still work.
+
+
+TEST 8 - DEPTH SCALING
+
+Move Punk toward TOP and BOTTOM through chase.
+
+Expected:
+- 0033 scaling remains active.
+- Sprite and combat boxes continue scaling together.
+
+============================================================
+STATUS
+============================================================
+
+0034 - COMPLETE
+
+FINAL 0034 FEATURES:
+
+- Enemy spawn position
+- Enemy entrance target
+- Entrance movement speed
+- Enemy entrance state
+- Temporary boundary bypass during entrance
+- No attack during entrance
+- Return to normal combat after entrance
+- Player detection / aggro range
+- Aggro using X + depth distance
+- Idle state while Player is far
+- Chase activation when Player is near
+- 0031 facing/chase preserved
+- 0032 boundary preserved
+- 0033 depth scaling preserved
+
+0034_Enemy_Entrance_Spawn_and_Aggro_Detection_System.txt
+WARDOGZ II DOCUMENTATION
+0034 - Enemy Entrance / Spawn + Aggro Detection System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0034_Enemy_Entrance_Spawn_and_Aggro_Detection_System
+
+============================================================
+PURPOSE
+============================================================
+
+Add controlled enemy entrance behavior and player detection range.
+
+Before 0034:
+- Punk could already face the player.
+- Punk could chase the player.
+- Punk could attack the player.
+- Punk used stage boundaries and depth scaling.
+- Punk could begin normal combat immediately.
+
+After 0034:
+- Punk can spawn outside the normal combat area.
+- Punk can walk into a chosen entrance position.
+- Punk does not attack while entering.
+- Punk can remain idle until the player comes close enough.
+- Punk begins chasing only after the player enters the aggro range.
+- Normal 0031-0033 combat systems resume after entrance.
+
+============================================================
+PART 1 - ENEMY SPAWN LOCATION
+============================================================
+
+The Punk starting position is created in main.c using:
+
+Enemy enemy = InitPunk(X, Y);
+
+Meaning:
+
+X
+- Horizontal spawn position.
+- Smaller value = farther LEFT.
+- Larger value = farther RIGHT.
+
+Y
+- Stage / depth position.
+- Smaller value = TOP / farther back.
+- Larger value = BOTTOM / closer to the camera.
+
+Example:
+
+Enemy enemy = InitPunk(1380.0f, 470.0f);
+
+This means Punk begins around:
+
+X = 1380
+Y = 470
+
+The X value may intentionally place Punk outside the visible/right side
+of the normal combat area.
+
+============================================================
+PART 2 - ENEMY ENTRANCE TARGET
+============================================================
+
+The entrance is started using:
+
+StartEnemyEntrance(
+    &enemy,
+    targetX,
+    targetY,
+    entranceSpeed
+);
+
+Example:
+
+StartEnemyEntrance(
+    &enemy,
+    1000.0f,
+    470.0f,
+    140.0f
+);
+
+Meaning:
+
+1000.0f
+- Entrance target X.
+
+470.0f
+- Entrance target stage/depth Y.
+
+140.0f
+- Entrance movement speed.
+
+Flow:
+
+SPAWN POSITION
+->
+WALK TO ENTRANCE TARGET
+->
+ENTRANCE COMPLETE
+->
+NORMAL ENEMY STATE
+
+============================================================
+NEW ENEMY STATE
+============================================================
+
+bool isEntering;
+
+Meaning:
+True while the enemy is still walking toward the entrance target.
+
+bool hasEnteredStage;
+
+Meaning:
+True after the entrance movement is complete.
+
+float entranceTargetX;
+
+Meaning:
+Target horizontal entrance position.
+
+float entranceTargetY;
+
+Meaning:
+Target vertical/depth entrance position.
+
+float entranceSpeed;
+
+Meaning:
+Movement speed used during the entrance.
+
+============================================================
+ENTRANCE RULES
+============================================================
+
+While:
+
+isEntering == true
+
+Punk:
+
+- Moves toward the entrance target.
+- Uses entranceSpeed.
+- Can temporarily exist outside the normal 0032 stage boundary.
+- Does not use normal chase AI.
+- Does not attack the player.
+
+When Punk reaches the target:
+
+isEntering = false
+
+hasEnteredStage = true
+
+Then:
+
+- 0032 stage boundary becomes active.
+- 0031 facing/chase behavior becomes available.
+- Normal enemy combat can begin.
+
+============================================================
+PART 3 - PLAYER DETECTION / AGGRO RANGE
+============================================================
+
+0034 also adds a player detection distance.
+
+New value:
+
+float aggroRange;
+
+Default:
+
+enemy.aggroRange = 500.0f;
+
+Meaning:
+
+Punk will not immediately chase the player after entering.
+
+Punk stays idle while the player is farther than the detection range.
+
+When the player becomes close enough:
+
+Player detected
+->
+Punk starts normal chase behavior
+
+============================================================
+AGGRO DISTANCE
+============================================================
+
+Detection uses both:
+
+- Horizontal X distance.
+- Stage/depth Y distance.
+
+The system calculates the distance between the player and Punk on the
+playable stage.
+
+This is better than using X distance alone.
+
+Example:
+
+Player is horizontally close but very far away on the depth axis:
+
+Punk should still remain idle.
+
+Player becomes close on both stage axes:
+
+Punk detects the player.
+
+============================================================
+AGGRO RANGE EXAMPLES
+============================================================
+
+enemy.aggroRange = 300.0f;
+
+Meaning:
+Player must come closer before Punk notices.
+
+enemy.aggroRange = 500.0f;
+
+Meaning:
+Default moderate detection distance.
+
+enemy.aggroRange = 700.0f;
+
+Meaning:
+Punk notices the player from farther away.
+
+RULE:
+
+Smaller number
+=
+shorter detection range.
+
+Larger number
+=
+longer detection range.
+
+============================================================
+FULL 0034 ENEMY FLOW
+============================================================
+
+1. Punk spawns.
+
+2. Punk may begin outside the normal stage area.
+
+3. Punk walks toward the entrance target.
+
+4. Punk reaches the entrance target.
+
+5. Normal boundary rules activate.
+
+6. Punk waits / remains idle.
+
+7. Player enters aggroRange.
+
+8. Punk detects Player.
+
+9. Punk faces Player.
+
+10. Punk chases Player.
+
+11. Punk aligns on the depth axis.
+
+12. Punk reaches attack range.
+
+13. Punk attacks.
+
+============================================================
+SYSTEM FLOW
+============================================================
+
+SPAWN
+->
+ENTRANCE
+->
+IDLE
+->
+PLAYER DETECTED
+->
+CHASE
+->
+ATTACK RANGE
+->
+ATTACK
+
+============================================================
+0031 SYSTEMS PRESERVED
+============================================================
+
+0031:
+- Enemy facing
+- Horizontal chase
+- Vertical/depth chase
+- Diagonal speed normalization
+- Chase stop distance
+- Enemy attack behavior
+
+============================================================
+0032 SYSTEMS PRESERVED
+============================================================
+
+0032:
+- Enemy stage boundary
+- Top walk limit
+- Bottom walk limit
+- Horizontal screen boundary
+- Normal combat clamp
+
+IMPORTANT:
+
+0032 boundary is temporarily skipped while Punk is entering.
+
+After entrance:
+0032 boundary works normally again.
+
+============================================================
+0033 SYSTEMS PRESERVED
+============================================================
+
+0033:
+- Enemy depth scaling
+- Scaled Punk sprite
+- Scaled enemy hurtbox
+- Scaled foot marker
+- Scaled attack hitbox
+- Scaled player-to-enemy collision target
+
+Entrance and aggro logic do not remove the depth-scaling system.
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+
+include/enemy/enemy.h
+
+src/enemy/enemy.c
+
+src/main.c
+
+============================================================
+MAIN.C SETTINGS
+============================================================
+
+Spawn position example:
+
+Enemy enemy = InitPunk(
+    1380.0f,
+    470.0f
+);
+
+Entrance target example:
+
+StartEnemyEntrance(
+    &enemy,
+    1000.0f,
+    470.0f,
+    140.0f
+);
+
+============================================================
+AGGRO SETTING
+============================================================
+
+Default:
+
+enemy.aggroRange = 500.0f;
+
+This value is initialized in the common enemy defaults.
+
+It can later be moved to Punk-specific data if different enemy types
+need different detection ranges.
+
+============================================================
+TEST
+============================================================
+
+TEST 1 - ENTRANCE
+
+Start the game.
+
+Expected:
+- Punk starts from its spawn position.
+- Punk walks toward the entrance target.
+- Punk does not attack during entrance.
+
+
+TEST 2 - ENTRANCE BOUNDARY
+
+Spawn Punk outside the normal combat area.
+
+Expected:
+- Punk is allowed to move from outside the stage while entering.
+- Punk is not immediately clamped by 0032.
+
+
+TEST 3 - AFTER ENTRANCE
+
+Wait until Punk reaches the target.
+
+Expected:
+- Entrance stops.
+- Normal stage boundary becomes active.
+
+
+TEST 4 - PLAYER FAR AWAY
+
+Keep Player farther than aggroRange.
+
+Expected:
+- Punk stays idle.
+- Punk does not chase.
+
+
+TEST 5 - PLAYER APPROACHES
+
+Walk toward Punk until inside aggroRange.
+
+Expected:
+- Punk detects Player.
+- Punk faces Player.
+- Punk begins chasing.
+
+
+TEST 6 - DEPTH DETECTION
+
+Stay horizontally near Punk but move far away on the stage depth axis.
+
+Expected:
+- Detection uses both X and depth distance.
+- Punk should not behave as if only horizontal distance matters.
+
+
+TEST 7 - ATTACK
+
+Enter Punk attack range.
+
+Expected:
+- Existing enemy attack behavior still works.
+- Existing hitbox and depth validation still work.
+
+
+TEST 8 - DEPTH SCALING
+
+Move Punk toward TOP and BOTTOM through chase.
+
+Expected:
+- 0033 scaling remains active.
+- Sprite and combat boxes continue scaling together.
+
+============================================================
+STATUS
+============================================================
+
+0034 - COMPLETE
+
+FINAL 0034 FEATURES:
+
+- Enemy spawn position
+- Enemy entrance target
+- Entrance movement speed
+- Enemy entrance state
+- Temporary boundary bypass during entrance
+- No attack during entrance
+- Return to normal combat after entrance
+- Player detection / aggro range
+- Aggro using X + depth distance
+- Idle state while Player is far
+- Chase activation when Player is near
+- 0031 facing/chase preserved
+- 0032 boundary preserved
+- 0033 depth scaling preserved
