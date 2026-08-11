@@ -1,0 +1,95 @@
+#include "player_attack_data.h"
+
+// ============================================================
+// 0023 - CENTRAL PLAYER MOVE DEFINITIONS
+// ============================================================
+// 0024 - PER-MOVE DAMAGE VALUES
+// Each basic attack now has its own damage value.
+// Damage balance can be changed here without rewriting enemy.c
+// or the attack/collision logic.
+
+static const PlayerAttackData PLAYER_ATTACK_DATA[] =
+{
+    // ATTACK_NONE
+    {
+        0.10f,
+        0,
+        -1,
+        0.0f,
+        0.0f,
+        0.0f,
+        0.0f,
+        0,
+        0.0f,
+        0.0f
+    },
+
+    // ATTACK_LEFT_PUNCH - A
+    {
+        0.10f,
+        0,
+        2,
+        0.25f,
+        0.10f,
+        0.04f,
+        0.32f,
+        8,
+        360.0f,
+        0.12f
+    },
+
+    // ATTACK_RIGHT_PUNCH - W
+    {
+        0.10f,
+        0,
+        2,
+        0.24f,
+        0.10f,
+        0.01f,
+        0.32f,
+        12,
+        360.0f,
+        0.12f
+    },
+
+    // ATTACK_LEFT_KICK - S
+    {
+        0.10f,
+        0,
+        2,
+        0.25f,
+        0.29f,
+        0.02f,
+        0.35f,
+        16,
+        360.0f,
+        0.12f
+    },
+
+    // ATTACK_RIGHT_KICK - D
+    {
+        0.10f,
+        0,
+        2,
+        0.26f,
+        0.32f,
+        0.02f,
+        0.33f,
+        20,
+        360.0f,
+        0.12f
+    }
+};
+
+const PlayerAttackData *GetPlayerAttackData(AttackType attackType)
+{
+    if (
+        attackType < ATTACK_NONE ||
+        attackType > ATTACK_RIGHT_KICK
+    )
+    {
+        return &PLAYER_ATTACK_DATA[ATTACK_NONE];
+    }
+
+    return &PLAYER_ATTACK_DATA[attackType];
+}
