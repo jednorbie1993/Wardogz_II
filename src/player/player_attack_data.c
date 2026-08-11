@@ -3,9 +3,9 @@
 // ============================================================
 // 0023 - CENTRAL PLAYER MOVE DEFINITIONS
 // ============================================================
-// 0024 - PER-MOVE DAMAGE VALUES
-// Each basic attack now has its own damage value.
-// Damage balance can be changed here without rewriting enemy.c
+// 0025 - PER-MOVE KNOCKBACK VALUES
+// Each basic attack now has its own damage AND knockback value.
+// Combat balance can be changed here without rewriting enemy.c
 // or the attack/collision logic.
 
 static const PlayerAttackData PLAYER_ATTACK_DATA[] =
@@ -26,16 +26,18 @@ static const PlayerAttackData PLAYER_ATTACK_DATA[] =
 
     // ATTACK_LEFT_PUNCH - A
     {
-        0.10f,
-        0,
-        2,
-        0.25f,
-        0.10f,
-        0.04f,
-        0.32f,
-        8,
-        360.0f,
-        0.12f
+        0.10f,   // animationFrameTime
+        0,       // activeStartFrame
+        2,       // activeEndFrame
+
+        0.25f,   // hitboxWidthScale
+        0.10f,   // hitboxHeightScale
+        0.04f,   // hitboxOffsetX
+        0.32f,   // hitboxOffsetY
+
+        8,       // damage
+        220.0f,  // knockbackSpeed
+        0.12f    // hitReactionTime
     },
 
     // ATTACK_RIGHT_PUNCH - W
@@ -48,7 +50,7 @@ static const PlayerAttackData PLAYER_ATTACK_DATA[] =
         0.01f,
         0.32f,
         12,
-        360.0f,
+        280.0f,
         0.12f
     },
 
@@ -76,7 +78,7 @@ static const PlayerAttackData PLAYER_ATTACK_DATA[] =
         0.02f,
         0.33f,
         20,
-        360.0f,
+        440.0f,
         0.12f
     }
 };

@@ -149,7 +149,7 @@ void UpdateEnemyHit(
             // DAMAGE
             // ====================================================
 
-            enemy->hp -= 10;
+            enemy->hp -= GetPlayerAttackDamage(player);
             enemy->hitByCurrentAttack = true;
 
             // ====================================================
@@ -157,8 +157,11 @@ void UpdateEnemyHit(
             // ====================================================
 
             enemy->isHit = true;
-            enemy->hitReactionTimer = 0.12f;
-            enemy->knockbackSpeed = 360.0f;
+            enemy->hitReactionTimer =
+                GetPlayerAttackHitReactionTime(player);
+
+            enemy->knockbackSpeed =
+                GetPlayerAttackKnockbackSpeed(player);
 
             if (player->facingRight)
             {

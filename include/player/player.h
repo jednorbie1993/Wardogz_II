@@ -84,6 +84,10 @@ void UpdatePlayerAttack(Player *player, float deltaTime);
 bool IsPlayerAttackHitboxActive(const Player *player);
 Rectangle GetPlayerAttackHitbox(const Player *player);
 
+int GetPlayerAttackDamage(const Player *player);
+float GetPlayerAttackKnockbackSpeed(const Player *player);
+float GetPlayerAttackHitReactionTime(const Player *player);
+
 void DrawPlayer(const Player *player);
 void UnloadPlayer(Player *player);
 

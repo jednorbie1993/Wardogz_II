@@ -1,4 +1,5 @@
 #include "player_attack.h"
+#include "player_attack_data.h"
 
 void UpdatePlayerAttack(Player *player, float deltaTime)
 {
@@ -44,11 +45,14 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
     // ============================================================
     if (player->isAttacking)
     {
+        const PlayerAttackData *attackData =
+            GetPlayerAttackData(player->currentAttack);
+
         player->attackTimer += deltaTime;
 
-        if (player->attackTimer >= player->attackFrameTime)
+        if (player->attackTimer >= attackData->frameTime)
         {
-            player->attackTimer -= player->attackFrameTime;
+            player->attackTimer -= attackData->frameTime;
             player->attackFrame++;
 
             if (player->attackFrame >= ATTACK_FRAME_COUNT)
@@ -63,14 +67,24 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
 }
 
 // ============================================================
-// 0017 - ATTACK HITBOX SYSTEM
+// 0017 + 0023 - ATTACK HITBOX SYSTEM USING MOVE DATA
 // ============================================================
 bool IsPlayerAttackHitboxActive(const Player *player)
 {
-    // TEMPORARY DEBUG MODE:
-    // buong 3-frame attack muna ang active para madaling makita.
-    return player->isAttacking &&
-           player->currentAttack != ATTACK_NONE;
+    if (
+        !player->isAttacking ||
+        player->currentAttack == ATTACK_NONE
+    )
+    {
+        return false;
+    }
+
+    const PlayerAttackData *attackData =
+        GetPlayerAttackData(player->currentAttack);
+
+    return
+        player->attackFrame >= attackData->activeStartFrame &&
+        player->attackFrame <= attackData->activeEndFrame;
 }
 
 Rectangle GetPlayerAttackHitbox(const Player *player)
@@ -79,6 +93,9 @@ Rectangle GetPlayerAttackHitbox(const Player *player)
     {
         return (Rectangle){0.0f, 0.0f, 0.0f, 0.0f};
     }
+
+    const PlayerAttackData *attackData =
+        GetPlayerAttackData(player->currentAttack);
 
     // Same depth scaling as DrawPlayer().
     float depth =
@@ -120,63 +137,60 @@ Rectangle GetPlayerAttackHitbox(const Player *player)
         bottomY - scaledHeight;
 
     Rectangle hitbox =
-        {0.0f, 0.0f, 0.0f, 0.0f};
-
-    // ============================================================
-    // INDIVIDUAL ATTACK HITBOX SETTINGS
-    // ============================================================
-
-    // LEFT PUNCH - A
-    if (player->currentAttack == ATTACK_LEFT_PUNCH)
     {
-        hitbox.width = scaledWidth * 0.25f;
-        hitbox.height = scaledHeight * 0.10f;
-        hitbox.y = topY + (scaledHeight * 0.32f);
+        0.0f,
+        0.0f,
+        scaledWidth * attackData->hitboxWidthScale,
+        scaledHeight * attackData->hitboxHeightScale
+    };
 
-        if (player->facingRight)
-            hitbox.x = centerX + (scaledWidth * 0.04f);
-        else
-            hitbox.x = centerX - (scaledWidth * 0.04f) - hitbox.width;
+    hitbox.y =
+        topY +
+        (scaledHeight * attackData->hitboxOffsetYScale);
+
+    if (player->facingRight)
+    {
+        hitbox.x =
+            centerX +
+            (scaledWidth * attackData->hitboxOffsetXScale);
     }
-
-    // RIGHT PUNCH - W
-    else if (player->currentAttack == ATTACK_RIGHT_PUNCH)
+    else
     {
-        hitbox.width = scaledWidth * 0.24f;
-        hitbox.height = scaledHeight * 0.10f;
-        hitbox.y = topY + (scaledHeight * 0.32f);
-
-        if (player->facingRight)
-            hitbox.x = centerX + (scaledWidth * 0.01f);
-        else
-            hitbox.x = centerX - (scaledWidth * 0.01f) - hitbox.width;
-    }
-
-    // LEFT KICK - S
-    else if (player->currentAttack == ATTACK_LEFT_KICK)
-    {
-        hitbox.width = scaledWidth * 0.25f;
-        hitbox.height = scaledHeight * 0.29f;
-        hitbox.y = topY + (scaledHeight * 0.35f);
-
-        if (player->facingRight)
-            hitbox.x = centerX + (scaledWidth * 0.02f);
-        else
-            hitbox.x = centerX - (scaledWidth * 0.02f) - hitbox.width;
-    }
-
-    // RIGHT KICK - D
-    else if (player->currentAttack == ATTACK_RIGHT_KICK)
-    {
-        hitbox.width = scaledWidth * 0.26f;
-        hitbox.height = scaledHeight * 0.32f;
-        hitbox.y = topY + (scaledHeight * 0.33f);
-
-        if (player->facingRight)
-            hitbox.x = centerX + (scaledWidth * 0.02f);
-        else
-            hitbox.x = centerX - (scaledWidth * 0.02f) - hitbox.width;
+        hitbox.x =
+            centerX -
+            (scaledWidth * attackData->hitboxOffsetXScale) -
+            hitbox.width;
     }
 
     return hitbox;
+}
+
+int GetPlayerAttackDamage(const Player *player)
+{
+    if (player->currentAttack == ATTACK_NONE)
+    {
+        return 0;
+    }
+
+    return GetPlayerAttackData(player->currentAttack)->damage;
+}
+
+float GetPlayerAttackKnockbackSpeed(const Player *player)
+{
+    if (player->currentAttack == ATTACK_NONE)
+    {
+        return 0.0f;
+    }
+
+    return GetPlayerAttackData(player->currentAttack)->knockbackSpeed;
+}
+
+float GetPlayerAttackHitReactionTime(const Player *player)
+{
+    if (player->currentAttack == ATTACK_NONE)
+    {
+        return 0.0f;
+    }
+
+    return GetPlayerAttackData(player->currentAttack)->hitReactionTime;
 }
