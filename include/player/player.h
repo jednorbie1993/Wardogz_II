@@ -7,7 +7,9 @@
 #define WALK_FRAME_COUNT 12
 #define ATTACK_FRAME_COUNT 3
 
+// ============================================================
 // ATTACK TYPES
+// ============================================================
 typedef enum
 {
     ATTACK_NONE,
@@ -17,7 +19,9 @@ typedef enum
     ATTACK_RIGHT_KICK
 } AttackType;
 
-// Lahat ng impormasyon tungkol sa player
+// ============================================================
+// PLAYER DATA
+// ============================================================
 typedef struct Player
 {
     Rectangle rectangle;
@@ -26,16 +30,13 @@ typedef struct Player
 
     // IDLE ANIMATION
     Texture2D idleTextures[IDLE_FRAME_COUNT];
-
     int idleFrame;
     int idleDirection;
-
     float idleTimer;
     float idleFrameTime;
 
     // WALKING ANIMATION
     Texture2D walkTextures[WALK_FRAME_COUNT];
-
     int walkFrame;
     float walkTimer;
     float walkFrameTime;
@@ -51,10 +52,8 @@ typedef struct Player
     float attackFrameTime;
     bool isAttacking;
 
-    // Player state
+    // PLAYER STATE
     bool isWalking;
-
-    // Current attack input
     AttackType currentAttack;
 
     // false = LEFT
@@ -63,12 +62,15 @@ typedef struct Player
 
 } Player;
 
+// ============================================================
+// PUBLIC PLAYER FUNCTIONS
+// ============================================================
+// Implementations are separated into player.c, player_move.c,
+// player_attack.c, and player_draw.c. Keeping the declarations
+// here means old files that include only player.h still work.
 
-// Gumawa ng player at mag-load ng textures
 Player InitPlayer(const char *texturePath);
 
-
-// Basahin ang keyboard at galawin ang player
 void UpdatePlayer(
     Player *player,
     float deltaTime,
@@ -77,23 +79,12 @@ void UpdatePlayer(
     float walkAreaBottom
 );
 
-// ============================================================
-// 0017 - ATTACK HITBOX SYSTEM
-// ============================================================
+void UpdatePlayerAttack(Player *player, float deltaTime);
 
-// True habang active ang attack hitbox.
-// TEMPORARY TEST: buong attack animation muna para madaling makita.
 bool IsPlayerAttackHitboxActive(const Player *player);
-
-// Kunin ang rectangle ng current attack hitbox.
 Rectangle GetPlayerAttackHitbox(const Player *player);
 
-
-// I-drawing ang player
 void DrawPlayer(const Player *player);
-
-
-// Alisin ang textures sa memory
 void UnloadPlayer(Player *player);
 
 #endif
