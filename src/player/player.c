@@ -117,6 +117,11 @@ Player InitPlayer(const char *texturePath)
     player.commandAttackActive = false;
     player.commandAttack = ATTACK_NONE;
 
+    // 0029 - Recovery/cancel state starts inactive.
+    player.isRecovering = false;
+    player.recoveryTimer = 0.0f;
+    player.cancelWindowOpen = false;
+
     player.facingRight = true;
 
     // ============================================================

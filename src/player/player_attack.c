@@ -2,28 +2,29 @@
 #include "player_attack_data.h"
 
 // ============================================================
-// 0028 - DIRECTION + ATTACK COMMANDS
+// 0029 - RECOVERY / CANCEL WINDOW SYSTEM
 // ============================================================
 //
-// Existing basic attacks:
-// A = Left Punch
-// W = Right Punch
-// S = Left Kick
-// D = Right Kick
+// Purpose:
+// 1. Add a short recovery period after an attack finishes.
+// 2. Open a cancel window near the end of the attack.
+// 3. Allow one buffered attack only during that cancel window.
 //
-// Existing combo:
-// A -> W -> D
+// Existing:
+// 0026 - one-slot input buffer
+// 0027 - A -> W -> D combo recognition
+// 0028 - Direction + Attack command detection
 //
-// New directional command detection:
-// FORWARD  + A = Forward Left Punch
-// FORWARD  + D = Forward Right Kick
-// BACKWARD + A = Backward Left Punch
-// BACKWARD + D = Backward Right Kick
-//
-// 0028 detects the command only.
-// It still reuses the normal A/D animations.
+// 0029 makes chaining more controlled and fighting-game-like.
 
-#define COMBO_WINDOW 0.70f
+#define COMBO_WINDOW 2.0f
+
+// Short post-attack recovery.
+// During recovery, a fresh attack cannot start yet.
+#define ATTACK_RECOVERY_TIME 0.00f
+
+// Cancel window opens on the final attack animation frame.
+#define CANCEL_WINDOW_FRAME 0
 
 static bool IsForwardHeld(const Player *player)
 {
@@ -155,6 +156,13 @@ static void DetectDirectionalCommand(
     }
 }
 
+static void StartRecovery(Player *player)
+{
+    player->isRecovering = true;
+    player->recoveryTimer = ATTACK_RECOVERY_TIME;
+    player->cancelWindowOpen = false;
+}
+
 static void StartPlayerAttack(Player *player, AttackType attack)
 {
     if (attack == ATTACK_NONE)
@@ -164,6 +172,10 @@ static void StartPlayerAttack(Player *player, AttackType attack)
 
     player->currentAttack = attack;
     player->isAttacking = true;
+    player->isRecovering = false;
+    player->recoveryTimer = 0.0f;
+    player->cancelWindowOpen = false;
+
     player->attackFrame = 0;
     player->attackTimer = 0.0f;
 
@@ -186,17 +198,44 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
     }
 
     // ============================================================
-    // 0026 - ATTACK INPUT BUFFER
+    // 0029 - RECOVERY TIMER
     // ============================================================
-    if (!player->isAttacking)
+    if (player->isRecovering)
+    {
+        player->recoveryTimer -= deltaTime;
+
+        if (player->recoveryTimer <= 0.0f)
+        {
+            player->isRecovering = false;
+            player->recoveryTimer = 0.0f;
+
+            // If a valid next attack was buffered during the
+            // cancel window, start it after recovery.
+            if (player->bufferedAttack != ATTACK_NONE)
+            {
+                AttackType nextAttack = player->bufferedAttack;
+                player->bufferedAttack = ATTACK_NONE;
+                StartPlayerAttack(player, nextAttack);
+            }
+        }
+    }
+
+    // ============================================================
+    // ATTACK INPUT
+    // ============================================================
+    if (!player->isAttacking && !player->isRecovering)
     {
         StartPlayerAttack(player, pressedAttack);
     }
     else if (
+        player->isAttacking &&
+        player->cancelWindowOpen &&
         pressedAttack != ATTACK_NONE &&
         player->bufferedAttack == ATTACK_NONE
     )
     {
+        // 0029:
+        // Only accept the next attack during the cancel window.
         player->bufferedAttack = pressedAttack;
     }
 
@@ -215,6 +254,10 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
             player->attackTimer -= attackData->frameTime;
             player->attackFrame++;
 
+            // Open the cancel window near the end of the attack.
+            if (player->attackFrame >= CANCEL_WINDOW_FRAME)
+                player->cancelWindowOpen = true;
+
             if (player->attackFrame >= ATTACK_FRAME_COUNT)
             {
                 if (player->comboFinisherActive)
@@ -227,20 +270,11 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
                 player->commandAttackActive = false;
                 player->commandAttack = ATTACK_NONE;
 
-                if (player->bufferedAttack != ATTACK_NONE)
-                {
-                    AttackType nextAttack = player->bufferedAttack;
+                player->attackFrame = 0;
+                player->attackTimer = 0.0f;
+                player->isAttacking = false;
 
-                    player->bufferedAttack = ATTACK_NONE;
-                    StartPlayerAttack(player, nextAttack);
-                }
-                else
-                {
-                    player->attackFrame = 0;
-                    player->attackTimer = 0.0f;
-                    player->isAttacking = false;
-                    player->currentAttack = ATTACK_NONE;
-                }
+                StartRecovery(player);
             }
         }
     }

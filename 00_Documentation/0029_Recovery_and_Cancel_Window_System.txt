@@ -1,0 +1,367 @@
+
+WARDOGZ II DOCUMENTATION
+0029 - Recovery / Cancel Window System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0029_Recovery_and_Cancel_Window_System
+
+============================================================
+PURPOSE
+============================================================
+
+Add controlled recovery and cancel timing to attacks.
+
+Before 0029:
+A next attack could be buffered while the current attack was
+still playing.
+
+After 0029:
+The next attack is only accepted during a defined cancel
+window near the end of the current attack.
+
+After the attack finishes, a short recovery period occurs.
+
+============================================================
+NEW VALUES
+============================================================
+
+ATTACK_RECOVERY_TIME = 0.12 seconds
+
+Meaning:
+The player has a short post-attack recovery before another
+attack may start.
+
+CANCEL_WINDOW_FRAME = 2
+
+Meaning:
+The cancel window opens when the attack reaches frame 2.
+
+============================================================
+NEW PLAYER STATE
+============================================================
+
+bool isRecovering;
+- True during post-attack recovery.
+
+float recoveryTimer;
+- Remaining recovery time.
+
+bool cancelWindowOpen;
+- True when the current attack can accept one next buffered
+  attack.
+
+============================================================
+HOW IT WORKS
+============================================================
+
+Example:
+
+A attack starts.
+
+Frame 0:
+No cancel.
+
+Frame 1:
+No cancel.
+
+Frame 2:
+cancelWindowOpen = true
+
+Press W during this window:
+W is saved in bufferedAttack.
+
+A finishes.
+
+Recovery begins for 0.12 seconds.
+
+Recovery ends.
+
+Buffered W starts automatically.
+
+============================================================
+WHY THIS MATTERS
+============================================================
+
+This prevents button mashing from always chaining attacks.
+
+The player must enter the next attack during a valid timing
+window.
+
+This gives the combat system a more controlled fighting-game
+feel and prepares for:
+
+- combo timing
+- move recovery
+- safe/unsafe attacks
+- special cancel rules
+- Tekken-style command timing
+
+============================================================
+EXISTING SYSTEMS PRESERVED
+============================================================
+
+0026:
+One-slot input buffer
+
+0027:
+A -> W -> D combo
+
+0028:
+Direction + Attack commands
+
+0029:
+Recovery + Cancel Window timing
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/player/player.h
+
+UPDATED:
+src/player/player.c
+
+UPDATED:
+src/player/player_attack.c
+
+NEW:
+00_Documentation/0029_Recovery_and_Cancel_Window_System.txt
+
+============================================================
+TEST
+============================================================
+
+Test 1:
+Press A normally.
+Expected:
+A completes and has a very short recovery.
+
+Test 2:
+Press A then immediately press W very early.
+Expected:
+W should NOT buffer if the cancel window is not open yet.
+
+Test 3:
+Press A then W near the end of A.
+Expected:
+W should buffer and start after A recovery.
+
+Test 4:
+Try A -> W -> D with proper timing.
+Expected:
+The existing combo can still be recognized.
+
+Test 5:
+Try directional commands such as Forward + D.
+Expected:
+0028 directional detection should still work.
+
+============================================================
+IMPORTANT
+============================================================
+
+0029 does not yet give every move a unique recovery value.
+
+All current attacks use the same recovery:
+
+0.12 seconds
+
+A future move-data update can give every move its own recovery
+and cancel-window settings.
+
+============================================================
+STATUS
+============================================================
+
+0029 - COMPLETE
+
+Library
+/
+0029_Recovery_and_Cancel_Window_System.txt
+WARDOGZ II DOCUMENTATION
+0029 - Recovery / Cancel Window System
+
+Date: 2026-08-11
+
+============================================================
+TITLE
+============================================================
+
+0029_Recovery_and_Cancel_Window_System
+
+============================================================
+PURPOSE
+============================================================
+
+Add controlled recovery and cancel timing to attacks.
+
+Before 0029:
+A next attack could be buffered while the current attack was
+still playing.
+
+After 0029:
+The next attack is only accepted during a defined cancel
+window near the end of the current attack.
+
+After the attack finishes, a short recovery period occurs.
+
+============================================================
+NEW VALUES
+============================================================
+
+ATTACK_RECOVERY_TIME = 0.12 seconds
+
+Meaning:
+The player has a short post-attack recovery before another
+attack may start.
+
+CANCEL_WINDOW_FRAME = 2
+
+Meaning:
+The cancel window opens when the attack reaches frame 2.
+
+============================================================
+NEW PLAYER STATE
+============================================================
+
+bool isRecovering;
+- True during post-attack recovery.
+
+float recoveryTimer;
+- Remaining recovery time.
+
+bool cancelWindowOpen;
+- True when the current attack can accept one next buffered
+  attack.
+
+============================================================
+HOW IT WORKS
+============================================================
+
+Example:
+
+A attack starts.
+
+Frame 0:
+No cancel.
+
+Frame 1:
+No cancel.
+
+Frame 2:
+cancelWindowOpen = true
+
+Press W during this window:
+W is saved in bufferedAttack.
+
+A finishes.
+
+Recovery begins for 0.12 seconds.
+
+Recovery ends.
+
+Buffered W starts automatically.
+
+============================================================
+WHY THIS MATTERS
+============================================================
+
+This prevents button mashing from always chaining attacks.
+
+The player must enter the next attack during a valid timing
+window.
+
+This gives the combat system a more controlled fighting-game
+feel and prepares for:
+
+- combo timing
+- move recovery
+- safe/unsafe attacks
+- special cancel rules
+- Tekken-style command timing
+
+============================================================
+EXISTING SYSTEMS PRESERVED
+============================================================
+
+0026:
+One-slot input buffer
+
+0027:
+A -> W -> D combo
+
+0028:
+Direction + Attack commands
+
+0029:
+Recovery + Cancel Window timing
+
+============================================================
+FILES CHANGED
+============================================================
+
+UPDATED:
+include/player/player.h
+
+UPDATED:
+src/player/player.c
+
+UPDATED:
+src/player/player_attack.c
+
+NEW:
+00_Documentation/0029_Recovery_and_Cancel_Window_System.txt
+
+============================================================
+TEST
+============================================================
+
+Test 1:
+Press A normally.
+Expected:
+A completes and has a very short recovery.
+
+Test 2:
+Press A then immediately press W very early.
+Expected:
+W should NOT buffer if the cancel window is not open yet.
+
+Test 3:
+Press A then W near the end of A.
+Expected:
+W should buffer and start after A recovery.
+
+Test 4:
+Try A -> W -> D with proper timing.
+Expected:
+The existing combo can still be recognized.
+
+Test 5:
+Try directional commands such as Forward + D.
+Expected:
+0028 directional detection should still work.
+
+============================================================
+IMPORTANT
+============================================================
+
+0029 does not yet give every move a unique recovery value.
+
+All current attacks use the same recovery:
+
+0.12 seconds
+
+A future move-data update can give every move its own recovery
+and cancel-window settings.
+
+============================================================
+STATUS
+============================================================
+
+0029 - COMPLETE

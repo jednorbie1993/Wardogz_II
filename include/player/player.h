@@ -69,6 +69,11 @@ typedef struct Player
     bool commandAttackActive;   // True when a directional command starts
     AttackType commandAttack;   // Attack used by the directional command
 
+    // 0029 - RECOVERY / CANCEL WINDOW STATE
+    bool isRecovering;          // True during post-attack recovery
+    float recoveryTimer;        // Remaining recovery time
+    bool cancelWindowOpen;      // True when next attack may be buffered/cancelled
+
     // false = LEFT
     // true  = RIGHT
     bool facingRight;
