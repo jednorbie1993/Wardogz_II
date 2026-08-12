@@ -32,8 +32,8 @@ static const PlayerAttackData PLAYER_ATTACK_DATA[] =
 
         0.25f,   // hitboxWidthScale
         0.10f,   // hitboxHeightScale
-        0.04f,   // hitboxOffsetX
-        0.32f,   // hitboxOffsetY
+        -0.01f,   // hitboxOffsetX
+        0.35f,   // hitboxOffsetY
 
         8,       // damage
         220.0f,  // knockbackSpeed
@@ -47,8 +47,8 @@ static const PlayerAttackData PLAYER_ATTACK_DATA[] =
         2,
         0.24f,
         0.10f,
-        0.01f,
-        0.32f,
+        0.02f,
+        0.36f,
         12,
         280.0f,
         0.12f
@@ -59,10 +59,10 @@ static const PlayerAttackData PLAYER_ATTACK_DATA[] =
         0.10f,
         0,
         2,
-        0.25f,
-        0.29f,
-        0.02f,
-        0.35f,
+        0.25f, //width size
+        0.23f, //height size
+        0.04f,  //left and right measurement
+        0.34f, // height measurement
         16,
         360.0f,
         0.12f
@@ -73,10 +73,10 @@ static const PlayerAttackData PLAYER_ATTACK_DATA[] =
         0.10f,
         0,
         2,
-        0.26f,
-        0.32f,
-        0.02f,
-        0.33f,
+        0.23f,
+        0.22f,
+        0.06f,
+        0.43f,
         20,
         440.0f,
         0.12f

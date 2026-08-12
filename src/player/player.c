@@ -38,32 +38,14 @@ Player InitPlayer(const char *texturePath)
     player.battleIdleDuration = 15.0f;
 
     // ============================================================
-    // 12 WALK TEXTURES
+    // 11 WALK TEXTURES - JWALK1 to JWALK11
     // ============================================================
-    player.walkTextures[0] =
-        LoadTexture("assets/sprites/player/walk/step1.png");
-    player.walkTextures[1] =
-        LoadTexture("assets/sprites/player/walk/step2.png");
-    player.walkTextures[2] =
-        LoadTexture("assets/sprites/player/walk/step3.png");
-    player.walkTextures[3] =
-        LoadTexture("assets/sprites/player/walk/step4.png");
-    player.walkTextures[4] =
-        LoadTexture("assets/sprites/player/walk/step5.png");
-    player.walkTextures[5] =
-        LoadTexture("assets/sprites/player/walk/step6.png");
-    player.walkTextures[6] =
-        LoadTexture("assets/sprites/player/walk/step7.png");
-    player.walkTextures[7] =
-        LoadTexture("assets/sprites/player/walk/step8.png");
-    player.walkTextures[8] =
-        LoadTexture("assets/sprites/player/walk/step9.png");
-    player.walkTextures[9] =
-        LoadTexture("assets/sprites/player/walk/step10.png");
-    player.walkTextures[10] =
-        LoadTexture("assets/sprites/player/walk/step11.png");
-    player.walkTextures[11] =
-        LoadTexture("assets/sprites/player/walk/step12.png");
+    for (int i = 0; i < WALK_FRAME_COUNT; i++)
+    {
+        player.walkTextures[i] = LoadTexture(
+            TextFormat("assets/sprites/player/walk/JWALK%d.png", i + 1)
+        );
+    }
 
     player.walkFrame = 0;
     player.walkTimer = 0.0f;
@@ -75,35 +57,47 @@ Player InitPlayer(const char *texturePath)
 
     // LEFT PUNCH - A
     player.leftPunchTextures[0] =
-        LoadTexture("assets/sprites/player/battle/left_punch1.png");
+        LoadTexture("assets/sprites/player/battle/JLP1.png");
     player.leftPunchTextures[1] =
-        LoadTexture("assets/sprites/player/battle/left_punch2.png");
+        LoadTexture("assets/sprites/player/battle/JLP2.png");
     player.leftPunchTextures[2] =
-        LoadTexture("assets/sprites/player/battle/left_punch3.png");
+        LoadTexture("assets/sprites/player/battle/JLP3.png");
+    player.leftPunchTextures[3] =
+        LoadTexture("assets/sprites/player/battle/JLP4.png");
 
     // RIGHT PUNCH - W
     player.rightPunchTextures[0] =
-        LoadTexture("assets/sprites/player/battle/right_punch1.png");
+        LoadTexture("assets/sprites/player/battle/JRP1.png");
     player.rightPunchTextures[1] =
-        LoadTexture("assets/sprites/player/battle/right_punch2.png");
+        LoadTexture("assets/sprites/player/battle/JRP2.png");
     player.rightPunchTextures[2] =
-        LoadTexture("assets/sprites/player/battle/right_punch3.png");
+        LoadTexture("assets/sprites/player/battle/JRP3.png");
+    player.rightPunchTextures[3] =
+        LoadTexture("assets/sprites/player/battle/JRP4.png");
 
     // LEFT KICK - S
     player.leftKickTextures[0] =
-        LoadTexture("assets/sprites/player/battle/left_kick1.png");
+        LoadTexture("assets/sprites/player/battle/JLK1.png");
     player.leftKickTextures[1] =
-        LoadTexture("assets/sprites/player/battle/left_kick2.png");
+        LoadTexture("assets/sprites/player/battle/JLK2.png");
     player.leftKickTextures[2] =
-        LoadTexture("assets/sprites/player/battle/left_kick3.png");
+        LoadTexture("assets/sprites/player/battle/JLK3.png");
+    player.leftKickTextures[3] =
+        LoadTexture("assets/sprites/player/battle/JLK4.png");
+    player.leftKickTextures[4] =
+        LoadTexture("assets/sprites/player/battle/JLK5.png");
 
     // RIGHT KICK - D
     player.rightKickTextures[0] =
-        LoadTexture("assets/sprites/player/battle/right_kick1.png");
+        LoadTexture("assets/sprites/player/battle/JRK1.png");
     player.rightKickTextures[1] =
-        LoadTexture("assets/sprites/player/battle/right_kick2.png");
+        LoadTexture("assets/sprites/player/battle/JRK2.png");
     player.rightKickTextures[2] =
-        LoadTexture("assets/sprites/player/battle/right_kick3.png");
+        LoadTexture("assets/sprites/player/battle/JRK3.png");
+    player.rightKickTextures[3] =
+        LoadTexture("assets/sprites/player/battle/JRK4.png");
+    player.rightKickTextures[4] =
+        LoadTexture("assets/sprites/player/battle/JRK5.png");
 
     player.attackFrame = 0;
     player.attackTimer = 0.0f;
@@ -181,12 +175,20 @@ void UnloadPlayer(Player *player)
         UnloadTexture(player->walkTextures[i]);
     }
 
-    for (int i = 0; i < ATTACK_FRAME_COUNT; i++)
+    for (int i = 0; i < LEFT_PUNCH_FRAME_COUNT; i++)
     {
         UnloadTexture(player->leftPunchTextures[i]);
-        UnloadTexture(player->rightPunchTextures[i]);
+    }
+
+    for (int i = 0; i < ATTACK_FRAME_COUNT; i++)
+    {
         UnloadTexture(player->leftKickTextures[i]);
         UnloadTexture(player->rightKickTextures[i]);
+    }
+
+    for (int i = 0; i < RIGHT_PUNCH_FRAME_COUNT; i++)
+    {
+        UnloadTexture(player->rightPunchTextures[i]);
     }
 
     player->texture = (Texture2D){0};

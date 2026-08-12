@@ -42,6 +42,23 @@ static bool IsBackwardHeld(const Player *player)
     return IsKeyDown(KEY_RIGHT);
 }
 
+static int GetAttackFrameCount(AttackType attack)
+{
+    if (attack == ATTACK_LEFT_PUNCH)
+        return LEFT_PUNCH_FRAME_COUNT;
+
+    if (attack == ATTACK_RIGHT_PUNCH)
+        return RIGHT_PUNCH_FRAME_COUNT;
+
+    if (attack == ATTACK_LEFT_KICK)
+        return ATTACK_FRAME_COUNT;
+
+    if (attack == ATTACK_RIGHT_KICK)
+        return ATTACK_FRAME_COUNT;
+
+    return ATTACK_FRAME_COUNT;
+}
+
 static AttackType GetPressedAttack(void)
 {
     if (IsKeyPressed(KEY_A))
@@ -267,7 +284,7 @@ void UpdatePlayerAttack(Player *player, float deltaTime)
             if (player->attackFrame >= CANCEL_WINDOW_FRAME)
                 player->cancelWindowOpen = true;
 
-            if (player->attackFrame >= ATTACK_FRAME_COUNT)
+            if (player->attackFrame >= GetAttackFrameCount(player->currentAttack))
             {
                 if (player->comboFinisherActive)
                 {

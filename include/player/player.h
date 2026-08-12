@@ -5,8 +5,10 @@
 
 #define IDLE_BREATH_FRAME_COUNT 4
 #define IDLE_BATTLE_FRAME_COUNT 8
-#define WALK_FRAME_COUNT 12
-#define ATTACK_FRAME_COUNT 3
+#define WALK_FRAME_COUNT 11
+#define ATTACK_FRAME_COUNT 5
+#define LEFT_PUNCH_FRAME_COUNT 4
+#define RIGHT_PUNCH_FRAME_COUNT 4
 
 // ============================================================
 // ATTACK TYPES
@@ -49,8 +51,8 @@ typedef struct Player
     float walkFrameTime;
 
     // ATTACK ANIMATIONS
-    Texture2D leftPunchTextures[ATTACK_FRAME_COUNT];
-    Texture2D rightPunchTextures[ATTACK_FRAME_COUNT];
+    Texture2D leftPunchTextures[LEFT_PUNCH_FRAME_COUNT];
+    Texture2D rightPunchTextures[RIGHT_PUNCH_FRAME_COUNT];
     Texture2D leftKickTextures[ATTACK_FRAME_COUNT];
     Texture2D rightKickTextures[ATTACK_FRAME_COUNT];
 

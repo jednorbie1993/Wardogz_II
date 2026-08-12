@@ -112,22 +112,34 @@ void UpdatePlayer(
     {
         player->walkTimer += deltaTime;
 
-        if (player->walkTimer >= player->walkFrameTime)
+        float currentWalkFrameTime;
+
+        // JWALK1 - JWALK5 = mabilis na bwelo
+        if (player->walkFrame <= 4)
         {
-            player->walkTimer -= player->walkFrameTime;
+            currentWalkFrameTime = 0.08f;
+        }
+        else
+        {
+            // JWALK6 - JWALK11 = normal walking speed
+            currentWalkFrameTime = player->walkFrameTime;
+        }
+
+        if (player->walkTimer >= currentWalkFrameTime)
+        {
+            player->walkTimer -= currentWalkFrameTime;
             player->walkFrame++;
 
             if (player->walkFrame >= WALK_FRAME_COUNT)
             {
-                player->walkFrame = 0;
+                // JWALK11 -> balik sa JWALK6
+                player->walkFrame = 5;
             }
         }
     }
     else
     {
-        // ========================================================
         // IDLE ANIMATION
-        // ========================================================
         player->walkFrame = 0;
         player->walkTimer = 0.0f;
 
@@ -136,6 +148,7 @@ void UpdatePlayer(
         if (player->idleTimer >= player->idleFrameTime)
         {
             player->idleTimer -= player->idleFrameTime;
+
             int idleFrameCount =
                 player->battleIdleActive
                     ? IDLE_BATTLE_FRAME_COUNT
