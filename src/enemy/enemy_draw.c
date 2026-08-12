@@ -1,5 +1,8 @@
 #include "enemy_internal.h"
 
+// Set to 1 when you want to see combat debug boxes again.
+#define SHOW_HITBOXES 0
+
 
 static Texture2D GetEnemyCurrentTexture(
     const Enemy *enemy
@@ -140,19 +143,17 @@ void DrawEnemy(const Enemy *enemy)
     );
 
     // ============================================================
-    // DEBUG HURTBOX
+    // COMBAT DEBUG BOXES - HIDDEN BY DEFAULT
     // ============================================================
-
+#if SHOW_HITBOXES
+    // DEBUG HURTBOX
     DrawRectangleLinesEx(
         scaledHurtbox,
         4.0f,
         BLUE
     );
 
-    // ============================================================
     // DEBUG FOOT / GROUND MARKER
-    // ============================================================
-
     Rectangle enemyFeet =
         GetEnemyFootMarker(enemy);
 
@@ -167,10 +168,7 @@ void DrawEnemy(const Enemy *enemy)
         ORANGE
     );
 
-    // ============================================================
     // DEBUG ATTACK HITBOX
-    // ============================================================
-
     if (
         enemy->isAttacking &&
         enemy->attackFrame == 2
@@ -190,6 +188,7 @@ void DrawEnemy(const Enemy *enemy)
             YELLOW
         );
     }
+#endif
 
     // ============================================================
     // HP BAR

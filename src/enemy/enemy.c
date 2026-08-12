@@ -33,6 +33,12 @@ Enemy InitEnemyBase(void)
     enemy.attackTimer = 0.0f;
     enemy.attackCooldownTimer = 0.60f;
     enemy.hitPlayerThisAttack = false;
+    enemy.attackSlotGranted = false;
+
+    // 0044 rollback/fix:
+    // Keep attack permission open so the working 0043 attack flow is restored.
+    // We will add shared turn timing again only after the basic attacks work.
+    enemy.attackTurnAllowed = true;
 
     enemy.attackDamage = 10;
     enemy.attackRange = 210.0f;
@@ -84,6 +90,12 @@ Enemy InitEnemyBase(void)
     enemy.separationRadiusX = 120.0f;
     enemy.separationDepthTolerance = 70.0f;
     enemy.separationPushSpeed = 260.0f;
+
+    // 0042 - Surround / formation defaults.
+    enemy.surroundEnabled = false;
+    enemy.surroundOffsetX = 0.0f;
+    enemy.surroundOffsetY = 0.0f;
+    enemy.surroundArrivalTolerance = 18.0f;
 
     // ============================================================
     // 0035 - ENEMY STOP / ATTACK RANGE DEFAULTS
@@ -260,6 +272,139 @@ void UpdateEnemyHit(
     EnemyCheckPlayerAttack(enemy, player);
 }
 
+
+// ============================================================
+// 0043 - DYNAMIC ATTACK SLOT SWAP / TAKEOVER SYSTEM
+// ============================================================
+// Maximum two active attackers are still allowed.
+//
+// New behavior:
+// - A Punk that is already attacking keeps its slot until the attack ends.
+// - Current non-attacking slot owners get a small stability bonus so the
+//   slots do not flicker between enemies every frame.
+// - A waiting/surround Punk that the player moves close to gets a strong
+//   takeover bonus. This lets that Punk become one of the two attackers,
+//   while a farther non-attacking attacker returns to the surround role.
+void ResolveEnemyAttackSlot(
+    Enemy *enemies,
+    int enemyCount,
+    const Player *player
+)
+{
+    if (enemies == 0 || enemyCount <= 0 || player == 0)
+    {
+        return;
+    }
+
+    const int maxActiveAttackers = 2;
+
+    // 0043 tuning values.
+    // A waiting Punk inside this area is considered close enough to
+    // challenge an existing non-attacking slot owner.
+    const float takeoverDistanceX = 190.0f;
+    const float takeoverDepth = 95.0f;
+
+    // Lower score = higher priority.
+    const float currentOwnerHoldBonus = 25.0f;
+    const float waitingTakeoverBonus = 140.0f;
+
+    // Remember who owned a slot before rebuilding the two slots.
+    // This is what lets us tell an old attacker from a waiting Punk.
+    bool previousSlotOwners[enemyCount];
+
+    for (int i = 0; i < enemyCount; i++)
+    {
+        previousSlotOwners[i] = enemies[i].attackSlotGranted;
+        enemies[i].attackSlotGranted = false;
+    }
+
+    int granted = 0;
+
+    // A Punk already performing an attack cannot lose its slot halfway
+    // through the animation. It finishes first, then it may be swapped out.
+    for (int i = 0; i < enemyCount && granted < maxActiveAttackers; i++)
+    {
+        if (enemies[i].isAlive && enemies[i].isAttacking)
+        {
+            enemies[i].attackSlotGranted = true;
+            granted++;
+        }
+    }
+
+    // Fill the remaining slots using distance + 0043 swap priority.
+    while (granted < maxActiveAttackers)
+    {
+        int bestIndex = -1;
+        float bestScore = 1000000000.0f;
+
+        float playerCenterX =
+            player->rectangle.x + player->rectangle.width * 0.5f;
+
+        float playerGroundY =
+            player->rectangle.y + player->rectangle.height;
+
+        for (int i = 0; i < enemyCount; i++)
+        {
+            Enemy *enemy = &enemies[i];
+
+            if (
+                !enemy->isAlive ||
+                enemy->isEntering ||
+                !enemy->hasEnteredStage ||
+                enemy->isHit ||
+                enemy->attackSlotGranted
+            )
+            {
+                continue;
+            }
+
+            float enemyCenterX =
+                enemy->hurtbox.x + enemy->hurtbox.width * 0.5f;
+
+            float enemyStageY =
+                enemy->hurtbox.y + enemy->stageAnchorOffsetY;
+
+            float dx = playerCenterX - enemyCenterX;
+            float dy = playerGroundY - enemyStageY;
+
+            if (dx < 0.0f) dx = -dx;
+            if (dy < 0.0f) dy = -dy;
+
+            // Horizontal distance matters most; depth is a smaller penalty.
+            float score = dx + dy * 0.75f;
+
+            // Keep existing non-attacking owners slightly stable.
+            if (previousSlotOwners[i])
+            {
+                score -= currentOwnerHoldBonus;
+            }
+            else if (
+                dx <= takeoverDistanceX &&
+                dy <= takeoverDepth
+            )
+            {
+                // 0043 TAKEOVER:
+                // The player approached a waiting Punk, so give that Punk
+                // strong priority to take one of the two attack slots.
+                score -= waitingTakeoverBonus;
+            }
+
+            if (score < bestScore)
+            {
+                bestScore = score;
+                bestIndex = i;
+            }
+        }
+
+        if (bestIndex < 0)
+        {
+            break;
+        }
+
+        enemies[bestIndex].attackSlotGranted = true;
+        granted++;
+    }
+}
 
 void UnloadEnemy(Enemy *enemy)
 {

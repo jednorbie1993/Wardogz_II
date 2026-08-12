@@ -1,0 +1,239 @@
+0042 - PUNK SOFT SURROUND / REPOSITION AI SYSTEM
+================================================
+
+DATE:
+2026-08-12
+
+SYSTEM:
+Soft Surround / Formation AI for Multi-Punk Combat
+
+================================================
+GOAL
+================================================
+
+Make multiple Punk enemies spread around the player instead of all
+chasing the exact same point.
+
+The surround system supports the 0041 two-attacker system without
+making waiting Punk enemies run away from the player.
+
+================================================
+ORIGINAL 0042 PROBLEM
+================================================
+
+The first hard-formation version used fixed left/right/upper/lower
+targets too aggressively.
+
+This caused:
+
+- Punk enemies to look like they were avoiding the player
+- waiting Punk enemies to move too far away
+- active attackers sometimes failing to reach attack range
+- the player having difficulty hitting waiting Punk enemies
+
+There was also a logic deadlock:
+
+- a Punk needed to be near enough to attack before receiving a slot
+- but a Punk without a slot was being forced toward a formation point
+- therefore some enemies never approached enough to become attackers
+
+This behavior was replaced with Soft Surround AI.
+
+================================================
+FINAL SOFT SURROUND BEHAVIOR
+================================================
+
+Current design:
+
+- 4 Punk enemies may surround the player.
+- 2 selected Punk enemies receive attack slots.
+- Attack-slot Punk enemies ignore formation pressure and chase the player normally.
+- Waiting Punk enemies stay nearby instead of running away.
+- Formation positions are guidance only.
+- They are not hard destinations.
+- Waiting Punk enemies remain close enough to be reached and hit.
+- When attack-slot ownership changes, the new attacker leaves its waiting position and chases the player.
+- When a Punk loses its attack slot, it may return to nearby surround behavior.
+
+================================================
+SURROUND POSITIONS
+================================================
+
+The system uses approximate relative positions around the player.
+
+Current soft offsets are approximately:
+
+    LEFT:
+        X = -190
+
+    RIGHT:
+        X = +190
+
+    UPPER / BACK DEPTH:
+        Y = -80
+
+    LOWER / FRONT DEPTH:
+        Y = +80
+
+These positions move with the player.
+
+They are not strict coordinates that a Punk must continuously reach.
+
+================================================
+ATTACKERS VS WAITING PUNKS
+================================================
+
+ATTACK-SLOT PUNK:
+
+- normal chase behavior
+- moves toward the player
+- enters Punch / Elbow range
+- may attack
+- formation does not pull it away during active pressure
+
+WAITING PUNK:
+
+- remains nearby
+- can reposition softly
+- does not run away when the player approaches
+- remains targetable by player attacks
+- may become an attacker when attack-slot priority changes
+
+================================================
+SOFT HOLD DISTANCE
+================================================
+
+Waiting Punk enemies stop forcing formation movement once they are
+already reasonably near the player.
+
+Current approximate nearby limits:
+
+    Horizontal:
+        about 260 px
+
+    Depth:
+        about 115 px
+
+Inside this area:
+
+- the Punk may hold position
+- anti-overlap can still separate enemies
+- the Punk remains reachable
+- the Punk does not retreat just to satisfy formation
+
+================================================
+ATTACK SLOT DEADLOCK FIX
+================================================
+
+0042 also fixes the interaction with 0041.
+
+Instead of requiring enemies to already be inside attack range before
+receiving an attack slot:
+
+    suitable / nearby Punk enemies may receive attack slots first
+
+Then:
+
+    attack slot
+        ->
+    normal chase
+        ->
+    attack range
+        ->
+    Punch / Elbow
+
+This prevents waiting enemies from getting permanently stuck outside
+attack range.
+
+================================================
+ANTI-OVERLAP COMPATIBILITY
+================================================
+
+0040 anti-overlap remains active.
+
+Soft Surround and Anti-Overlap have different jobs:
+
+Soft Surround:
+- controls general position around player
+
+Anti-Overlap:
+- prevents Punk enemies from occupying the same space
+
+The systems work together.
+
+================================================
+0039 / 0040 / 0041 / 0043 COMPATIBILITY
+================================================
+
+0039:
+- Elbow Frame 3 forward lunge remains active.
+
+0040:
+- Multi-Punk support remains active.
+- Anti-overlap remains active.
+- Shared Punk texture system remains active.
+
+0041:
+- Maximum 2 simultaneous attackers remains active.
+
+0043:
+- waiting Punk enemies may dynamically take over an attack slot when
+  the player moves close to them.
+- a former attacker that loses its slot can return to surround behavior.
+
+0042 adds the surrounding / waiting movement behavior.
+
+================================================
+FILES INVOLVED
+================================================
+
+Main files:
+
+    src/main.c
+    src/enemy/enemy.c
+    src/enemy/enemy_move.c
+    include/enemy.h
+
+IMPORTANT:
+If the project still contains:
+
+    include/enemy.h
+    include/enemy/enemy.h
+
+keep both copies synchronized if both are still used.
+
+================================================
+CURRENT 0042 RESULT
+================================================
+
+Expected combat behavior:
+
+- 2 Punk enemies pressure / chase / attack.
+- 2 Punk enemies remain nearby and reposition softly.
+- waiting Punk enemies no longer look like they are escaping.
+- the player can still move toward and hit waiting enemies.
+- attack slots may change dynamically through 0043.
+- enemies remain separated using 0040 anti-overlap.
+- the group feels more like a surrounding street fight.
+
+================================================
+NEXT ACTUAL SYSTEM
+================================================
+
+0043 - DYNAMIC ATTACK SLOT SWAP / TAKEOVER SYSTEM
+
+Goal:
+
+- allow a waiting Punk near the player to take an attack slot
+- keep max active attackers at 2
+- allow a farther non-attacking slot owner to return to surround
+- keep an active attacker committed until its attack finishes
+- reduce unstable slot switching
+
+================================================
+0042 STATUS
+================================================
+
+DONE
+
+Punk Soft Surround / Reposition AI System implemented and fixed.

@@ -201,7 +201,7 @@ void EnemyUpdateChase(
     EnemyCombatContext *context
 )
 {
-    // Face the player whenever Punk is free to react.
+    // Always face the real player when Punk is free to react.
     if (!enemy->isAttacking && !enemy->isHit)
     {
         enemy->facingRight =
@@ -216,6 +216,8 @@ void EnemyUpdateChase(
     float currentStopDistance =
         GetNextEnemyAttackStopDistance(enemy);
 
+    // Attack range is always measured against the real player,
+    // never against a formation point.
     enemy->isInAttackRange =
         context->playerDetected &&
         player->isAlive &&
@@ -225,20 +227,88 @@ void EnemyUpdateChase(
     enemy->isChasing = false;
 
     if (
-        !enemy->isAttacking &&
-        !enemy->isHit &&
-        player->isAlive &&
-        context->playerDetected &&
-        !enemy->isInAttackRange
+        enemy->isAttacking ||
+        enemy->isHit ||
+        !player->isAlive ||
+        !context->playerDetected
     )
     {
-        float moveX = 0.0f;
-        float moveY = 0.0f;
+        return;
+    }
 
+    float moveX = 0.0f;
+    float moveY = 0.0f;
+
+    // ============================================================
+    // 0042 FIX - SOFT SURROUND / WAITING AI
+    // ============================================================
+    // Waiting Punks DO NOT run away from the player to force a perfect
+    // formation. If they are already near the player, they simply hold
+    // position and remain hittable. Formation offsets only guide enemies
+    // that are genuinely far away.
+    if (enemy->surroundEnabled && !enemy->attackSlotGranted)
+    {
+        const float waitingMaxDistanceX = 260.0f;
+        const float waitingMaxDepth = 115.0f;
+
+        // Already close enough: hold position instead of retreating.
         if (
-            context->absoluteDistanceX >
-            currentStopDistance
+            context->absoluteDistanceX > waitingMaxDistanceX ||
+            context->absoluteDepthDifference > waitingMaxDepth
         )
+        {
+            float playerCenterX =
+                player->rectangle.x +
+                player->rectangle.width * 0.5f;
+
+            float playerGroundY =
+                player->rectangle.y +
+                player->rectangle.height;
+
+            float enemyCenterX =
+                enemy->hurtbox.x +
+                enemy->hurtbox.width * 0.5f;
+
+            float enemyStageY =
+                enemy->hurtbox.y +
+                enemy->stageAnchorOffsetY;
+
+            float targetCenterX =
+                playerCenterX + enemy->surroundOffsetX;
+
+            float targetStageY =
+                playerGroundY + enemy->surroundOffsetY;
+
+            float formationDifferenceX =
+                targetCenterX - enemyCenterX;
+
+            float formationDifferenceY =
+                targetStageY - enemyStageY;
+
+            // Only correct X while the Punk is truly far from the player.
+            if (context->absoluteDistanceX > waitingMaxDistanceX)
+            {
+                moveX =
+                    (formationDifferenceX > 0.0f)
+                    ? 1.0f
+                    : -1.0f;
+            }
+
+            // Depth correction is softer and only used when clearly far.
+            if (context->absoluteDepthDifference > waitingMaxDepth)
+            {
+                moveY =
+                    (formationDifferenceY > 0.0f)
+                    ? 1.0f
+                    : -1.0f;
+            }
+        }
+    }
+    else if (!enemy->isInAttackRange)
+    {
+        // 0031/0035 behavior for a Punk that currently owns an attack slot:
+        // close the real distance to the player until attack position.
+        if (context->absoluteDistanceX > currentStopDistance)
         {
             moveX =
                 (context->distanceX > 0.0f)
@@ -256,56 +326,115 @@ void EnemyUpdateChase(
                 ? 1.0f
                 : -1.0f;
         }
+    }
 
-        if (moveX != 0.0f || moveY != 0.0f)
+    if (moveX != 0.0f || moveY != 0.0f)
+    {
+        enemy->isChasing = true;
+
+        if (moveX != 0.0f && moveY != 0.0f)
         {
-            enemy->isChasing = true;
+            const float diagonalFactor = 0.70710678f;
+            moveX *= diagonalFactor;
+            moveY *= diagonalFactor;
+        }
 
-            if (moveX != 0.0f && moveY != 0.0f)
-            {
-                const float diagonalFactor = 0.70710678f;
-                moveX *= diagonalFactor;
-                moveY *= diagonalFactor;
-            }
+        enemy->hurtbox.x +=
+            moveX *
+            enemy->chaseSpeed *
+            deltaTime;
 
-            enemy->hurtbox.x +=
-                moveX *
-                enemy->chaseSpeed *
-                deltaTime;
+        enemy->hurtbox.y +=
+            moveY *
+            enemy->chaseSpeed *
+            deltaTime;
 
-            enemy->hurtbox.y +=
-                moveY *
-                enemy->chaseSpeed *
-                deltaTime;
+        EnemyClampToStage(
+            enemy,
+            screenWidth,
+            walkAreaTop,
+            walkAreaBottom
+        );
 
-            EnemyClampToStage(
+        // Refresh combat distance after movement.
+        *context =
+            EnemyBuildCombatContext(
                 enemy,
-                screenWidth,
-                walkAreaTop,
-                walkAreaBottom
+                player
             );
 
-            // Refresh all combat distances after movement.
-            *context =
-                EnemyBuildCombatContext(
-                    enemy,
-                    player
-                );
+        enemy->isInAttackRange =
+            context->absoluteDistanceX <= currentStopDistance &&
+            context->absoluteDepthDifference <= enemy->chaseDepthTolerance;
 
-            enemy->isInAttackRange =
-                context->absoluteDistanceX <= currentStopDistance &&
-                context->absoluteDepthDifference <= enemy->chaseDepthTolerance;
+        enemy->attackDirection =
+            (context->distanceX >= 0.0f)
+            ? 1
+            : -1;
 
-            enemy->attackDirection =
-                (context->distanceX >= 0.0f)
-                ? 1
-                : -1;
-
-            enemy->facingRight =
-                (context->distanceX >= 0.0f);
-        }
+        enemy->facingRight =
+            (context->distanceX >= 0.0f);
     }
 }
+
+
+// ============================================================
+// 0042 - ENEMY SURROUND / FORMATION SLOT ASSIGNMENT
+// ============================================================
+// Alive Punks are distributed across four relative positions around
+// the player. The offsets move with the player because EnemyUpdateChase()
+// interprets them relative to the player's current position every frame.
+void ResolveEnemySurroundFormation(
+    Enemy *enemies,
+    int enemyCount
+)
+{
+    if (enemies == NULL || enemyCount <= 0)
+    {
+        return;
+    }
+
+    // Beat-em-up style surround offsets, not a perfect circle.
+    // Slot 0 = left, slot 1 = right, slot 2 = upper/back,
+    // slot 3 = lower/front.
+    static const float slotOffsetX[4] =
+    {
+        -190.0f,
+         190.0f,
+         -85.0f,
+          85.0f
+    };
+
+    static const float slotOffsetY[4] =
+    {
+          0.0f,
+          0.0f,
+         -80.0f,
+          80.0f
+    };
+
+    int formationSlot = 0;
+
+    for (int i = 0; i < enemyCount; i++)
+    {
+        Enemy *enemy = &enemies[i];
+
+        if (!enemy->isAlive)
+        {
+            enemy->surroundEnabled = false;
+            continue;
+        }
+
+        int slot = formationSlot % 4;
+
+        enemy->surroundEnabled = true;
+        enemy->surroundOffsetX = slotOffsetX[slot];
+        enemy->surroundOffsetY = slotOffsetY[slot];
+
+        formationSlot++;
+    }
+}
+
 
 // ============================================================
 // 0040 - MULTI-ENEMY SPACING / ANTI-OVERLAP

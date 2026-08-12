@@ -66,6 +66,20 @@ int main(void)
             walkAreaBottom
         );
 
+        // 0042 - Keep free Punks distributed around the player.
+        // Attack-slot owners still chase the player directly.
+        ResolveEnemySurroundFormation(
+            punks,
+            PUNK_COUNT
+        );
+
+        // 0043 - Choose/swap the two active attackers dynamically.
+        ResolveEnemyAttackSlot(
+            punks,
+            PUNK_COUNT,
+            &player
+        );
+
         // Update each Punk independently.
         for (int i = 0; i < PUNK_COUNT; i++)
         {
@@ -87,6 +101,14 @@ int main(void)
             (float)screenWidth,
             walkAreaTop,
             walkAreaBottom
+        );
+
+        // 0043 - Refresh after attacks/cancellations so a nearby waiting
+        // Punk can take over a released attack slot immediately.
+        ResolveEnemyAttackSlot(
+            punks,
+            PUNK_COUNT,
+            &player
         );
 
         // ========================================================

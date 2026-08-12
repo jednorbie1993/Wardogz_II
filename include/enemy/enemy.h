@@ -50,6 +50,13 @@ typedef struct Enemy
     float attackCooldownTimer;
     bool hitPlayerThisAttack;
 
+    // 0041 - Only enemies holding the shared attack slot may start an attack.
+    bool attackSlotGranted;
+
+    // 0044 - Shared turn timing. A slot owner may only START a new attack
+    // when the group controller grants this short start permission.
+    bool attackTurnAllowed;
+
     int attackDamage;
     float attackRange;
     float attackHitboxWidth;
@@ -117,6 +124,12 @@ typedef struct Enemy
     float separationRadiusX;
     float separationDepthTolerance;
     float separationPushSpeed;
+
+    // 0042 - SURROUND / FORMATION AI
+    bool surroundEnabled;
+    float surroundOffsetX;
+    float surroundOffsetY;
+    float surroundArrivalTolerance;
 
     // ============================================================
     // 0035 - ENEMY STOP / ATTACK RANGE
@@ -209,6 +222,28 @@ void ResolveEnemySpacing(
     float screenWidth,
     float walkAreaTop,
     float walkAreaBottom
+);
+
+
+// 0041 - Shared enemy attack-slot controller.
+void ResolveEnemyAttackSlot(
+    Enemy *enemies,
+    int enemyCount,
+    const Player *player
+);
+
+// 0044 - Prevent the two active attackers from starting attacks together.
+void ResolveEnemyAttackTurnTiming(
+    Enemy *enemies,
+    int enemyCount,
+    const Player *player,
+    float deltaTime
+);
+
+// 0042 - Assign left/right/upper/lower surround positions.
+void ResolveEnemySurroundFormation(
+    Enemy *enemies,
+    int enemyCount
 );
 
 

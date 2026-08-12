@@ -1,0 +1,248 @@
+0043 - DYNAMIC ATTACK SLOT SWAP / TAKEOVER SYSTEM
+=================================================
+
+DATE:
+2026-08-13
+
+SYSTEM:
+Dynamic Attack Slot Swap / Takeover for Multi-Punk Combat
+
+=================================================
+GOAL
+=================================================
+
+Allow nearby waiting Punk enemies to take over an attack slot while
+keeping the existing multi-enemy combat readable.
+
+The system works together with:
+
+    0040 - Multi-Punk / Anti-Overlap
+    0041 - Attack Slot / Turn System
+    0042 - Soft Surround / Reposition AI
+
+Final current target:
+
+    MAX ACTIVE ATTACKERS = 2
+
+=================================================
+FINAL 0043 BEHAVIOR
+=================================================
+
+Current combat setup:
+
+- 4 Punk enemies may exist on screen.
+- Maximum 2 Punk enemies may hold attack slots.
+- The 2 selected attackers may chase and attack the player.
+- The other Punk enemies remain in waiting / surround behavior.
+- Attackers are not permanently fixed.
+- When the player moves close to a waiting Punk, that Punk may take
+  over one of the two attack slots.
+- A farther non-attacking slot owner may lose its slot and return to
+  surround / waiting behavior.
+- A Punk already performing an attack keeps its slot until the current
+  attack animation finishes.
+- This prevents Punch / Elbow animations from being interrupted by
+  slot swapping.
+
+=================================================
+EXAMPLE
+=================================================
+
+Before:
+
+    Punk 1 = ATTACKER
+    Punk 2 = ATTACKER
+    Punk 3 = WAITING
+    Punk 4 = WAITING
+
+If the player moves near Punk 3:
+
+    Punk 1 = WAITING
+    Punk 2 = ATTACKER
+    Punk 3 = ATTACKER
+    Punk 4 = WAITING
+
+The exact Punk that gives up its slot depends on distance and current
+attack state.
+
+Maximum active attackers remains:
+
+    2
+
+=================================================
+TAKEOVER AREA
+=================================================
+
+Current 0043 takeover tuning:
+
+    Horizontal distance:
+        190 px
+
+    Depth distance:
+        95 px
+
+A waiting Punk inside this approximate area receives stronger priority
+to become one of the active attackers.
+
+Current tuning values in the slot resolver:
+
+    takeoverDistanceX = 190.0f
+    takeoverDepth     = 95.0f
+
+=================================================
+SLOT STABILITY
+=================================================
+
+The system includes a small hold bonus for current attack-slot owners.
+
+Purpose:
+
+- prevent attack slots from changing every frame
+- reduce flickering between nearly equal enemies
+- make the current attackers feel stable
+- still allow a nearby waiting Punk to take over when appropriate
+
+Current concept:
+
+    currentOwnerHoldBonus = 25.0f
+    waitingTakeoverBonus  = 140.0f
+
+Lower final score receives higher slot priority.
+
+=================================================
+ATTACK COMMITMENT
+=================================================
+
+An enemy already inside an active Punch / Elbow animation cannot lose
+its attack slot halfway through the attack.
+
+Concept:
+
+    if (enemy.isAlive && enemy.isAttacking)
+    {
+        keep attack slot
+    }
+
+After the attack finishes, the slot may be reassigned normally.
+
+This keeps compatibility with:
+
+- Punch animation
+- Elbow animation
+- Elbow Frame 3 forward lunge
+- attack damage / hitbox timing
+- attack cooldown
+
+=================================================
+FINAL ATTACKER LIMIT DECISION
+=================================================
+
+A test was made with:
+
+    MAX ACTIVE ATTACKERS = 3
+
+The result was visually too crowded / aggressive for the current
+character and sprite size.
+
+Final decision:
+
+    MAX ACTIVE ATTACKERS = 2
+
+Reason:
+
+- cleaner screen
+- easier to read enemy attacks
+- waiting enemies remain useful around the player
+- better fit for the large character sprites
+- preserves the street-fight surround feeling without overcrowding
+
+=================================================
+IMPORTANT ATTACK FLOW NOTE
+=================================================
+
+During the next 0044 experiment, an extra attack permission flag caused
+all Punk enemies to approach the player but remain standing without
+starting an attack.
+
+The working 0043 setup keeps the normal attack flow open.
+
+Current working behavior must allow attack start when the Punk:
+
+- owns an attack slot
+- is inside attack range
+- has finished its own cooldown
+- is aligned with the player
+- is alive and detects the player
+
+Do not add another attack gate unless it is initialized and updated
+correctly.
+
+=================================================
+0040 / 0041 / 0042 COMPATIBILITY
+=================================================
+
+0040:
+- 4 Punk test setup remains supported.
+- Anti-overlap remains active.
+- Shared Punk textures remain active.
+
+0041:
+- Maximum 2 active attackers remains active.
+- attackSlotGranted remains the main shared attack permission.
+
+0042:
+- Waiting Punk enemies use soft surround / reposition behavior.
+- Attack-slot owners chase the player normally.
+- Enemies that lose a slot may return to surround behavior.
+
+0043:
+- adds dynamic takeover / swapping of the two attack slots.
+
+=================================================
+FILES INVOLVED
+=================================================
+
+Main 0043 files:
+
+    src/enemy/enemy.c
+    src/main.c
+
+Related existing files:
+
+    src/enemy/enemy_attack.c
+    src/enemy/enemy_move.c
+    include/enemy.h
+
+IMPORTANT:
+If the project still contains two enemy.h copies:
+
+    include/enemy.h
+    include/enemy/enemy.h
+
+keep both synchronized when enemy structure fields are changed.
+
+=================================================
+CURRENT 0043 RESULT
+=================================================
+
+Expected gameplay:
+
+- 4 Punk enemies are active in the encounter.
+- 2 Punk enemies pressure / attack the player.
+- 2 Punk enemies wait / surround nearby.
+- If the player approaches a waiting Punk, it may become an attacker.
+- A farther available attacker may return to waiting behavior.
+- Active attacks are not interrupted during swapping.
+- Enemy attacks work normally.
+- Maximum attackers stays at 2.
+
+=================================================
+0043 STATUS
+=================================================
+
+DONE
+
+Dynamic Attack Slot Swap / Takeover System implemented.
+
+Final decision:
+    MAX ACTIVE ATTACKERS = 2

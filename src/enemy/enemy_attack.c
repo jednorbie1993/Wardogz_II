@@ -241,6 +241,8 @@ void EnemyUpdateAttack(
 
     if (
         !enemy->isAttacking &&
+        enemy->attackSlotGranted &&
+        enemy->attackTurnAllowed &&
         enemy->attackCooldownTimer <= 0.0f &&
         enemy->isInAttackRange &&
         context->absoluteDistanceX <= GetNextEnemyAttackRange(enemy) &&

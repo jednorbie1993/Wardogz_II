@@ -1,0 +1,218 @@
+0041 - PUNK ATTACK SLOT / TURN SYSTEM
+====================================
+
+DATE:
+2026-08-12
+
+SYSTEM:
+Multi-Punk Attack Slot / Turn Control
+
+====================================
+GOAL
+====================================
+
+Prevent all Punk enemies from attacking at exactly the same time.
+
+The game currently supports up to 4 Punk enemies on screen.
+The attack-slot system limits how many may actively attack the player.
+
+Final current target:
+
+    MAX ACTIVE ATTACKERS = 2
+
+This keeps multi-enemy combat aggressive without becoming unreadable.
+
+====================================
+FINAL BEHAVIOR
+====================================
+
+- Up to 4 Punk enemies may exist on screen.
+- Maximum 2 Punk enemies may hold attack permission at the same time.
+- Punk enemies with an attack slot may:
+  - chase the player
+  - enter attack range
+  - start Punch or Elbow
+  - keep their slot while an active attack is in progress
+- Punk enemies without an attack slot may:
+  - stay nearby
+  - reposition
+  - wait for an available attack slot
+- When slot priority changes, another nearby / suitable Punk may receive the slot.
+- 0043 later improves this with dynamic takeover based on player proximity.
+
+====================================
+WHY 2 ATTACKERS
+====================================
+
+Only 1 attacker felt too passive for a beat-'em-up.
+
+Allowing all 4 to attack at the same time may cause:
+
+- overlapping attacks
+- multiple attack hitboxes at once
+- unclear damage source
+- unavoidable pressure
+- visually messy combat
+
+Two simultaneous attackers gives a better middle ground.
+
+A later test with 3 active attackers was also rejected because the
+current character sprites are large and the screen became too crowded.
+
+Final decision remains:
+
+    MAX ACTIVE ATTACKERS = 2
+
+====================================
+ATTACK GATE
+====================================
+
+Enemy attack start checks attack-slot permission.
+
+Important condition:
+
+    enemy->attackSlotGranted
+
+This is checked together with the normal attack requirements.
+
+Conceptually:
+
+    if (
+        !enemy->isAttacking &&
+        enemy->attackSlotGranted &&
+        enemy->attackCooldownTimer <= 0.0f &&
+        enemy->isInAttackRange
+    )
+    {
+        StartEnemyAttack(enemy);
+    }
+
+A Punk cannot start Punch or Elbow without an active attack slot.
+
+====================================
+SLOT OWNERSHIP
+====================================
+
+Each Punk tracks whether it currently has attack permission.
+
+Main field:
+
+    bool attackSlotGranted;
+
+The slot manager chooses the active attackers.
+
+Current combat design:
+
+    Punk A = attack slot
+    Punk B = attack slot
+    Punk C = waiting / repositioning
+    Punk D = waiting / repositioning
+
+0043 later adds dynamic takeover so a waiting Punk near the player may
+replace a farther non-attacking slot owner.
+
+====================================
+ATTACK COMMITMENT
+====================================
+
+If a Punk is already attacking, the system should not immediately
+take its slot away.
+
+This prevents:
+
+- Punch animation being cancelled for no reason
+- Elbow Frame 3 lunge being interrupted
+- attack state becoming inconsistent
+
+The slot remains committed while an active attack is in progress.
+
+====================================
+NEAREST / SUITABLE PRIORITY
+====================================
+
+The system prefers Punk enemies that are useful to the current player
+encounter.
+
+Priority may consider:
+
+- alive
+- already entered the stage
+- not in hit reaction
+- near the player
+- currently committed to an attack
+
+0043 later extends this priority system with:
+
+- current slot-owner stability
+- waiting Punk takeover priority
+- player proximity
+
+====================================
+COMPATIBILITY
+====================================
+
+0039:
+- Punk Elbow Frame 3 Lunge / Slide System remains active.
+
+0040:
+- Multi-Punk support
+- Anti-overlap / separation
+- Shared Punk textures
+
+0042:
+- waiting Punk enemies may use Soft Surround behavior.
+
+0043:
+- dynamic attack-slot swap / takeover builds on top of 0041.
+
+The attack-slot system only controls attack permission.
+
+It does not replace:
+- spacing
+- movement
+- elbow lunge
+- hitbox logic
+- shared textures
+- surround behavior
+
+====================================
+FILES INVOLVED
+====================================
+
+Main files:
+
+    src/main.c
+    src/enemy/enemy.c
+    src/enemy/enemy_attack.c
+    include/enemy.h
+
+IMPORTANT:
+If the project still contains two enemy.h copies:
+
+    include/enemy.h
+    include/enemy/enemy.h
+
+keep both synchronized if both are still used by the build.
+
+====================================
+CURRENT 0041 RESULT
+====================================
+
+- 4 Punk enemies supported
+- 2 simultaneous attackers maximum
+- attack permission controlled by attack slots
+- waiting Punk enemies do not all attack at once
+- active attacks remain compatible with Punch / Elbow logic
+- 0043 now handles dynamic swapping of the two attack slots
+
+====================================
+0041 STATUS
+====================================
+
+DONE
+
+Punk Attack Slot / Turn System implemented.
+
+Final attacker limit:
+
+    2

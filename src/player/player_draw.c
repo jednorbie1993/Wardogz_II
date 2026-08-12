@@ -1,6 +1,9 @@
 #include "player_draw.h"
 #include "player_attack.h"
 
+// Set to 1 when you want to see combat debug boxes again.
+#define SHOW_HITBOXES 0
+
 void DrawPlayer(const Player *player)
 {
     // ============================================================
@@ -145,8 +148,10 @@ void DrawPlayer(const Player *player)
     );
 
     // ============================================================
-    // 0017 - ATTACK HITBOX DEBUG DRAW
+    // COMBAT DEBUG BOXES - HIDDEN BY DEFAULT
     // ============================================================
+#if SHOW_HITBOXES
+    // 0017 - ATTACK HITBOX DEBUG DRAW
     if (IsPlayerAttackHitboxActive(player))
     {
         Rectangle attackHitbox =
@@ -164,9 +169,7 @@ void DrawPlayer(const Player *player)
         );
     }
 
-    // ============================================================
     // 0030 - PLAYER HURTBOX DEBUG
-    // ============================================================
     Rectangle playerHurtbox =
         GetPlayerHurtbox(player);
 
@@ -176,9 +179,7 @@ void DrawPlayer(const Player *player)
         GREEN
     );
 
-    // ============================================================
     // 0030 FIX 3 - PLAYER FOOT MARKER DEBUG
-    // ============================================================
     Rectangle playerFeet =
         GetPlayerFootMarker(player);
 
@@ -192,6 +193,7 @@ void DrawPlayer(const Player *player)
         3.0f,
         PURPLE
     );
+#endif
 
     // ============================================================
     // 0030 - PLAYER HP DISPLAY
