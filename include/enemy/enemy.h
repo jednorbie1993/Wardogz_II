@@ -51,17 +51,23 @@ typedef struct Enemy
     float attackRange;
     float attackHitboxWidth;
     float attackHitboxHeight;
+    float attackKnockbackSpeed;
+    float attackHitReactionTime;
+    int attackDirection;
+
+    // ============================================================
+    // 0037 - PER-MOVE ATTACK DISTANCE
+    // ============================================================
+
+    float punchAttackRange;
+    float punchStopDistance;
+
+    float elbowAttackRange;
+    float elbowStopDistance;
 
     // ============================================================
     // 0037 - PER-MOVE ATTACK HITBOX SETTINGS
     // ============================================================
-    // OffsetX:
-    //   positive = farther forward from the enemy
-    //   negative = closer toward the enemy body
-    //
-    // OffsetY:
-    //   positive = lower
-    //   negative = higher
 
     float punchHitboxWidth;
     float punchHitboxHeight;
@@ -72,10 +78,6 @@ typedef struct Enemy
     float elbowHitboxHeight;
     float elbowHitboxOffsetX;
     float elbowHitboxOffsetY;
-
-    float attackKnockbackSpeed;
-    float attackHitReactionTime;
-    int attackDirection;
 
     // ============================================================
     // 0037 - ENEMY ATTACK ANIMATION

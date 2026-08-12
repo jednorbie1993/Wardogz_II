@@ -1,6 +1,19 @@
 #include "enemy_internal.h"
 
 
+static float GetNextEnemyAttackStopDistance(
+    const Enemy *enemy
+)
+{
+    if (enemy->nextAttackMove == ENEMY_ATTACK_ELBOW)
+    {
+        return enemy->elbowStopDistance;
+    }
+
+    return enemy->punchStopDistance;
+}
+
+
 void StartEnemyEntrance(
     Enemy *enemy,
     float targetX,
@@ -199,10 +212,13 @@ void EnemyUpdateChase(
         ? 1
         : -1;
 
+    float currentStopDistance =
+        GetNextEnemyAttackStopDistance(enemy);
+
     enemy->isInAttackRange =
         context->playerDetected &&
         player->isAlive &&
-        context->absoluteDistanceX <= enemy->attackStopDistance &&
+        context->absoluteDistanceX <= currentStopDistance &&
         context->absoluteDepthDifference <= enemy->chaseDepthTolerance;
 
     enemy->isChasing = false;
@@ -220,7 +236,7 @@ void EnemyUpdateChase(
 
         if (
             context->absoluteDistanceX >
-            enemy->attackStopDistance
+            currentStopDistance
         )
         {
             moveX =
@@ -276,7 +292,7 @@ void EnemyUpdateChase(
                 );
 
             enemy->isInAttackRange =
-                context->absoluteDistanceX <= enemy->attackStopDistance &&
+                context->absoluteDistanceX <= currentStopDistance &&
                 context->absoluteDepthDifference <= enemy->chaseDepthTolerance;
 
             enemy->attackDirection =

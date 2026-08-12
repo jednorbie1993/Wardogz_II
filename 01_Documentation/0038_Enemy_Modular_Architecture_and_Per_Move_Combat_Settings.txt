@@ -1,0 +1,617 @@
+WARDOGZ II DOCUMENTATION
+0038 - Enemy Modular Architecture and Per-Move Combat Settings
+
+Date: 2026-08-12
+
+============================================================
+TITLE
+============================================================
+
+0038_Enemy_Modular_Architecture_and_Per_Move_Combat_Settings
+
+
+============================================================
+PURPOSE
+============================================================
+
+The shared enemy.c file became too large after adding:
+
+- Enemy movement
+- Chase AI
+- Stage boundaries
+- Entrance movement
+- Idle animation
+- Walk animation
+- Attack animation
+- Damage
+- Knockback
+- Collision
+- Attack hitboxes
+- Drawing
+- HP bar
+
+The file reached more than 1000 lines.
+
+0038 separates the enemy system into smaller modules similar to the
+existing Player code structure.
+
+
+============================================================
+NEW ENEMY MODULE STRUCTURE
+============================================================
+
+The enemy system is now separated into:
+
+src/enemy/enemy.c
+
+src/enemy/enemy_move.c
+
+src/enemy/enemy_animation.c
+
+src/enemy/enemy_attack.c
+
+src/enemy/enemy_hit.c
+
+src/enemy/enemy_collision.c
+
+src/enemy/enemy_draw.c
+
+
+Internal header:
+
+include/enemy/enemy_internal.h
+
+
+Public header:
+
+include/enemy/enemy.h
+
+
+Stage 1 Punk:
+
+src/enemy/stage_1/punk.c
+
+include/enemy/stage_1/punk.h
+
+
+============================================================
+ENEMY.C
+============================================================
+
+enemy.c is now the main shared enemy base / orchestrator.
+
+Main responsibilities:
+
+- InitEnemyBase()
+- Shared/default Enemy values
+- Main UpdateEnemyHit() flow
+- UnloadEnemy()
+
+
+The detailed systems are moved to separate files.
+
+
+============================================================
+ENEMY_MOVE.C
+============================================================
+
+enemy_move.c contains:
+
+- Enemy entrance movement
+- StartEnemyEntrance()
+- Chase AI
+- Horizontal movement
+- Depth / vertical movement
+- Diagonal normalization
+- Attack stop distance behavior
+- Stage walk-area clamping
+- Enemy facing while moving
+
+
+This keeps movement logic separate from attack and drawing logic.
+
+
+============================================================
+ENEMY_ANIMATION.C
+============================================================
+
+enemy_animation.c contains:
+
+- Idle animation update
+- Walk animation update
+- Walk frame timer
+- Idle frame timer
+- Walk frame looping
+- Idle ping-pong animation
+
+
+============================================================
+ENEMY_ATTACK.C
+============================================================
+
+enemy_attack.c contains:
+
+- Attack start conditions
+- Punch / Elbow move selection
+- Attack animation progression
+- Attack timer
+- Attack damage collision
+- Enemy attack hitbox generation
+
+
+The yellow Punk attack box is controlled here.
+
+
+============================================================
+ENEMY_HIT.C
+============================================================
+
+enemy_hit.c contains:
+
+- Player attack -> enemy collision
+- Enemy damage
+- Hit reaction
+- Knockback
+- Enemy death
+- Attack cancellation when Punk is hit
+
+
+============================================================
+ENEMY_COLLISION.C
+============================================================
+
+enemy_collision.c contains:
+
+- Enemy perspective / depth scale
+- Scaled enemy hurtbox
+- Foot / ground marker
+- Player / enemy ground-depth checks
+- Vertical range checks
+- Combat distance information
+
+
+============================================================
+ENEMY_DRAW.C
+============================================================
+
+enemy_draw.c contains:
+
+- Active enemy texture selection
+- Attack sprite drawing
+- Walk sprite drawing
+- Idle sprite drawing
+- Sprite mirroring
+- Perspective scaling
+- Blue hurtbox debug
+- Orange foot marker debug
+- Yellow attack hitbox debug
+- HP bar
+
+
+============================================================
+ENEMY_INTERNAL.H
+============================================================
+
+enemy_internal.h contains internal shared declarations used by the
+enemy modules.
+
+These functions are for the enemy system itself and do not need to be
+part of the normal public interface used by main.c.
+
+
+============================================================
+PUNK.C
+============================================================
+
+punk.c remains the Stage 1 Punk configuration file.
+
+Punk-specific settings belong here.
+
+Examples:
+
+- Punk HP
+- Punk hurtbox
+- Chase speed
+- Depth tolerance
+- Idle textures
+- Walk textures
+- Punch textures
+- Elbow textures
+- Attack animation speed
+- Punch hitbox settings
+- Elbow hitbox settings
+- Punch attack distance
+- Elbow attack distance
+- Sprite size
+- Sprite alignment
+
+
+============================================================
+SEPARATE PUNCH HITBOX
+============================================================
+
+Punch now has its own adjustable attack hitbox.
+
+Settings:
+
+enemy.punchHitboxWidth
+enemy.punchHitboxHeight
+enemy.punchHitboxOffsetX
+enemy.punchHitboxOffsetY
+
+
+Example Punk values used during testing:
+
+enemy.punchHitboxWidth = 120.0f;
+enemy.punchHitboxHeight = 80.0f;
+enemy.punchHitboxOffsetX = -50.0f;
+enemy.punchHitboxOffsetY = -55.0f;
+
+
+Meaning:
+
+punchHitboxWidth
+=
+Width of Punch yellow box.
+
+
+punchHitboxHeight
+=
+Height of Punch yellow box.
+
+
+punchHitboxOffsetX
+=
+Forward / backward adjustment of Punch box.
+
+
+punchHitboxOffsetY
+=
+Up / down adjustment of Punch box.
+
+
+============================================================
+SEPARATE ELBOW HITBOX
+============================================================
+
+Elbow also has its own adjustable attack hitbox.
+
+Settings:
+
+enemy.elbowHitboxWidth
+enemy.elbowHitboxHeight
+enemy.elbowHitboxOffsetX
+enemy.elbowHitboxOffsetY
+
+
+Example Punk values used during testing:
+
+enemy.elbowHitboxWidth = 120.0f;
+enemy.elbowHitboxHeight = 80.0f;
+enemy.elbowHitboxOffsetX = -80.90f;
+enemy.elbowHitboxOffsetY = -65.0f;
+
+
+Punch and Elbow can therefore use different:
+
+- Box width
+- Box height
+- Horizontal placement
+- Vertical placement
+
+
+============================================================
+HITBOX OFFSET RULE
+============================================================
+
+OffsetX:
+
+Positive
+=
+Move the attack box farther forward.
+
+Negative
+=
+Move the attack box closer / backward.
+
+
+OffsetY:
+
+Positive
+=
+Move the attack box downward.
+
+Negative
+=
+Move the attack box upward.
+
+
+The attack direction is still mirrored automatically depending on
+whether Punk faces LEFT or RIGHT.
+
+
+============================================================
+SEPARATE PUNCH ATTACK DISTANCE
+============================================================
+
+Punch now has its own attack-start and stop distances.
+
+Settings:
+
+enemy.punchAttackRange
+enemy.punchStopDistance
+
+
+Example:
+
+enemy.punchAttackRange = 160.0f;
+enemy.punchStopDistance = 150.0f;
+
+
+Important:
+
+These values are NOT subtracted from each other.
+
+
+punchAttackRange = 160.0f
+
+means:
+
+Punk may START Punch when horizontal distance is 160 or less.
+
+
+punchStopDistance = 150.0f
+
+means:
+
+Punk stops walking toward the player when distance is 150 or less.
+
+
+Normally:
+
+punchAttackRange
+should be equal to or greater than:
+
+punchStopDistance
+
+
+Example valid setup:
+
+160 attack range
+150 stop distance
+
+
+============================================================
+SEPARATE ELBOW ATTACK DISTANCE
+============================================================
+
+Elbow has shorter physical reach than Punch.
+
+Therefore Elbow now has its own:
+
+enemy.elbowAttackRange
+enemy.elbowStopDistance
+
+
+Example starting values:
+
+enemy.elbowAttackRange = 100.0f;
+enemy.elbowStopDistance = 100.0f;
+
+
+This makes Punk walk closer before using Elbow.
+
+
+Punch example:
+
+enemy.punchAttackRange = 140.0f;
+enemy.punchStopDistance = 140.0f;
+
+
+Elbow example:
+
+enemy.elbowAttackRange = 100.0f;
+enemy.elbowStopDistance = 100.0f;
+
+
+============================================================
+NEXT-MOVE STOP DISTANCE
+============================================================
+
+The movement system now checks Punk's NEXT attack move.
+
+If the next move is Punch:
+
+Use:
+
+enemy.punchStopDistance
+
+
+If the next move is Elbow:
+
+Use:
+
+enemy.elbowStopDistance
+
+
+This prevents Punk from stopping too far away for the shorter Elbow
+attack.
+
+
+============================================================
+NEXT-MOVE ATTACK RANGE
+============================================================
+
+The attack system also checks the selected move.
+
+Punch uses:
+
+enemy.punchAttackRange
+
+
+Elbow uses:
+
+enemy.elbowAttackRange
+
+
+This means each attack can have a different effective combat distance.
+
+
+============================================================
+DEPTH / LANE REQUIREMENT
+============================================================
+
+Horizontal distance is not the only condition required before Punk
+attacks.
+
+Punk must also be aligned with the player on the ground / depth axis.
+
+The current Punk setting includes:
+
+enemy.chaseDepthTolerance
+
+
+Smaller value:
+
+More strict vertical / lane alignment.
+
+
+Larger value:
+
+More forgiving alignment.
+
+
+Example:
+
+8.0f
+=
+Very strict.
+
+
+25.0f / 30.0f
+=
+More forgiving.
+
+
+============================================================
+BUILD SYSTEM UPDATE
+============================================================
+
+Because enemy.c was separated into additional .c files, build.bat and
+build_and_run.bat were updated to compile:
+
+src\enemy\enemy.c
+src\enemy\enemy_move.c
+src\enemy\enemy_animation.c
+src\enemy\enemy_attack.c
+src\enemy\enemy_hit.c
+src\enemy\enemy_collision.c
+src\enemy\enemy_draw.c
+src\enemy\stage_1\punk.c
+
+
+run.bat does not require special changes because it only runs the
+already-built executable.
+
+
+============================================================
+HOW TO RUN DOCUMENT UPDATE
+============================================================
+
+how to run.txt was also updated so the project structure shows the new
+enemy modules.
+
+The existing documentation format was preserved.
+
+Only the new files / modules were added.
+
+
+============================================================
+CURRENT RESULT
+============================================================
+
+Implemented:
+
+[OK] enemy.c separated into smaller modules
+[OK] enemy_move.c
+[OK] enemy_animation.c
+[OK] enemy_attack.c
+[OK] enemy_hit.c
+[OK] enemy_collision.c
+[OK] enemy_draw.c
+[OK] enemy_internal.h
+[OK] Punk remains character-specific in punk.c
+[OK] Separate Punch yellow hitbox
+[OK] Separate Elbow yellow hitbox
+[OK] Adjustable Punch hitbox width / height
+[OK] Adjustable Punch hitbox X / Y placement
+[OK] Adjustable Elbow hitbox width / height
+[OK] Adjustable Elbow hitbox X / Y placement
+[OK] Separate Punch attack range
+[OK] Separate Punch stop distance
+[OK] Separate Elbow attack range
+[OK] Separate Elbow stop distance
+[OK] Next-move distance used by chase system
+[OK] Build files updated for modular enemy sources
+[OK] how to run.txt updated for modular structure
+
+
+============================================================
+PLANNED NEXT ATTACK BEHAVIOR
+============================================================
+
+The next planned Elbow improvement is NOT implemented yet.
+
+Planned Elbow behavior:
+
+PUNKE1
+->
+PUNKE2
+->
+Freeze / charge approximately 1 second
+->
+PUNKE3
+->
+Forward Elbow lunge + active hit
+->
+PUNKE4
+->
+Recovery
+
+
+Planned adjustable values may include:
+
+enemy.elbowChargeTime
+
+enemy.elbowForwardSpeed
+
+enemy.elbowForwardDistance
+
+
+Goal:
+
+Because Elbow has shorter reach, Punk can briefly charge on Frame 2,
+then move forward during Frame 3 like a short dagger / charge attack.
+
+
+The forward movement should:
+
+- Move Punk's actual position / hurtbox.
+- Respect facing direction.
+- Have a maximum forward distance.
+- Avoid unlimited movement through the player.
+- Make the Elbow hitbox active during the intended impact frame.
+
+
+============================================================
+NEXT
+============================================================
+
+Recommended next documentation / system:
+
+0039 - Punk Elbow Charge and Forward Lunge System
+
+
+============================================================
+END OF DOCUMENTATION
+============================================================

@@ -35,24 +35,30 @@ Enemy InitEnemyBase(void)
 
     enemy.attackDamage = 10;
     enemy.attackRange = 210.0f;
-    enemy.attackHitboxWidth = 100.0f;
-    enemy.attackHitboxHeight = 150.0f;
-
-    // 0037 - Default per-move hitboxes.
-    // Character files such as punk.c can override these values.
-    enemy.punchHitboxWidth = 100.0f;
-    enemy.punchHitboxHeight = 150.0f;
-    enemy.punchHitboxOffsetX = 0.0f;
-    enemy.punchHitboxOffsetY = 0.0f;
-
-    enemy.elbowHitboxWidth = 100.0f;
-    enemy.elbowHitboxHeight = 150.0f;
-    enemy.elbowHitboxOffsetX = 0.0f;
-    enemy.elbowHitboxOffsetY = 0.0f;
-
+    enemy.attackHitboxWidth = 150.0f;
+    enemy.attackHitboxHeight = 120.0f;
     enemy.attackKnockbackSpeed = 190.0f;
     enemy.attackHitReactionTime = 0.16f;
     enemy.attackDirection = -1;
+
+    // 0037 - Per-move attack distance defaults.
+    enemy.punchAttackRange = 140.0f;
+    enemy.punchStopDistance = 140.0f;
+
+    enemy.elbowAttackRange = 110.0f;
+    enemy.elbowStopDistance = 110.0f;
+
+    // 0037 - Per-move attack hitbox defaults.
+    // Punk overrides these values in punk.c.
+    enemy.punchHitboxWidth = 150.0f;
+    enemy.punchHitboxHeight = 120.0f;
+    enemy.punchHitboxOffsetX = 0.0f;
+    enemy.punchHitboxOffsetY = 0.0f;
+
+    enemy.elbowHitboxWidth = 150.0f;
+    enemy.elbowHitboxHeight = 120.0f;
+    enemy.elbowHitboxOffsetX = 0.0f;
+    enemy.elbowHitboxOffsetY = 0.0f;
 
     // 0037 - Attack animation defaults.
     enemy.punchFrameCount = 0;

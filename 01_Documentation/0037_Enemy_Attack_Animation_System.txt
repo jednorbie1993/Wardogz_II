@@ -1,0 +1,431 @@
+WARDOGZ II DOCUMENTATION
+0037 - Enemy Attack Animation System
+
+Date: 2026-08-12
+
+============================================================
+TITLE
+============================================================
+
+0037_Enemy_Attack_Animation_System
+
+
+============================================================
+PURPOSE
+============================================================
+
+This update adds dedicated attack animations to the Stage 1 Punk enemy.
+
+Before 0037, Punk already had:
+
+- Idle animation
+- Walking animation
+- Chase behavior
+- Attack range / stop behavior
+- Basic enemy attack damage
+- Enemy attack hitbox
+
+However, the enemy attack did not yet have dedicated sprite animation
+for different moves.
+
+0037 adds two Punk attack moves:
+
+1. Punch
+2. Elbow
+
+
+============================================================
+PUNK ATTACK MOVES
+============================================================
+
+Punk currently has two attack moves.
+
+PUNCH:
+
+punkp1.png
+punkp2.png
+punkp3.png
+punkp4.png
+
+
+ELBOW:
+
+PUNKE1.png
+PUNKE2.png
+PUNKE3.png
+PUNKE4.png
+
+
+Each attack uses 4 frames.
+
+
+============================================================
+ASSET FOLDER
+============================================================
+
+Current Punk attack sprites are stored in:
+
+assets/sprites/enemy/stage_1/punk/
+
+
+Punch files:
+
+punkp1.png
+punkp2.png
+punkp3.png
+punkp4.png
+
+
+Elbow files:
+
+PUNKE1.png
+PUNKE2.png
+PUNKE3.png
+PUNKE4.png
+
+
+============================================================
+PUNK.C ATTACK TEXTURE SETUP
+============================================================
+
+The attack textures are loaded inside:
+
+src/enemy/stage_1/punk.c
+
+
+Punch:
+
+enemy.punchFrameCount = 4;
+
+enemy.punchTextures[0] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/punkp1.png"
+);
+
+enemy.punchTextures[1] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/punkp2.png"
+);
+
+enemy.punchTextures[2] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/punkp3.png"
+);
+
+enemy.punchTextures[3] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/punkp4.png"
+);
+
+
+Elbow:
+
+enemy.elbowFrameCount = 4;
+
+enemy.elbowTextures[0] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/PUNKE1.png"
+);
+
+enemy.elbowTextures[1] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/PUNKE2.png"
+);
+
+enemy.elbowTextures[2] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/PUNKE3.png"
+);
+
+enemy.elbowTextures[3] = LoadTexture(
+    "assets/sprites/enemy/stage_1/punk/PUNKE4.png"
+);
+
+
+============================================================
+ATTACK MOVE ENUM
+============================================================
+
+The enemy system uses:
+
+EnemyAttackMove
+
+
+Current values:
+
+ENEMY_ATTACK_PUNCH
+ENEMY_ATTACK_ELBOW
+
+
+This allows the shared enemy system to know which attack animation
+and attack settings are currently active.
+
+
+============================================================
+ATTACK ANIMATION DATA
+============================================================
+
+The Enemy structure stores:
+
+Texture2D punchTextures[MAX_ENEMY_ATTACK_FRAMES];
+Texture2D elbowTextures[MAX_ENEMY_ATTACK_FRAMES];
+
+int punchFrameCount;
+int elbowFrameCount;
+
+int attackFrame;
+float attackFrameTimer;
+float attackFrameTime;
+
+EnemyAttackMove currentAttackMove;
+EnemyAttackMove nextAttackMove;
+
+
+Purpose:
+
+currentAttackMove
+=
+The attack currently being performed.
+
+
+nextAttackMove
+=
+The attack Punk should use next.
+
+
+attackFrame
+=
+Current attack animation frame.
+
+
+attackFrameTimer
+=
+Counts time between attack frames.
+
+
+attackFrameTime
+=
+Controls attack animation speed.
+
+
+============================================================
+ATTACK ANIMATION SPEED
+============================================================
+
+The Punk attack animation speed is configured in:
+
+src/enemy/stage_1/punk.c
+
+
+Example:
+
+enemy.attackFrameTime = 0.11f;
+
+
+Smaller value:
+
+Faster attack animation.
+
+
+Larger value:
+
+Slower attack animation.
+
+
+Examples:
+
+0.08f
+=
+Fast
+
+
+0.11f
+=
+Current / medium
+
+
+0.15f
+=
+Slower
+
+
+============================================================
+PUNCH / ELBOW ALTERNATION
+============================================================
+
+Punk alternates between the two moves.
+
+Current intended order:
+
+PUNCH
+->
+ELBOW
+->
+PUNCH
+->
+ELBOW
+->
+repeat
+
+
+Important fix:
+
+The next move should change only AFTER the current attack finishes.
+
+This prevents the move order from being skipped when Punk is interrupted
+or hit during an attack.
+
+
+Example:
+
+Punk begins Punch.
+
+If Punk is hit before Punch finishes:
+
+- Current attack is cancelled.
+- The next attack should still remain Punch.
+
+If Punch finishes normally:
+
+- Next move becomes Elbow.
+
+
+============================================================
+ATTACK INTERRUPTION
+============================================================
+
+If Punk is hit while attacking:
+
+- Attack animation is cancelled.
+- Attack timer resets.
+- Attack frame resets.
+- Hit reaction / knockback takes priority.
+
+This prevents the attack animation from continuing while Punk is already
+being knocked backward.
+
+
+============================================================
+ATTACK DRAW PRIORITY
+============================================================
+
+The drawing system uses attack animation before walking or idle.
+
+Priority:
+
+ATTACK
+->
+WALK
+->
+IDLE
+
+
+When Punk is attacking:
+
+Punch:
+enemy.punchTextures[enemy.attackFrame]
+
+or:
+
+Elbow:
+enemy.elbowTextures[enemy.attackFrame]
+
+
+The existing facing / mirror system is preserved.
+
+
+============================================================
+SPRITE FACING
+============================================================
+
+The original Punk sprites face RIGHT.
+
+When Punk faces LEFT, raylib mirrors the active texture.
+
+This means separate LEFT attack sprite files are not required.
+
+
+============================================================
+ATTACK TEXTURE CLEANUP
+============================================================
+
+UnloadEnemy() also unloads:
+
+- Punch textures
+- Elbow textures
+
+
+Punch loop:
+
+for (int i = 0; i < enemy->punchFrameCount; i++)
+{
+    UnloadTexture(enemy->punchTextures[i]);
+}
+
+
+Elbow loop:
+
+for (int i = 0; i < enemy->elbowFrameCount; i++)
+{
+    UnloadTexture(enemy->elbowTextures[i]);
+}
+
+
+============================================================
+PUNCH IMAGE GLITCH FIX
+============================================================
+
+During 0037 testing, one Punch sprite appeared to show repeated or extra
+body parts.
+
+Important:
+
+A 1024 x 1024 PNG can still contain unwanted pixels or leftover parts
+from another animation frame.
+
+raylib draws the entire texture canvas.
+
+Therefore:
+
+- Extra feet
+- Extra arms
+- Leftover sprite pieces
+- Stray pixels
+
+must be removed from the PNG itself in Photopea.
+
+
+This is an image / sprite problem, not necessarily an animation-code
+problem.
+
+
+============================================================
+CURRENT RESULT
+============================================================
+
+Implemented:
+
+[OK] Punk Punch animation
+[OK] Punk Elbow animation
+[OK] 4 Punch frames
+[OK] 4 Elbow frames
+[OK] Punch / Elbow move enum
+[OK] Attack animation timer
+[OK] Attack animation frame control
+[OK] Punch -> Elbow alternation
+[OK] Attack interruption when Punk is hit
+[OK] Attack texture priority over walk / idle
+[OK] Existing sprite mirroring preserved
+[OK] Attack texture unloading
+[OK] Missing Punch frame issue identified and corrected
+
+
+============================================================
+NEXT
+============================================================
+
+The next update separates the large shared enemy.c file into smaller
+enemy modules and gives Punch and Elbow their own adjustable hitbox and
+distance settings.
+
+Continue with:
+
+0038 - Enemy Modular Architecture and Per-Move Combat Settings
+
+
+============================================================
+END OF DOCUMENTATION
+============================================================

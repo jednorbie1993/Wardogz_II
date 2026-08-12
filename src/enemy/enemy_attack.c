@@ -1,6 +1,19 @@
 #include "enemy_internal.h"
 
 
+static float GetNextEnemyAttackRange(
+    const Enemy *enemy
+)
+{
+    if (enemy->nextAttackMove == ENEMY_ATTACK_ELBOW)
+    {
+        return enemy->elbowAttackRange;
+    }
+
+    return enemy->punchAttackRange;
+}
+
+
 static int GetCurrentAttackFrameCount(
     const Enemy *enemy
 )
@@ -184,7 +197,7 @@ void EnemyUpdateAttack(
         !enemy->isAttacking &&
         enemy->attackCooldownTimer <= 0.0f &&
         enemy->isInAttackRange &&
-        context->absoluteDistanceX <= enemy->attackRange &&
+        context->absoluteDistanceX <= GetNextEnemyAttackRange(enemy) &&
         EnemyIsPlayerInVerticalRange(enemy, player) &&
         player->isAlive &&
         context->playerDetected

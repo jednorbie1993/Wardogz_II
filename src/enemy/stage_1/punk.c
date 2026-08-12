@@ -35,16 +35,22 @@ Enemy InitPunk(float x, float y)
     enemy.chaseDepthTolerance = 8.00f;
 
     // ============================================================
-    // 0037 - PUNK ATTACK DISTANCE SETTINGS
+    // 0037 - PUNK PUNCH / ELBOW DISTANCE SETTINGS
     // ============================================================
-    // attackRange:
-    //   Maximum horizontal distance where Punk may START an attack.
-    //
-    // attackStopDistance:
-    //   Distance where Punk stops walking toward the player.
 
-    enemy.attackRange = 140.0f;
-    enemy.attackStopDistance = 140.0f;
+    // PUNCH
+    // Maximum distance where Punch may START.
+    enemy.punchAttackRange = 230.0f;
+
+    // Distance where Punk stops walking before Punch.
+    enemy.punchStopDistance = 190.0f;
+
+    // ELBOW
+    // Elbow has shorter reach, so Punk walks closer first.
+    enemy.elbowAttackRange = 140.0f;
+
+    // Distance where Punk stops walking before Elbow.
+    enemy.elbowStopDistance = 120.0f;
 
     // ============================================================
     // 0032 - PUNK STAGE POSITION ANCHOR
