@@ -1,449 +1,255 @@
-============================================================
-WARDOGZ II - 0011
-PLAYER IDLE SPRITE SIZE, ALIGNMENT, AND DEPTH SCALING
-============================================================
+WARDOGZ II
+DOCUMENTATION 0011
 
-DATE:
-August 8, 2026
+TITLE:
+Player Idle, Scaling, Alignment, and Sprite Image Adjustments
 
+===========================================================
+OVERVIEW
+===========================================================
 
-------------------------------------------------------------
-1. IDLE ANIMATION FRAMES
-------------------------------------------------------------
+This document records the player sprite/image system used for Jamber,
+including idle animation, image sizing, depth scaling, bottom alignment,
+and later visual sprite adjustments.
 
-Originally, the player had 4 idle animation frames.
+The player image files can be replaced or redrawn without changing the
+gameplay collision rectangle, as long as DrawPlayer continues to use the
+current texture dimensions and the same bottom-center anchor system.
 
-Current setup:
-- player_idle_1.png
-- player_idle_2.png
-- player_idle_3.png
+===========================================================
+1. PLAYER IDLE ANIMATION
+===========================================================
 
-player_idle_4.png was removed.
+The original idle animation uses 3 frames:
 
-In player.h:
+idle_1.png
+idle_2.png
+idle_3.png
 
-OLD:
-Texture2D idleTextures[4];
+idle_4.png was removed.
 
-NEW:
-Texture2D idleTextures[3];
+The currently active idle texture is selected using the player's
+idle animation frame.
 
+The drawing system uses the dimensions of the current texture instead
+of assuming every image has exactly the same source size.
 
-In player.c, remove:
+This prevents sprite cropping when newer player images use a larger
+canvas.
 
-player.idleTextures[3] =
-    LoadTexture("assets/sprites/player/player_idle_4.png");
+===========================================================
+2. SPRITE IMAGE SIZE VS GAMEPLAY RECTANGLE
+===========================================================
 
+The visible Jamber sprite can use a larger image/canvas than the
+Player rectangle.
 
-Idle animation should now use frame indexes:
+The player rectangle is mainly used for gameplay positioning,
+movement, collision, hurtboxes, and related calculations.
 
-0
-1
-2
+The sprite image is drawn separately over that rectangle.
 
-Example animation sequence:
+Because of this, changing the PNG canvas or visible character size
+does NOT require making the Player rectangle the same size as the PNG.
 
-0 -> 1 -> 2 -> 1 -> 0
+===========================================================
+3. DEPTH / PERSPECTIVE SCALING
+===========================================================
 
+Player size changes depending on vertical position in the walk area.
 
-------------------------------------------------------------
-2. IMPORTANT FIX - IDLE TEXTURE SOURCE SIZE
-------------------------------------------------------------
+Current reference range:
 
-Problem:
+Top Y    = 270
+Bottom Y = 700
 
-The idle PNG images were changed to a larger canvas size.
+Depth is calculated from the player's Y position.
 
-However, DrawPlayer() was still using the dimensions of:
+Current scaling reference:
 
-player->texture
+scale = 2.70 + (depth * 1.80)
 
-This caused parts of the idle images, such as the hands and shoes,
-to be cut off.
+Width also uses an additional multiplier:
 
+width *= 1.30
 
-OLD:
+Result:
 
-Rectangle source =
-{
-    0.0f,
-    0.0f,
-    (float)player->texture.width,
-    (float)player->texture.height
-};
+- Jamber appears smaller farther toward the top/back of the stage.
+- Jamber appears larger toward the bottom/front of the stage.
+- The effect gives the beat-'em-up stage a depth/perspective feeling.
 
+===========================================================
+4. BOTTOM-CENTER SPRITE ALIGNMENT
+===========================================================
 
-FIX:
+The sprite uses bottom-center alignment.
 
-Texture2D currentTexture =
-    player->idleTextures[player->idleFrame];
-
-Rectangle source =
-{
-    0.0f,
-    0.0f,
-    (float)currentTexture.width,
-    (float)currentTexture.height
-};
-
-
-IMPORTANT:
-
-Always use currentTexture.width and currentTexture.height when
-drawing the current animation frame.
-
-Do not use player->texture dimensions for idle animation frames.
-
-
-------------------------------------------------------------
-3. SPRITE CANVAS SIZE
-------------------------------------------------------------
-
-The animation PNG canvas was increased so that future animations
-have enough space.
-
-This is useful for:
-
-- Idle
-- Walking
-- Punching
-- Kicking
-- Hurt animations
-- Special attacks
-
-A large transparent canvas does NOT mean that the player's
-gameplay collision size must also be large.
-
-IMAGE CANVAS SIZE
-and
-GAMEPLAY PLAYER SIZE
-
-are two different things.
-
-
-------------------------------------------------------------
-4. PLAYER VISUAL SCALE
-------------------------------------------------------------
-
-Player visual size is controlled inside:
-
-src/player.c
-
-Function:
-
-DrawPlayer()
-
-
-Current structure:
-
-float depth =
-    (player->rectangle.y - 270.0f) /
-    (700.0f - 270.0f);
-
-if (depth < 0.0f)
-    depth = 0.0f;
-
-if (depth > 1.0f)
-    depth = 1.0f;
-
-float scale = 2.70f + (depth * 1.80f);
-
-float scaledWidth =
-    player->rectangle.width * scale * 1.30f;
-
-float scaledHeight =
-    player->rectangle.height * scale;
-
-
-------------------------------------------------------------
-5. DEPTH / PERSPECTIVE EFFECT
-------------------------------------------------------------
-
-The player changes size depending on the Y position.
-
-TOP / BACK:
-Player is smaller.
-
-MIDDLE:
-Player gradually becomes larger.
-
-BOTTOM / FRONT:
-Player is largest.
-
-
-Example:
-
-Y = 270
-depth = 0.0
-small player
-
-
-Middle of the walk area:
-depth is approximately 0.5
-medium player
-
-
-Y = 700
-depth = 1.0
-large player
-
-
-This creates a fake 3D perspective effect for the
-2D beat-'em-up stage.
-
-
-------------------------------------------------------------
-6. SCALE VALUES
-------------------------------------------------------------
-
-Example:
-
-float scale = 2.70f + (depth * 1.80f);
-
-
-2.70f
-=
-Base player size.
-
-This controls the player's size near the TOP of the stage.
-
-
-1.80f
-=
-Depth growth.
-
-This controls how much larger the player becomes when moving
-toward the BOTTOM of the stage.
-
-
-Example:
-
-TOP:
-scale = approximately 2.70
-
-
-MIDDLE:
-scale = approximately 3.60
-
-
-BOTTOM:
-scale = approximately 4.50
-
-
-If the TOP player is too small or too large:
-
-Change:
-2.70f
-
-
-If the difference between TOP and BOTTOM is too small:
-
-Increase:
-1.80f
-
-
-If the difference is too large:
-
-Decrease:
-1.80f
-
-
-------------------------------------------------------------
-7. PLAYER WIDTH
-------------------------------------------------------------
-
-Current width adjustment:
-
-float scaledWidth =
-    player->rectangle.width * scale * 1.30f;
-
-
-The:
-
-1.30f
-
-is an extra width multiplier.
-
-
-Increase it if the character looks too thin.
-
-Example:
-
-1.35f
-1.40f
-
-
-Decrease it if the character looks too wide.
-
-Example:
-
-1.25f
-1.20f
-
-
-------------------------------------------------------------
-8. PLAYER DRAWING ALIGNMENT
-------------------------------------------------------------
-
-The sprite should be anchored using the player's bottom-center
+This is important because sprite images can have different canvas
+sizes while the player's feet still stay attached to the same gameplay
 position.
 
-Current setup:
+General idea:
 
-Rectangle destination =
-{
-    player->rectangle.x +
-        (player->rectangle.width / 2.0f),
+destination.x =
+    player center X - half of the scaled sprite width
 
-    player->rectangle.y +
-        player->rectangle.height,
+destination.y =
+    player bottom Y - scaled sprite height
 
-    scaledWidth,
-    scaledHeight
-};
+The feet/bottom of the image are therefore treated as the visual anchor.
 
+===========================================================
+5. PLAYER IMAGE / SPRITE ADJUSTMENTS
+===========================================================
 
-Vector2 origin =
-{
-    scaledWidth / 2.0f,
-    scaledHeight
-};
+The Jamber images have been updated several times after the original
+idle system was created.
 
+Current visual direction:
 
-DrawTexturePro(
-    currentTexture,
-    source,
-    destination,
-    origin,
-    0.0f,
-    WHITE
-);
+- White dog head
+- Black tactical vest
+- Muscular brown arms with white patches
+- Olive cargo pants
+- Black combat boots
+- Retro pixel-art fighting-game appearance
+- Classic arcade / KOF-like visual texture
+- Character should NOT look chubby
+- Keep the body muscular and balanced
 
+Recent image adjustments:
 
-This makes the sprite follow the player's ground position instead
-of using the upper-left corner of the large transparent image.
+- Slightly larger head than the earlier version
+- Character height slightly reduced visually
+- Keep proportions consistent between animation frames
+- Deeper/slightly darker shading
+- Preserve visible pixel texture and highlights
+- Keep full body visible
+- Maintain enough transparent canvas space around the character
+- Keep feet aligned consistently between frames
 
+These are IMAGE adjustments only unless a code change is specifically
+needed for alignment or animation.
 
-------------------------------------------------------------
-9. WALK AREA VS IMAGE SIZE
-------------------------------------------------------------
+===========================================================
+6. PLAYER WALK SPRITES / JWALK UPDATE
+===========================================================
 
-IMPORTANT:
+The player walking images were later expanded and replaced with newer
+JWALK frames.
 
-Do NOT confuse:
+Current walk animation uses:
 
-1024 x 1024 PNG canvas
+JWALK1
+JWALK2
+JWALK3
+JWALK4
+JWALK5
+JWALK6
+JWALK7
+JWALK8
+JWALK9
+JWALK10
+JWALK11
 
-with:
+The current animation timing separates the opening movement from the
+normal walking section:
 
-walkAreaTop
-walkAreaBottom
+JWALK1 - JWALK5
+    Faster starting/buildup frames.
 
+Reference timing:
+    0.06 seconds per frame
 
-The PNG dimensions are IMAGE dimensions.
+JWALK6 - JWALK11
+    Normal walking animation speed.
 
-walkAreaTop and walkAreaBottom are GAME WORLD Y coordinates.
+These new walking sprites should keep the same Jamber design and
+general body proportions.
 
+For corrected walking poses, leg placement must follow the intended
+step of each frame.
 
-Example:
+Recent correction example:
 
-const float walkAreaTop = 270.0f;
-const float walkAreaBottom = 700.0f;
+- Body facing right
+- Left foot forward
+- Right foot behind
+- Natural walking stance
+- Do not unnecessarily redesign the character
+- Slightly darker overall shading
 
+===========================================================
+7. WHY CURRENT TEXTURE DIMENSIONS ARE IMPORTANT
+===========================================================
 
-The value:
+Newer Jamber sprites do not always use the exact same canvas dimensions
+as older images.
 
-700.0f
+DrawPlayer must therefore continue to derive the source image width
+and height from the currently selected texture.
 
-does NOT mean the image is 700 pixels tall.
+This lets us improve or replace:
 
-It means Y = 700 is being used as the bottom/front position of
-the playable floor.
+- idle images
+- idle breathing images
+- battle idle images
+- walk images
+- punch images
+- kick images
 
+without forcing every PNG to use the old exact image dimensions.
 
-------------------------------------------------------------
-10. BETTER FUTURE SETUP
-------------------------------------------------------------
+===========================================================
+8. IMAGE REPLACEMENT RULE
+===========================================================
 
-Currently, DrawPlayer() uses hardcoded values:
+When replacing a Jamber PNG:
 
-270.0f
-700.0f
+1. Keep the full body inside the transparent canvas.
+2. Do not crop the ears, head, hands, or boots.
+3. Keep the feet near a consistent bottom reference.
+4. Preserve the intended facing direction.
+5. Keep Jamber's proportions consistent.
+6. Do not make the character chubby.
+7. Preserve the retro pixel-art texture.
+8. Check the sprite in-game after replacement.
+9. Adjust draw offset only when the new image genuinely needs it.
+10. Do not change the gameplay rectangle only because the PNG canvas
+    became larger.
 
+===========================================================
+9. CURRENT STATUS
+===========================================================
 
-Example:
+DONE / IMPLEMENTED:
 
-float depth =
-    (player->rectangle.y - 270.0f) /
-    (700.0f - 270.0f);
+- 3-frame original idle animation
+- Removed idle_4
+- Current texture dimensions used when drawing
+- Larger sprite canvas supported
+- Player gameplay rectangle kept separate from visible image size
+- Depth scaling
+- Bottom-center alignment
+- Jamber sprite redesign/replacement workflow
+- Newer walk/JWALK images supported
+- Current Jamber visual proportions being standardized
+- Slightly larger head adjustment
+- Slightly darker sprite shading
+- Walk-frame foot placement corrections
 
+===========================================================
+10. IMPORTANT NOTE FOR FUTURE SPRITE CHANGES
+===========================================================
 
-Later, improve this so DrawPlayer() uses the same:
+If Jamber's image is changed again, update this document only when the
+change affects the player sprite system, sizing, alignment, proportions,
+animation image set, or general visual rules.
 
-walkAreaTop
-walkAreaBottom
+Pure attack timing, attack hitbox, damage, knockback, and combat-data
+changes belong in their respective attack/combat documentation instead.
 
-used by the movement system.
-
-
-This will prevent the movement area and perspective scaling
-from becoming out of sync.
-
-
-------------------------------------------------------------
-11. TEXTURE CLEANUP
-------------------------------------------------------------
-
-Because there are now 3 idle textures, they should also be
-unloaded when the game closes.
-
-In:
-
-src/player.c
-
-
-Use:
-
-void UnloadPlayer(Player *player)
-{
-    UnloadTexture(player->texture);
-
-    for (int i = 0; i < 3; i++)
-    {
-        UnloadTexture(player->idleTextures[i]);
-    }
-
-    player->texture = (Texture2D){0};
-}
-
-
-------------------------------------------------------------
-12. CURRENT GOAL
-------------------------------------------------------------
-
-Current player system:
-
-[OK] Player PNG loads
-[OK] 3 idle animation frames
-[OK] Idle animation
-[OK] Larger animation canvas
-[OK] Hands/shoes no longer cropped
-[OK] Visual player size adjusted
-[OK] Extra width adjustment
-[OK] Bottom-center sprite alignment
-[OK] Depth-based scaling
-[OK] Smaller at the back/top
-[OK] Gradually larger toward the front/bottom
-
-NEXT:
-
-- Finalize walkable floor boundaries
-- Synchronize walkAreaTop / walkAreaBottom with DrawPlayer()
-- Separate visual sprite size from gameplay collision box
-- Add walking animation
-- Add attack animations later
-
-
-============================================================
-END OF 0011
-============================================================
+===========================================================
+END OF DOCUMENTATION 0011
+===========================================================

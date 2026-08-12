@@ -103,6 +103,54 @@ Enemy InitPunk(float x, float y)
     enemy.walkFrameTime = 0.11f;
 
     // ============================================================
+    // 0037 - PUNK ATTACK TEXTURES
+    // ============================================================
+
+    // PUNCH - 4 FRAMES
+    enemy.punchFrameCount = 4;
+
+    enemy.punchTextures[0] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punkp1.png"
+    );
+
+    enemy.punchTextures[1] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punkp2.png"
+    );
+
+    enemy.punchTextures[2] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punkp3.png"
+    );
+
+    enemy.punchTextures[3] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/punkp4.png"
+    );
+
+    // ELBOW - 4 FRAMES
+    enemy.elbowFrameCount = 4;
+
+    enemy.elbowTextures[0] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/PUNKE1.png"
+    );
+
+    enemy.elbowTextures[1] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/PUNKE2.png"
+    );
+
+    enemy.elbowTextures[2] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/PUNKE3.png"
+    );
+
+    enemy.elbowTextures[3] = LoadTexture(
+        "assets/sprites/enemy/stage_1/punk/PUNKE4.png"
+    );
+
+    enemy.attackFrame = 0;
+    enemy.attackFrameTimer = 0.0f;
+    enemy.attackFrameTime = 0.08f;
+    enemy.currentAttackMove = ENEMY_ATTACK_PUNCH;
+    enemy.nextAttackMove = ENEMY_ATTACK_PUNCH;
+
+    // ============================================================
     // PUNK - SPRITE SIZE / ALIGNMENT
     // ============================================================
 

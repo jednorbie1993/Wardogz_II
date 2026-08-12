@@ -40,6 +40,15 @@ Enemy InitEnemyBase(void)
     enemy.attackHitReactionTime = 0.16f;
     enemy.attackDirection = -1;
 
+    // 0037 - Attack animation defaults.
+    enemy.punchFrameCount = 0;
+    enemy.elbowFrameCount = 0;
+    enemy.attackFrame = 0;
+    enemy.attackFrameTimer = 0.0f;
+    enemy.attackFrameTime = 0.08f;
+    enemy.currentAttackMove = ENEMY_ATTACK_PUNCH;
+    enemy.nextAttackMove = ENEMY_ATTACK_PUNCH;
+
     // ============================================================
     // 0031 - FACING + CHASE AI DEFAULTS
     // ============================================================
@@ -208,6 +217,8 @@ void StartEnemyEntrance(
     enemy->isAttacking = false;
     enemy->attackTimer = 0.0f;
     enemy->hitPlayerThisAttack = false;
+    enemy->attackFrame = 0;
+    enemy->attackFrameTimer = 0.0f;
 }
 
 
@@ -779,12 +790,59 @@ void UpdateEnemyHit(
     )
     {
         enemy->isAttacking = true;
-        enemy->attackTimer = 0.18f;
         enemy->hitPlayerThisAttack = false;
+
+        // 0037 - Alternate between Punk Punch and Punk Elbow.
+        enemy->currentAttackMove = enemy->nextAttackMove;
+
+        if (enemy->nextAttackMove == ENEMY_ATTACK_PUNCH)
+        {
+            enemy->nextAttackMove = ENEMY_ATTACK_ELBOW;
+        }
+        else
+        {
+            enemy->nextAttackMove = ENEMY_ATTACK_PUNCH;
+        }
+
+        enemy->attackFrame = 0;
+        enemy->attackFrameTimer = 0.0f;
+
+        int attackFrameCount =
+            (enemy->currentAttackMove == ENEMY_ATTACK_ELBOW)
+            ? enemy->elbowFrameCount
+            : enemy->punchFrameCount;
+
+        if (attackFrameCount <= 0)
+        {
+            attackFrameCount = 1;
+        }
+
+        enemy->attackTimer =
+            enemy->attackFrameTime *
+            (float)attackFrameCount;
     }
 
     if (enemy->isAttacking)
     {
+        // 0037 - Advance the current 4-frame attack animation.
+        int attackFrameCount =
+            (enemy->currentAttackMove == ENEMY_ATTACK_ELBOW)
+            ? enemy->elbowFrameCount
+            : enemy->punchFrameCount;
+
+        if (attackFrameCount > 0)
+        {
+            enemy->attackFrameTimer += deltaTime;
+
+            while (
+                enemy->attackFrameTimer >= enemy->attackFrameTime &&
+                enemy->attackFrame < attackFrameCount - 1
+            )
+            {
+                enemy->attackFrameTimer -= enemy->attackFrameTime;
+                enemy->attackFrame++;
+            }
+        }
         Rectangle enemyAttackHitbox =
             GetEnemyAttackHitbox(enemy);
 
@@ -817,6 +875,8 @@ void UpdateEnemyHit(
             enemy->attackTimer = 0.0f;
             enemy->attackCooldownTimer = 1.10f;
             enemy->hitPlayerThisAttack = false;
+            enemy->attackFrame = 0;
+            enemy->attackFrameTimer = 0.0f;
         }
     }
 
@@ -981,9 +1041,40 @@ void DrawEnemy(const Enemy *enemy)
         !enemy->isHit &&
         enemy->walkFrameCount > 0;
 
-    Texture2D currentTexture = drawWalk
-        ? enemy->walkTextures[enemy->walkFrame]
-        : enemy->idleTextures[enemy->idleFrame];
+    Texture2D currentTexture;
+
+    // 0037 - Attack animation has priority over walk and idle.
+    if (enemy->isAttacking)
+    {
+        if (
+            enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
+            enemy->elbowFrameCount > 0
+        )
+        {
+            currentTexture =
+                enemy->elbowTextures[enemy->attackFrame];
+        }
+        else if (enemy->punchFrameCount > 0)
+        {
+            currentTexture =
+                enemy->punchTextures[enemy->attackFrame];
+        }
+        else
+        {
+            currentTexture =
+                enemy->idleTextures[enemy->idleFrame];
+        }
+    }
+    else if (drawWalk)
+    {
+        currentTexture =
+            enemy->walkTextures[enemy->walkFrame];
+    }
+    else
+    {
+        currentTexture =
+            enemy->idleTextures[enemy->idleFrame];
+    }
 
     Rectangle source =
     {
@@ -1155,5 +1246,17 @@ void UnloadEnemy(Enemy *enemy)
     for (int i = 0; i < enemy->walkFrameCount; i++)
     {
         UnloadTexture(enemy->walkTextures[i]);
+    }
+
+    // 0037 - Unload Punk punch textures.
+    for (int i = 0; i < enemy->punchFrameCount; i++)
+    {
+        UnloadTexture(enemy->punchTextures[i]);
+    }
+
+    // 0037 - Unload Punk elbow textures.
+    for (int i = 0; i < enemy->elbowFrameCount; i++)
+    {
+        UnloadTexture(enemy->elbowTextures[i]);
     }
 }

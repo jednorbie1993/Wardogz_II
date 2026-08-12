@@ -6,6 +6,13 @@
 
 #define MAX_ENEMY_IDLE_FRAMES 8
 #define MAX_ENEMY_WALK_FRAMES 8
+#define MAX_ENEMY_ATTACK_FRAMES 4
+
+typedef enum EnemyAttackMove
+{
+    ENEMY_ATTACK_PUNCH = 0,
+    ENEMY_ATTACK_ELBOW = 1
+} EnemyAttackMove;
 
 typedef struct Enemy
 {
@@ -46,6 +53,23 @@ typedef struct Enemy
     float attackKnockbackSpeed;
     float attackHitReactionTime;
     int attackDirection;
+
+    // ============================================================
+    // 0037 - ENEMY ATTACK ANIMATION
+    // ============================================================
+
+    Texture2D punchTextures[MAX_ENEMY_ATTACK_FRAMES];
+    Texture2D elbowTextures[MAX_ENEMY_ATTACK_FRAMES];
+
+    int punchFrameCount;
+    int elbowFrameCount;
+
+    int attackFrame;
+    float attackFrameTimer;
+    float attackFrameTime;
+
+    EnemyAttackMove currentAttackMove;
+    EnemyAttackMove nextAttackMove;
 
     // ============================================================
     // 0031 - FACING + CHASE AI

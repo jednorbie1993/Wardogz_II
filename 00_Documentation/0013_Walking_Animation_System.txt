@@ -1,393 +1,227 @@
-WARDOGZ II DOCUMENTATION
-0013 - Walking Animation System
+WARDOGZ II
+DOCUMENTATION 0013
 
-Date: 2026-08-09
+TITLE:
+Player Walking Animation System - Updated JWALK System
 
-============================================================
-TITLE
-============================================================
+===========================================================
+OVERVIEW
+===========================================================
 
-0013_Walking_Animation_System
+This document records the player walking animation system for Jamber.
 
-============================================================
-PURPOSE
-============================================================
+The walking animation originally used fewer frames, but the player walk
+sprites were later replaced and expanded into the current JWALK sequence.
 
-This update adds a 4-frame walking animation to the player.
+Current walking animation:
 
-The player now uses:
+JWALK1
+JWALK2
+JWALK3
+JWALK4
+JWALK5
+JWALK6
+JWALK7
+JWALK8
+JWALK9
+JWALK10
+JWALK11
 
-- Idle animation when no movement key is pressed.
-- Walking animation when Arrow Keys or WASD are pressed.
-- Horizontal mirroring so the same walking sprites can be used for both LEFT and RIGHT movement.
+===========================================================
+1. WALKING STATE
+===========================================================
 
-This means there is no need to create a second set of walking sprites for the opposite direction.
+The player enters the walking animation while movement input is active.
 
+When the player is not moving and is not attacking, the normal idle or
+battle-idle animation can be shown instead.
 
-============================================================
-PLAYER SPRITES
-============================================================
+The walking system uses:
 
-Folder:
+player->isWalking
+player->walkTimer
+player->walkFrame
+player->walkFrameTime
 
-assets/sprites/player/
+===========================================================
+2. WALK TIMER
+===========================================================
 
-Required files:
-
-player_idle_1.png
-player_idle_2.png
-player_idle_3.png
-
-player_walk_1.png
-player_walk_2.png
-player_walk_3.png
-player_walk_4.png
-
-
-============================================================
-WALKING FRAME ORDER
-============================================================
-
-Walking animation:
-
-1 -> 2 -> 3 -> 4 -> 1 -> 2 -> 3 -> 4 ...
-
-The animation keeps looping while a movement key is held.
-
-When the movement key is released, the player returns to the idle animation.
-
-
-============================================================
-CONTROLS
-============================================================
-
-LEFT:
-Left Arrow
-A
-
-RIGHT:
-Right Arrow
-D
-
-UP:
-Up Arrow
-W
-
-DOWN:
-Down Arrow
-S
-
-
-============================================================
-PLAYER BEHAVIOR
-============================================================
-
-No movement key:
-
-IDLE animation
-
-player_idle_1
-player_idle_2
-player_idle_3
-player_idle_2
-player_idle_1
-...
-
-
-Movement key pressed:
-
-WALK animation
-
-player_walk_1
-player_walk_2
-player_walk_3
-player_walk_4
-repeat
-
-
-============================================================
-LEFT AND RIGHT FACING
-============================================================
-
-The walking sprites only need one original direction.
-
-LEFT movement:
-
-Use the original walking sprite normally.
-
-RIGHT movement:
-
-Use the same walking sprite but flip/mirror it horizontally using raylib.
-
-This is handled in DrawPlayer() using the source Rectangle.
-
-
-Normal source width:
-
-source.width = currentTexture.width;
-
-
-Mirrored source width:
-
-source.x = currentTexture.width;
-source.width = -currentTexture.width;
-
-
-A negative source width tells raylib to draw the texture horizontally flipped.
-
-
-============================================================
-UP AND DOWN MOVEMENT
-============================================================
-
-When moving UP or DOWN:
-
-- The walking animation still plays.
-- The player keeps the last LEFT or RIGHT facing direction.
-
-Example:
-
-Player walks RIGHT.
-Then player presses UP.
-
-The player continues facing RIGHT while walking upward.
-
-
-============================================================
-NEW PLAYER VARIABLES
-============================================================
-
-Added to Player struct:
-
-Texture2D walkTextures[4];
-
-int walkFrame;
-float walkTimer;
-float walkFrameTime;
-
-bool isWalking;
-bool facingRight;
-
-
-Purpose:
-
-walkTextures[4]
-Stores the four walking PNG textures.
-
-walkFrame
-Stores the current walking frame.
-
-walkTimer
-Counts animation time.
-
-walkFrameTime
-Controls how fast the walking frames change.
-
-isWalking
-True while any movement key is pressed.
-
-facingRight
-Controls whether the player texture should be mirrored.
-
-
-============================================================
-WALK ANIMATION SPEED
-============================================================
-
-Current value:
-
-player.walkFrameTime = 0.12f;
-
-Smaller number:
-Faster animation.
-
-Example:
-0.08f = faster
-
-Larger number:
-Slower animation.
-
-Example:
-0.18f = slower
-
-
-============================================================
-PLAYER.C LOGIC
-============================================================
-
-UpdatePlayer() first checks movement:
-
-movingLeft
-movingRight
-movingUp
-movingDown
-
-Then:
-
-player->isWalking =
-    movingLeft ||
-    movingRight ||
-    movingUp ||
-    movingDown;
-
-
-Facing direction:
-
-if moving LEFT:
-
-player->facingRight = false;
-
-
-if moving RIGHT:
-
-player->facingRight = true;
-
-
-If walking:
+While the player is walking:
 
 player->walkTimer += deltaTime;
 
-When walkTimer reaches walkFrameTime:
+When the timer reaches the required frame duration, the walk frame is
+advanced and the timer is reset.
 
-walkFrame increases.
+===========================================================
+3. CURRENT JWALK FRAME TIMING
+===========================================================
 
-After frame 4:
+The current JWALK animation is split into two timing groups.
 
-walkFrame returns to 0.
+JWALK1 - JWALK5
+    Fast starting / buildup frames.
 
+Reference frame time:
 
-If not walking:
+0.06f seconds
 
-- Walking frame resets.
-- Walking timer resets.
-- Idle animation continues.
+JWALK6 - JWALK11
+    Normal walking cycle speed.
 
+Reference logic:
 
-============================================================
-DRAWPLAYER LOGIC
-============================================================
-
-DrawPlayer() chooses which texture to display.
-
-If walking:
-
-currentTexture =
-    player->walkTextures[player->walkFrame];
-
-
-If not walking:
-
-currentTexture =
-    player->idleTextures[player->idleFrame];
-
-
-Then the same depth scaling system is applied.
-
-
-============================================================
-MIRROR SYSTEM
-============================================================
-
-Source rectangle starts normally:
-
-Rectangle source =
+if (player->walkFrame <= 4)
 {
-    0.0f,
-    0.0f,
-    (float)currentTexture.width,
-    (float)currentTexture.height
-};
-
-
-When facing RIGHT:
-
-if (player->facingRight)
+    currentWalkFrameTime = 0.06f;
+}
+else
 {
-    source.x = (float)currentTexture.width;
-    source.width = -(float)currentTexture.width;
+    currentWalkFrameTime = player->walkFrameTime;
 }
 
+This creates a quicker movement buildup at the start of the walking
+animation before the normal walk cycle continues.
 
-This mirrors the image horizontally without creating new PNG files.
+===========================================================
+4. WALK FRAME RANGE
+===========================================================
 
+The current player walk animation uses 11 frames.
 
-============================================================
-TEXTURE UNLOADING
-============================================================
+Frame index reference:
 
-UnloadPlayer() must unload:
+0  = JWALK1
+1  = JWALK2
+2  = JWALK3
+3  = JWALK4
+4  = JWALK5
+5  = JWALK6
+6  = JWALK7
+7  = JWALK8
+8  = JWALK9
+9  = JWALK10
+10 = JWALK11
 
-- Original texture
-- 3 idle textures
-- 4 walking textures
+The frame index must stay inside the valid walking texture range.
 
-Walking textures are unloaded using:
+===========================================================
+5. CURRENT PLAYER WALK IMAGE DIRECTION
+===========================================================
 
-for (int i = 0; i < 4; i++)
-{
-    UnloadTexture(player->walkTextures[i]);
-}
+Jamber's current walking sprites follow the same character design used
+throughout the player image system.
 
+Visual rules:
 
-============================================================
-EXPECTED RESULT
-============================================================
+- white dog head
+- black tactical vest
+- muscular brown arms with white patches
+- olive cargo pants
+- black combat boots
+- retro pixel-art fighting-game style
+- classic arcade / KOF-like texture
+- not chubby
+- slightly larger head than older versions
+- slightly darker overall shading
 
-After Build and Run:
+===========================================================
+6. WALK FRAME FOOT PLACEMENT
+===========================================================
 
-1. Player stands still.
-   -> Idle animation plays.
+Each walking frame must show a natural alternating leg position.
 
-2. Press LEFT.
-   -> Player walks left.
-   -> Walking frames loop.
+Recent sprite correction:
 
-3. Press RIGHT.
-   -> Player walks right.
-   -> Same walking images are mirrored.
+Body facing right.
 
-4. Press UP or DOWN.
-   -> Walking animation plays.
-   -> Player keeps last horizontal facing direction.
+Corrected pose example:
 
-5. Release movement key.
-   -> Player returns to idle animation.
+- left foot forward
+- right foot behind
 
+Other frames should alternate the legs naturally so the animation looks
+like a real walk cycle instead of repeating the same stance.
 
-============================================================
-IMPORTANT
-============================================================
+Changing foot placement in a PNG is an image/sprite correction and does
+not normally require changing movement code.
 
-Do not create separate:
+===========================================================
+7. FACING DIRECTION
+===========================================================
 
-player_walk_right_1.png
-player_walk_right_2.png
-player_walk_right_3.png
-player_walk_right_4.png
+The player can face left or right depending on horizontal movement.
 
-They are not needed.
+The sprite drawing system may mirror the current walking texture when
+the player faces the opposite direction.
 
-The raylib mirror system handles the opposite direction.
+The walk animation itself should keep one consistent base-facing
+direction in the source PNG files.
 
+===========================================================
+8. DEPTH SCALING DURING WALKING
+===========================================================
 
-============================================================
-CURRENT SYSTEM STATUS
-============================================================
+Walking sprites continue to use the player depth/perspective scaling
+system.
 
-Implemented:
+The character appears:
 
-[OK] 3-frame idle animation
-[OK] 4-frame walking animation
-[OK] Arrow Key movement
-[OK] WASD movement
-[OK] LEFT facing
-[OK] RIGHT mirror facing
-[OK] UP/DOWN walking animation
-[OK] Return to idle after movement
-[OK] Existing depth scaling preserved
-[OK] Existing walkable boundaries preserved
+- smaller toward the top/back of the stage
+- larger toward the bottom/front of the stage
 
+The walking animation must remain anchored at the feet so changing
+animation frames does not make the character jump vertically.
 
-============================================================
-END OF DOCUMENTATION
-============================================================
+===========================================================
+9. CURRENT TEXTURE DIMENSIONS
+===========================================================
+
+DrawPlayer should use the dimensions of the currently active texture.
+
+This is important because newer JWALK images may have different canvas
+dimensions from older sprites.
+
+Do not hard-code the old PNG dimensions when drawing the current walk
+frames.
+
+===========================================================
+10. WALK IMAGE REPLACEMENT RULE
+===========================================================
+
+When replacing a JWALK image:
+
+1. Keep the full body visible.
+2. Do not crop ears, head, hands, or boots.
+3. Keep feet near the same bottom anchor.
+4. Keep the same Jamber design.
+5. Keep body proportions consistent.
+6. Keep natural alternating leg positions.
+7. Preserve the intended facing direction.
+8. Keep the retro pixel-art texture.
+9. Test the new frame in-game.
+10. Do not change movement physics only because the PNG changed.
+
+===========================================================
+11. CURRENT STATUS
+===========================================================
+
+DONE / IMPLEMENTED:
+
+- Walking state
+- Walk timer
+- Walk frame animation
+- 11-frame JWALK sequence
+- JWALK1-JWALK5 fast startup timing
+- JWALK6-JWALK11 normal walk timing
+- Player-facing support
+- Depth scaling while walking
+- Bottom-center sprite anchoring
+- Current-texture dimension support
+- Updated Jamber walk sprite proportions
+- Walk-frame foot position correction
+
+===========================================================
+END OF DOCUMENTATION 0013
+===========================================================
