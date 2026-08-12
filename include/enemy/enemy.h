@@ -26,7 +26,7 @@ typedef struct Enemy
     int maxHp;
     bool isAlive;
 
-    // Prevents one attack from damaging the enemy more than once.
+    // Prevents one player attack from damaging the enemy more than once.
     bool hitByCurrentAttack;
 
     // ============================================================
@@ -41,6 +41,7 @@ typedef struct Enemy
     // ============================================================
     // 0030 - BASIC ENEMY ATTACK
     // ============================================================
+
     bool isAttacking;
     float attackTimer;
     float attackCooldownTimer;
@@ -50,6 +51,28 @@ typedef struct Enemy
     float attackRange;
     float attackHitboxWidth;
     float attackHitboxHeight;
+
+    // ============================================================
+    // 0037 - PER-MOVE ATTACK HITBOX SETTINGS
+    // ============================================================
+    // OffsetX:
+    //   positive = farther forward from the enemy
+    //   negative = closer toward the enemy body
+    //
+    // OffsetY:
+    //   positive = lower
+    //   negative = higher
+
+    float punchHitboxWidth;
+    float punchHitboxHeight;
+    float punchHitboxOffsetX;
+    float punchHitboxOffsetY;
+
+    float elbowHitboxWidth;
+    float elbowHitboxHeight;
+    float elbowHitboxOffsetX;
+    float elbowHitboxOffsetY;
+
     float attackKnockbackSpeed;
     float attackHitReactionTime;
     int attackDirection;
@@ -74,6 +97,7 @@ typedef struct Enemy
     // ============================================================
     // 0031 - FACING + CHASE AI
     // ============================================================
+
     bool facingRight;
     bool isChasing;
     float chaseSpeed;
@@ -83,29 +107,21 @@ typedef struct Enemy
     // ============================================================
     // 0035 - ENEMY STOP / ATTACK RANGE
     // ============================================================
-    // Distance where the enemy stops advancing horizontally.
-    // Keep this at or below attackRange.
+
     float attackStopDistance;
-
-    // True only when Punk is both close enough horizontally
-    // and aligned with the player's ground/depth position.
     bool isInAttackRange;
-
-    // 0034 - Player detection / aggro distance.
-    // Punk stays idle until the player is close enough on the stage.
     float aggroRange;
 
     // ============================================================
     // 0032 - ENEMY STAGE BOUNDARY / WALK AREA
     // ============================================================
-    // Y offset from hurtbox.y to the character's stage-position anchor.
-    // For Punk, InitPunk(x, y) uses y as the stage position and places
-    // the hurtbox 200 px above it, so this value is 200.0f.
+
     float stageAnchorOffsetY;
 
     // ============================================================
     // 0034 - ENEMY ENTRANCE / SPAWN
     // ============================================================
+
     bool isEntering;
     bool hasEnteredStage;
 
@@ -141,21 +157,17 @@ typedef struct Enemy
     // ============================================================
 
     float spriteSize;
-
-    // Image adjustment relative to the hurtbox.
     float spriteOffsetX;
     float spriteOffsetY;
 
 } Enemy;
 
 
-// Creates common/default enemy state.
-// Character-specific files such as punk.c customize the returned Enemy.
+// Common/default enemy state.
 Enemy InitEnemyBase(void);
 
 
-// Shared enemy update system.
-// Handles idle animation, hit detection, damage, knockback, and death.
+// Main shared enemy update/orchestrator.
 void UpdateEnemyHit(
     Enemy *enemy,
     Player *player,
@@ -166,8 +178,7 @@ void UpdateEnemyHit(
 );
 
 
-// 0034 - Start an enemy entrance from its current InitPunk position.
-// targetStageY uses the same stage-Y coordinate system as InitPunk(x, y).
+// 0034 - Entrance control.
 void StartEnemyEntrance(
     Enemy *enemy,
     float targetX,
@@ -176,17 +187,16 @@ void StartEnemyEntrance(
 );
 
 
-// 0030 - Current enemy attack hitbox.
+// Public debug/combat helpers.
 Rectangle GetEnemyAttackHitbox(const Enemy *enemy);
 Rectangle GetEnemyFootMarker(const Enemy *enemy);
 
 
-// Shared drawing system.
-// Draws the current enemy sprite, debug hurtbox, and HP display.
+// Shared enemy drawing.
 void DrawEnemy(const Enemy *enemy);
 
 
-// Unload textures belonging to the enemy.
+// Shared enemy texture cleanup.
 void UnloadEnemy(Enemy *enemy);
 
 #endif

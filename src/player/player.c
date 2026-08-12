@@ -130,7 +130,7 @@ Player InitPlayer(const char *texturePath)
     // ============================================================
     // 0030 - PLAYER HP / HURT STATE
     // ============================================================
-    player.maxHp = 100;
+    player.maxHp = 900;
     player.hp = player.maxHp;
     player.isAlive = true;
 

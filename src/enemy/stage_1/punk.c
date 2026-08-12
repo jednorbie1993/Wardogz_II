@@ -30,9 +30,21 @@ Enemy InitPunk(float x, float y)
     // 0031 - PUNK FACING + CHASE AI
     // ============================================================
     enemy.facingRight = false;
-    enemy.chaseSpeed = 115.0f;
+    enemy.chaseSpeed = 165.0f;
     enemy.chaseStopDistance = 155.0f;
     enemy.chaseDepthTolerance = 8.00f;
+
+    // ============================================================
+    // 0037 - PUNK ATTACK DISTANCE SETTINGS
+    // ============================================================
+    // attackRange:
+    //   Maximum horizontal distance where Punk may START an attack.
+    //
+    // attackStopDistance:
+    //   Distance where Punk stops walking toward the player.
+
+    enemy.attackRange = 140.0f;
+    enemy.attackStopDistance = 140.0f;
 
     // ============================================================
     // 0032 - PUNK STAGE POSITION ANCHOR
@@ -146,9 +158,37 @@ Enemy InitPunk(float x, float y)
 
     enemy.attackFrame = 0;
     enemy.attackFrameTimer = 0.0f;
-    enemy.attackFrameTime = 0.08f;
+    enemy.attackFrameTime = 0.19f;
+    // First completed attack is Punch, then Elbow, then Punch...
     enemy.currentAttackMove = ENEMY_ATTACK_PUNCH;
     enemy.nextAttackMove = ENEMY_ATTACK_PUNCH;
+
+    // ============================================================
+    // 0037 - PUNK PUNCH HITBOX SETTINGS
+    // ============================================================
+    //
+    // Width / Height = yellow box size.
+    // OffsetX:
+    //   positive = farther forward
+    //   negative = closer to Punk
+    //
+    // OffsetY:
+    //   positive = lower
+    //   negative = higher
+
+    enemy.punchHitboxWidth = 120.0f;
+    enemy.punchHitboxHeight = 80.0f;
+    enemy.punchHitboxOffsetX = -50.0f;
+    enemy.punchHitboxOffsetY = -55.0f; //height
+
+    // ============================================================
+    // 0037 - PUNK ELBOW HITBOX SETTINGS
+    // ============================================================
+
+    enemy.elbowHitboxWidth = 120.0f;
+    enemy.elbowHitboxHeight = 80.0f;
+    enemy.elbowHitboxOffsetX = -80.90f;
+    enemy.elbowHitboxOffsetY = -65.0f; //height
 
     // ============================================================
     // PUNK - SPRITE SIZE / ALIGNMENT

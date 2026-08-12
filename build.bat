@@ -32,6 +32,12 @@ src\player\player_attack.c ^
 src\player\player_draw.c ^
 src\player\player_attack_data.c ^
 src\enemy\enemy.c ^
+src\enemy\enemy_move.c ^
+src\enemy\enemy_animation.c ^
+src\enemy\enemy_attack.c ^
+src\enemy\enemy_hit.c ^
+src\enemy\enemy_collision.c ^
+src\enemy\enemy_draw.c ^
 src\enemy\stage_1\punk.c ^
 -o build\Wardogz_II.exe ^
 -Iinclude ^

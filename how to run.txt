@@ -20,8 +20,8 @@ Recommended command:
 
 This will:
 1. Compile the game.
-2. Compile player.c.
-3. Compile the shared enemy.c.
+2. Compile player.c and the player modules.
+3. Compile enemy.c and the enemy modules.
 4. Compile the Stage 1 punk.c.
 5. Create Wardogz_II.exe.
 6. Run the game automatically.
@@ -70,7 +70,18 @@ The build currently compiles:
 
 src\main.c
 src\player\player.c
+src\player\player_move.c
+src\player\player_attack.c
+src\player\player_draw.c
+
 src\enemy\enemy.c
+src\enemy\enemy_move.c
+src\enemy\enemy_animation.c
+src\enemy\enemy_attack.c
+src\enemy\enemy_hit.c
+src\enemy\enemy_collision.c
+src\enemy\enemy_draw.c
+
 src\enemy\stage_1\punk.c
 
 
@@ -105,6 +116,7 @@ Wardogz_II
 │   │
 │   └── enemy
 │       ├── enemy.h
+│       ├── enemy_internal.h
 │       │
 │       └── stage_1
 │           └── punk.h
@@ -121,6 +133,12 @@ Wardogz_II
 │   │
 │   └── enemy
 │       ├── enemy.c
+│       ├── enemy_move.c
+│       ├── enemy_animation.c
+│       ├── enemy_attack.c
+│       ├── enemy_hit.c
+│       ├── enemy_collision.c
+│       ├── enemy_draw.c
 │       │
 │       └── stage_1
 │           └── punk.c
@@ -136,26 +154,38 @@ ENEMY SYSTEM STRUCTURE
 ===========================================================
 
 enemy.c / enemy.h
-= Shared system for ALL enemies.
+= Shared base/orchestrator for ALL enemies.
 
-Contains:
-- Damage
-- HP
-- HP bar
-- Hurtbox
-- Hit detection
-- Hit reaction
-- Knockback
-- Death
-- Common animation logic
-- Common sprite drawing
+enemy_move.c
+= Enemy movement, chase AI, entrance, and stage boundary logic.
+
+enemy_animation.c
+= Shared idle and walk animation logic.
+
+enemy_attack.c
+= Enemy attack state, Punk punch/elbow attack flow, and attack hitbox.
+
+enemy_hit.c
+= Enemy damage, hit reaction, knockback, and death handling.
+
+enemy_collision.c
+= Enemy depth scaling, scaled hurtbox, foot marker, and collision/depth checks.
+
+enemy_draw.c
+= Shared enemy sprite drawing, debug boxes, attack hitbox display, and HP bar.
+
+enemy_internal.h
+= Internal shared declarations used by the enemy modules.
 
 
 punk.c / punk.h
 = Stage 1 Punk settings.
 
 Contains:
-- Punk textures
+- Punk idle textures
+- Punk walk textures
+- Punk Punch textures: punkp1.png - punkp4.png
+- Punk Elbow textures: PUNKE1.png - PUNKE4.png
 - Punk sprite size
 - Punk sprite alignment
 - Punk hurtbox size
