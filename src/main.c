@@ -25,25 +25,28 @@ int main(void)
         InitPlayer("assets/sprites/player/player.png");
 
     // ============================================================
-    // 0034 - PUNK ENTRANCE / SPAWN
+    // 0040 - MULTI-PUNK TEST SETUP
     // ============================================================
     //
-    // InitPunk(x, y) = START / SPAWN LOCATION.
+    // Stage 1 test limit: 4 Punks at the same time.
+    // Each Punk keeps its own AI, HP, attack state, and animation.
     //
-    // Current setup:
-    // 1380 = outside the RIGHT side of the 1280 screen.
-    // 470  = stage/depth Y.
-    //
-    Enemy enemy = InitPunk(1380.0f, 470.0f);
+    #define PUNK_COUNT 4
 
-    // Entrance target inside the stage:
-    // targetX, targetStageY, entranceSpeed
-    StartEnemyEntrance(
-        &enemy,
-        1000.0f,
-        470.0f,
-        140.0f
-    );
+    Enemy punks[PUNK_COUNT];
+
+    // 0040 - Load the 17 Punk textures once, then share them across all Punks.
+    LoadPunkSharedTextures();
+
+    punks[0] = InitPunk(1380.0f, 470.0f);
+    punks[1] = InitPunk(-180.0f, 540.0f);
+    punks[2] = InitPunk(1460.0f, 620.0f);
+    punks[3] = InitPunk(-260.0f, 430.0f);
+
+    StartEnemyEntrance(&punks[0], 1000.0f, 470.0f, 140.0f);
+    StartEnemyEntrance(&punks[1],  220.0f, 540.0f, 140.0f);
+    StartEnemyEntrance(&punks[2], 1080.0f, 620.0f, 140.0f);
+    StartEnemyEntrance(&punks[3],  320.0f, 430.0f, 140.0f);
 
     Texture2D background =
         LoadTexture("assets/background/back_alley.png");
@@ -63,10 +66,23 @@ int main(void)
             walkAreaBottom
         );
 
-        // 0019 - Damage + enemy hit reaction / knockback.
-        UpdateEnemyHit(
-            &enemy,
-            &player,
+        // Update each Punk independently.
+        for (int i = 0; i < PUNK_COUNT; i++)
+        {
+            UpdateEnemyHit(
+                &punks[i],
+                &player,
+                deltaTime,
+                (float)screenWidth,
+                walkAreaTop,
+                walkAreaBottom
+            );
+        }
+
+        // 0040 - Push nearby Punks apart so they do not stack.
+        ResolveEnemySpacing(
+            punks,
+            PUNK_COUNT,
             deltaTime,
             (float)screenWidth,
             walkAreaTop,
@@ -105,7 +121,11 @@ int main(void)
             WHITE
         );
 
-        DrawEnemy(&enemy);
+        for (int i = 0; i < PUNK_COUNT; i++)
+        {
+            DrawEnemy(&punks[i]);
+        }
+
         DrawPlayer(&player);
 
         DrawText(
@@ -123,6 +143,15 @@ int main(void)
     // UNLOAD
     // ============================================================
     UnloadTexture(background);
+
+    for (int i = 0; i < PUNK_COUNT; i++)
+    {
+        UnloadEnemy(&punks[i]);
+    }
+
+    // Shared Punk textures are released exactly once.
+    UnloadPunkSharedTextures();
+
     UnloadPlayer(&player);
 
     CloseWindow();

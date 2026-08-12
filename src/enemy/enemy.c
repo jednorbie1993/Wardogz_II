@@ -14,6 +14,7 @@ Enemy InitEnemyBase(void)
     enemy.hp = enemy.maxHp;
     enemy.isAlive = true;
     enemy.hitByCurrentAttack = false;
+    enemy.ownsTextures = true;
 
     // ============================================================
     // HIT REACTION / KNOCKBACK DEFAULTS
@@ -78,6 +79,11 @@ Enemy InitEnemyBase(void)
     enemy.chaseSpeed = 115.0f;
     enemy.chaseStopDistance = 155.0f;
     enemy.chaseDepthTolerance = 8.0f;
+
+    // 0040 - Multi-enemy spacing defaults.
+    enemy.separationRadiusX = 120.0f;
+    enemy.separationDepthTolerance = 70.0f;
+    enemy.separationPushSpeed = 260.0f;
 
     // ============================================================
     // 0035 - ENEMY STOP / ATTACK RANGE DEFAULTS
@@ -257,6 +263,12 @@ void UpdateEnemyHit(
 
 void UnloadEnemy(Enemy *enemy)
 {
+    // 0040 - Shared Punk textures are unloaded once by UnloadPunkSharedTextures().
+    if (!enemy->ownsTextures)
+    {
+        return;
+    }
+
     for (int i = 0; i < enemy->idleFrameCount; i++)
     {
         UnloadTexture(enemy->idleTextures[i]);

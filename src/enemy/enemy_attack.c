@@ -32,6 +32,37 @@ static int GetCurrentAttackFrameCount(
 }
 
 
+static float GetEnemyAttackFrameDuration(
+    const Enemy *enemy,
+    int frame
+)
+{
+    // Punk Elbow timing:
+    // Frame 1 = wind-up
+    // Frame 2 = freeze / hold (no hitbox)
+    // Frame 3 = strike (yellow hitbox active)
+    // Frame 4 = recovery
+    if (
+        enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
+        frame == 1
+    )
+    {
+        return 0.32f;
+    }
+
+    // Visible Frame 3 (index 2) stays held while Punk slides forward.
+    if (
+        enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
+        frame == 2
+    )
+    {
+        return 0.30f;
+    }
+
+    return enemy->attackFrameTime;
+}
+
+
 static void StartEnemyAttack(Enemy *enemy)
 {
     enemy->isAttacking = true;
@@ -39,18 +70,28 @@ static void StartEnemyAttack(Enemy *enemy)
 
     // 0037 FIX - Do NOT switch moves at attack start.
     // currentAttackMove is the move that must finish first.
-    // The Punch/Elbow switch happens only after the full 4-frame
-    // animation completes, so a cancelled Punch will not skip to Elbow.
+    // The Punch/Elbow switch happens only after the full animation
+    // completes, so a cancelled Punch will not skip to Elbow.
 
     enemy->attackFrame = 0;
     enemy->attackFrameTimer = 0.0f;
 
+    // Prepare the elbow lunge once at attack start.
+    enemy->elbowLungeRemaining =
+        (enemy->currentAttackMove == ENEMY_ATTACK_ELBOW)
+        ? enemy->elbowLungeDistance
+        : 0.0f;
+
     int frameCount =
         GetCurrentAttackFrameCount(enemy);
 
-    enemy->attackTimer =
-        enemy->attackFrameTime *
-        (float)frameCount;
+    enemy->attackTimer = 0.0f;
+
+    for (int frame = 0; frame < frameCount; frame++)
+    {
+        enemy->attackTimer +=
+            GetEnemyAttackFrameDuration(enemy, frame);
+    }
 }
 
 
@@ -64,16 +105,20 @@ static void AdvanceEnemyAttackAnimation(
 
     enemy->attackFrameTimer += deltaTime;
 
-    while (
-        enemy->attackFrameTimer >=
-            enemy->attackFrameTime &&
-        enemy->attackFrame <
-            frameCount - 1
-    )
+    while (enemy->attackFrame < frameCount - 1)
     {
-        enemy->attackFrameTimer -=
-            enemy->attackFrameTime;
+        float currentFrameDuration =
+            GetEnemyAttackFrameDuration(
+                enemy,
+                enemy->attackFrame
+            );
 
+        if (enemy->attackFrameTimer < currentFrameDuration)
+        {
+            break;
+        }
+
+        enemy->attackFrameTimer -= currentFrameDuration;
         enemy->attackFrame++;
     }
 }
@@ -190,6 +235,7 @@ void EnemyUpdateAttack(
         enemy->hitPlayerThisAttack = false;
         enemy->attackFrame = 0;
         enemy->attackFrameTimer = 0.0f;
+        enemy->elbowLungeRemaining = 0.0f;
         return;
     }
 
@@ -212,6 +258,33 @@ void EnemyUpdateAttack(
     }
 
     AdvanceEnemyAttackAnimation(enemy, deltaTime);
+    // ============================================================
+    // 0038 - ELBOW FRAME 3 FORWARD SLIDE
+    // ============================================================
+    // attackFrame == 2 means visible Frame 3.
+    // Move the actual Punk hurtbox/body forward while Frame 3 is held.
+    if (
+        enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
+        enemy->attackFrame == 2 &&
+        enemy->elbowLungeRemaining > 0.0f
+    )
+    {
+        const float frame3HoldTime = 0.30f;
+
+        float slideAmount =
+            (enemy->elbowLungeDistance / frame3HoldTime) *
+            deltaTime;
+
+        if (slideAmount > enemy->elbowLungeRemaining)
+        {
+            slideAmount = enemy->elbowLungeRemaining;
+        }
+
+        enemy->hurtbox.x +=
+            slideAmount * (float)enemy->attackDirection;
+
+        enemy->elbowLungeRemaining -= slideAmount;
+    }
 
     // Frame 3 (index 2) is the actual strike frame.
     const bool attackHitboxActive =
@@ -254,6 +327,7 @@ void EnemyUpdateAttack(
         enemy->hitPlayerThisAttack = false;
         enemy->attackFrame = 0;
         enemy->attackFrameTimer = 0.0f;
+        enemy->elbowLungeRemaining = 0.0f;
 
         // 0037 FIX - Alternate only after a completed attack.
         if (enemy->currentAttackMove == ENEMY_ATTACK_PUNCH)

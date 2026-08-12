@@ -29,6 +29,9 @@ typedef struct Enemy
     // Prevents one player attack from damaging the enemy more than once.
     bool hitByCurrentAttack;
 
+    // 0040 - true only when this Enemy instance owns its texture handles.
+    bool ownsTextures;
+
     // ============================================================
     // HIT REACTION / KNOCKBACK
     // ============================================================
@@ -64,6 +67,10 @@ typedef struct Enemy
 
     float elbowAttackRange;
     float elbowStopDistance;
+
+    // 0038 - ELBOW FRAME 3 LUNGE / SLIDE
+    float elbowLungeDistance;
+    float elbowLungeRemaining;
 
     // ============================================================
     // 0037 - PER-MOVE ATTACK HITBOX SETTINGS
@@ -105,6 +112,11 @@ typedef struct Enemy
     float chaseSpeed;
     float chaseStopDistance;
     float chaseDepthTolerance;
+
+    // 0040 - MULTI-ENEMY SPACING / ANTI-OVERLAP
+    float separationRadiusX;
+    float separationDepthTolerance;
+    float separationPushSpeed;
 
     // ============================================================
     // 0035 - ENEMY STOP / ATTACK RANGE
@@ -186,6 +198,17 @@ void StartEnemyEntrance(
     float targetX,
     float targetStageY,
     float entranceSpeed
+);
+
+
+// 0040 - Keep multiple enemies from stacking on top of each other.
+void ResolveEnemySpacing(
+    Enemy *enemies,
+    int enemyCount,
+    float deltaTime,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
 );
 
 

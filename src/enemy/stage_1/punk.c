@@ -1,6 +1,63 @@
 #include "punk.h"
 
 
+// ============================================================
+// 0040 - SHARED PUNK TEXTURE CACHE
+// ============================================================
+
+static bool punkTexturesLoaded = false;
+static Texture2D punkIdleTextures[3];
+static Texture2D punkWalkTextures[6];
+static Texture2D punkPunchTextures[4];
+static Texture2D punkElbowTextures[4];
+
+void LoadPunkSharedTextures(void)
+{
+    if (punkTexturesLoaded)
+    {
+        return;
+    }
+
+    punkIdleTextures[0] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_idle_1.png");
+    punkIdleTextures[1] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_idle_2.png");
+    punkIdleTextures[2] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_idle_3.png");
+
+    punkWalkTextures[0] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_walk_1.png");
+    punkWalkTextures[1] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_walk_2.png");
+    punkWalkTextures[2] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_walk_3.png");
+    punkWalkTextures[3] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_walk_4.png");
+    punkWalkTextures[4] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_walk_5.png");
+    punkWalkTextures[5] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_walk_6.png");
+
+    punkPunchTextures[0] = LoadTexture("assets/sprites/enemy/stage_1/punk/punkp1.png");
+    punkPunchTextures[1] = LoadTexture("assets/sprites/enemy/stage_1/punk/punkp2.png");
+    punkPunchTextures[2] = LoadTexture("assets/sprites/enemy/stage_1/punk/punkp3.png");
+    punkPunchTextures[3] = LoadTexture("assets/sprites/enemy/stage_1/punk/punkp4.png");
+
+    punkElbowTextures[0] = LoadTexture("assets/sprites/enemy/stage_1/punk/PUNKE1.png");
+    punkElbowTextures[1] = LoadTexture("assets/sprites/enemy/stage_1/punk/PUNKE2.png");
+    punkElbowTextures[2] = LoadTexture("assets/sprites/enemy/stage_1/punk/PUNKE3.png");
+    punkElbowTextures[3] = LoadTexture("assets/sprites/enemy/stage_1/punk/PUNKE4.png");
+
+    punkTexturesLoaded = true;
+}
+
+void UnloadPunkSharedTextures(void)
+{
+    if (!punkTexturesLoaded)
+    {
+        return;
+    }
+
+    for (int i = 0; i < 3; i++) UnloadTexture(punkIdleTextures[i]);
+    for (int i = 0; i < 6; i++) UnloadTexture(punkWalkTextures[i]);
+    for (int i = 0; i < 4; i++) UnloadTexture(punkPunchTextures[i]);
+    for (int i = 0; i < 4; i++) UnloadTexture(punkElbowTextures[i]);
+
+    punkTexturesLoaded = false;
+}
+
+
 Enemy InitPunk(float x, float y)
 {
     // Start with the shared/common enemy defaults.
@@ -34,6 +91,12 @@ Enemy InitPunk(float x, float y)
     enemy.chaseStopDistance = 155.0f;
     enemy.chaseDepthTolerance = 8.00f;
 
+    // 0040 - MULTI-PUNK SPACING / ANTI-OVERLAP
+    // Adjust these if multiple Punks look too close or too spread out.
+    enemy.separationRadiusX = 135.0f;
+    enemy.separationDepthTolerance = 75.0f;
+    enemy.separationPushSpeed = 300.0f;
+
     // ============================================================
     // 0037 - PUNK PUNCH / ELBOW DISTANCE SETTINGS
     // ============================================================
@@ -46,11 +109,16 @@ Enemy InitPunk(float x, float y)
     enemy.punchStopDistance = 190.0f;
 
     // ELBOW
-    // Elbow has shorter reach, so Punk walks closer first.
-    enemy.elbowAttackRange = 140.0f;
+    // Maximum distance where Elbow may START.
+    enemy.elbowAttackRange = 200.0f;
 
     // Distance where Punk stops walking before Elbow.
     enemy.elbowStopDistance = 120.0f;
+
+    // 0038 - Frame 3 forward lunge / slide.
+    // Adjust this value to control how far Punk slides.
+    enemy.elbowLungeDistance = 70.0f;
+    enemy.elbowLungeRemaining = 0.0f;
 
     // ============================================================
     // 0032 - PUNK STAGE POSITION ANCHOR
@@ -61,25 +129,17 @@ Enemy InitPunk(float x, float y)
     enemy.stageAnchorOffsetY = 220.0f;
 
     // ============================================================
-    // PUNK - IDLE TEXTURES
+    // PUNK - IDLE TEXTURES (SHARED)
     // ============================================================
 
+    LoadPunkSharedTextures();
+    enemy.ownsTextures = false;
+
     enemy.idleFrameCount = 3;
-
-    enemy.idleTextures[0] =
-        LoadTexture(
-            "assets/sprites/enemy/stage_1/punk/punk_idle_1.png"
-        );
-
-    enemy.idleTextures[1] =
-        LoadTexture(
-            "assets/sprites/enemy/stage_1/punk/punk_idle_2.png"
-        );
-
-    enemy.idleTextures[2] =
-        LoadTexture(
-            "assets/sprites/enemy/stage_1/punk/punk_idle_3.png"
-        );
+    for (int i = 0; i < enemy.idleFrameCount; i++)
+    {
+        enemy.idleTextures[i] = punkIdleTextures[i];
+    }
 
     enemy.idleFrame = 0;
     enemy.idleDirection = 1;
@@ -87,80 +147,34 @@ Enemy InitPunk(float x, float y)
     enemy.idleFrameTime = 0.19f;
 
     // ============================================================
-    // 0036 - PUNK WALK TEXTURES
+    // 0036 - PUNK WALK TEXTURES (SHARED)
     // ============================================================
 
     enemy.walkFrameCount = 6;
-
-    enemy.walkTextures[0] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punk_walk_1.png"
-    );
-
-    enemy.walkTextures[1] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punk_walk_2.png"
-    );
-
-    enemy.walkTextures[2] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punk_walk_3.png"
-    );
-
-    enemy.walkTextures[3] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punk_walk_4.png"
-    );
-
-    enemy.walkTextures[4] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punk_walk_5.png"
-    );
-
-    enemy.walkTextures[5] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punk_walk_6.png"
-    );
+    for (int i = 0; i < enemy.walkFrameCount; i++)
+    {
+        enemy.walkTextures[i] = punkWalkTextures[i];
+    }
 
     enemy.walkFrame = 0;
     enemy.walkTimer = 0.0f;
     enemy.walkFrameTime = 0.11f;
 
     // ============================================================
-    // 0037 - PUNK ATTACK TEXTURES
+    // 0037 - PUNK ATTACK TEXTURES (SHARED)
     // ============================================================
 
-    // PUNCH - 4 FRAMES
     enemy.punchFrameCount = 4;
+    for (int i = 0; i < enemy.punchFrameCount; i++)
+    {
+        enemy.punchTextures[i] = punkPunchTextures[i];
+    }
 
-    enemy.punchTextures[0] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punkp1.png"
-    );
-
-    enemy.punchTextures[1] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punkp2.png"
-    );
-
-    enemy.punchTextures[2] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punkp3.png"
-    );
-
-    enemy.punchTextures[3] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/punkp4.png"
-    );
-
-    // ELBOW - 4 FRAMES
     enemy.elbowFrameCount = 4;
-
-    enemy.elbowTextures[0] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/PUNKE1.png"
-    );
-
-    enemy.elbowTextures[1] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/PUNKE2.png"
-    );
-
-    enemy.elbowTextures[2] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/PUNKE3.png"
-    );
-
-    enemy.elbowTextures[3] = LoadTexture(
-        "assets/sprites/enemy/stage_1/punk/PUNKE4.png"
-    );
+    for (int i = 0; i < enemy.elbowFrameCount; i++)
+    {
+        enemy.elbowTextures[i] = punkElbowTextures[i];
+    }
 
     enemy.attackFrame = 0;
     enemy.attackFrameTimer = 0.0f;
@@ -193,7 +207,7 @@ Enemy InitPunk(float x, float y)
 
     enemy.elbowHitboxWidth = 120.0f;
     enemy.elbowHitboxHeight = 80.0f;
-    enemy.elbowHitboxOffsetX = -80.90f;
+    enemy.elbowHitboxOffsetX = -45.90f; // Frame 3 reach: ~1-2 inches farther forward
     enemy.elbowHitboxOffsetY = -65.0f; //height
 
     // ============================================================

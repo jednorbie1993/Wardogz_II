@@ -1,0 +1,420 @@
+0040 - MULTI-PUNK SPACING / ANTI-OVERLAP + SHARED TEXTURE SYSTEM
+================================================================
+
+DATE:
+2026-08-12
+
+SYSTEM:
+Stage 1 Multi-Punk Combat Base
+
+================================================================
+GOAL
+================================================================
+
+Allow multiple Punk enemies to exist on screen at the same time
+without excessive overlap and without loading the same Punk textures
+again for every enemy instance.
+
+This system establishes the base for:
+- multiple Punk enemies
+- 4 Punk maximum for the current Stage 1 setup
+- anti-overlap / separation behavior
+- left/right/depth placement
+- shared Punk texture loading
+- lower startup loading cost
+- safer texture cleanup
+
+================================================================
+CURRENT MULTI-PUNK TARGET
+================================================================
+
+Maximum Punk enemies on screen for the current test:
+
+    4 Punks
+
+Reason:
+
+Four enemies are enough to test:
+- left/right pressure
+- different depth positions
+- enemy spacing
+- simultaneous enemy AI
+- future attack slot / turn behavior
+
+The current goal is stability and readability before increasing the
+enemy count.
+
+================================================================
+0040 PART 1 - MULTI-PUNK SUPPORT
+================================================================
+
+The game now supports multiple Punk enemy instances instead of only
+one Punk.
+
+Each Punk has its own:
+
+- hurtbox
+- HP
+- attack state
+- hit reaction state
+- chase state
+- movement position
+- attack frame
+- cooldown
+- elbow lunge state
+- facing direction
+
+The same Punk character definition is reused for every Punk instance.
+
+================================================================
+MULTI-PUNK POSITIONING
+================================================================
+
+Punks can be placed from different sides and different depth positions.
+
+Examples:
+
+- Punk entering from the left
+- Punk entering from the right
+- Punk slightly above the player depth
+- Punk slightly below the player depth
+
+This creates the base for enemies eventually surrounding the player
+instead of forming one single line.
+
+================================================================
+0040 PART 2 - ANTI-OVERLAP / SEPARATION
+================================================================
+
+A spacing system was added so Punk enemies do not remain stacked on
+top of each other.
+
+Main adjustable Punk spacing values:
+
+    enemy.separationRadiusX = 135.0f;
+    enemy.separationDepthTolerance = 75.0f;
+    enemy.separationPushSpeed = 300.0f;
+
+================================================================
+SEPARATION SETTINGS
+================================================================
+
+separationRadiusX
+
+    enemy.separationRadiusX = 135.0f;
+
+Controls the desired horizontal spacing between Punk enemies.
+
+Higher value:
+- Punk enemies keep more left/right distance from each other.
+
+Lower value:
+- Punk enemies are allowed to stand closer together.
+
+----------------------------------------------------------------
+
+separationDepthTolerance
+
+    enemy.separationDepthTolerance = 75.0f;
+
+Controls how close enemies must be in stage depth / Y position before
+the anti-overlap system treats them as occupying the same lane.
+
+Higher value:
+- enemies at more different Y positions may still separate.
+
+Lower value:
+- separation mainly happens when they are almost on the same depth.
+
+----------------------------------------------------------------
+
+separationPushSpeed
+
+    enemy.separationPushSpeed = 300.0f;
+
+Controls how quickly enemies are pushed apart.
+
+Higher value:
+- stronger / faster separation.
+
+Lower value:
+- softer movement apart.
+
+================================================================
+SEPARATION BEHAVIOR
+================================================================
+
+When two Punk enemies are too close:
+
+- the system compares their X distance
+- the system checks their depth difference
+- if they are inside the spacing limits, separation is applied
+
+The goal is to prevent:
+
+- Punk sprites completely overlapping
+- multiple hurtboxes stacking
+- enemies appearing as one enemy
+- every Punk standing on exactly the same attack position
+
+================================================================
+ATTACK / HIT PRIORITY DURING SEPARATION
+================================================================
+
+The spacing system should avoid aggressively moving an enemy that is
+already committed to an important combat state.
+
+Examples:
+
+- Punk currently attacking
+- Punk currently receiving a hit reaction
+- Punk performing the Elbow Frame 3 lunge
+
+The free / movable Punk is preferred for separation when possible.
+
+This preserves attack readability.
+
+================================================================
+0039 COMPATIBILITY
+================================================================
+
+0040 keeps the previous Punk Elbow Frame 3 Lunge / Slide System.
+
+Important 0039 values remain:
+
+    enemy.elbowAttackRange = 200.0f;
+
+    enemy.elbowLungeDistance = 70.0f;
+
+Frame 3 remains the active elbow strike / forward slide frame.
+
+The multi-Punk separation system must not replace the actual elbow
+lunge movement.
+
+================================================================
+0040 PART 3 - SHARED PUNK TEXTURE SYSTEM
+================================================================
+
+After increasing the Punk count to four, startup became slower.
+
+Reason:
+
+InitPunk() originally loaded all Punk textures for every enemy.
+
+Punk textures:
+
+- 3 idle textures
+- 6 walk textures
+- 4 punch textures
+- 4 elbow textures
+
+TOTAL PER PUNK:
+
+    17 textures
+
+With 4 Punk enemies:
+
+    17 x 4 = 68 LoadTexture() calls
+
+This caused noticeably longer startup loading.
+
+================================================================
+SHARED TEXTURE SOLUTION
+================================================================
+
+Punk textures are now loaded only once.
+
+New shared texture flow:
+
+    LoadPunkSharedTextures();
+
+Then all Punk instances use the same loaded Texture2D handles.
+
+Instead of:
+
+    Punk 1 -> loads 17 textures
+    Punk 2 -> loads 17 textures
+    Punk 3 -> loads 17 textures
+    Punk 4 -> loads 17 textures
+
+The new behavior is:
+
+    Shared Punk Texture Cache -> loads 17 textures once
+
+    Punk 1 -> references shared handles
+    Punk 2 -> references shared handles
+    Punk 3 -> references shared handles
+    Punk 4 -> references shared handles
+
+TOTAL:
+
+    17 LoadTexture() calls
+
+instead of:
+
+    68 LoadTexture() calls
+
+================================================================
+SHARED TEXTURE FUNCTIONS
+================================================================
+
+Functions added to the Punk system:
+
+    void LoadPunkSharedTextures(void);
+
+    void UnloadPunkSharedTextures(void);
+
+LoadPunkSharedTextures()
+
+- loads the Punk idle textures
+- loads the Punk walk textures
+- loads the Punk punch textures
+- loads the Punk elbow textures
+- should only load them once
+
+UnloadPunkSharedTextures()
+
+- unloads the shared Punk textures
+- should only be called once during game cleanup
+
+================================================================
+TEXTURE OWNERSHIP SAFETY
+================================================================
+
+A texture ownership flag is used so Punk instances do not all unload
+the same shared texture handles.
+
+Reason:
+
+If four enemies reference the same texture and each enemy calls
+UnloadTexture() on it, the same GPU texture can be unloaded multiple
+times.
+
+This can cause:
+
+- invalid texture access
+- graphical problems
+- crashes
+- double-unload bugs
+
+The shared texture system separates:
+
+- texture users
+- texture owner
+
+The Punk instances reference shared textures but do not individually
+own them.
+
+================================================================
+MAIN.C FLOW
+================================================================
+
+Shared Punk textures are loaded before the Punk instances are created.
+
+Example flow:
+
+    LoadPunkSharedTextures();
+
+    punks[0] = InitPunk(...);
+    punks[1] = InitPunk(...);
+    punks[2] = InitPunk(...);
+    punks[3] = InitPunk(...);
+
+During cleanup:
+
+    UnloadPunkSharedTextures();
+
+This avoids loading/unloading the same PNG assets four times.
+
+================================================================
+FILES INVOLVED
+================================================================
+
+Main files updated during 0040:
+
+    src/main.c
+
+    include/enemy.h
+
+    src/enemy/enemy.c
+
+    src/enemy/enemy_move.c
+
+    src/enemy/stage_1/punk.c
+
+    src/enemy/stage_1/punk.h
+
+================================================================
+COMPILE FIX DURING 0040
+================================================================
+
+enemy_move.c used:
+
+    NULL
+
+The compiler reported:
+
+    'NULL' undeclared
+
+Fix:
+
+Add:
+
+    #include <stddef.h>
+
+near the top of enemy_move.c.
+
+Example:
+
+    #include "enemy_internal.h"
+    #include <stddef.h>
+
+================================================================
+0040 RESULT
+================================================================
+
+The game now has a stronger Stage 1 enemy base:
+
+- up to 4 Punk enemies
+- each Punk is an independent enemy instance
+- enemies can approach from different positions
+- Punk enemies use anti-overlap spacing
+- separation values can be tuned
+- 0039 elbow lunge remains compatible
+- Punk textures are shared
+- texture loading reduced from 68 loads to 17
+- startup loading is improved
+- shared textures are unloaded safely
+
+================================================================
+NEXT SYSTEM
+================================================================
+
+Suggested next step:
+
+0041 - PUNK ATTACK SLOT / TURN SYSTEM
+
+Goal:
+
+Prevent all four Punk enemies from attacking at the same time.
+
+Possible behavior:
+
+- only 1 Punk attacks at a time initially
+- later allow maximum 2 active attackers
+- other Punk enemies hold / reposition around the player
+- attack permission rotates between enemies
+
+This should make multi-enemy combat more readable and fair.
+
+================================================================
+0040 STATUS
+================================================================
+
+DONE
+
+Multi-Punk Spacing / Anti-Overlap System
++
+Shared Punk Texture System
+
+implemented and documented.

@@ -1,0 +1,348 @@
+0039 - PUNK ELBOW FRAME 3 LUNGE / SLIDE SYSTEM
+============================================================
+
+DATE:
+2026-08-12
+
+SYSTEM:
+Punk Elbow Attack - Frame 3 Forward Lunge / Slide
+
+============================================================
+GOAL
+============================================================
+
+Improve the Punk enemy elbow attack so it does not feel like a
+stationary long-range hit.
+
+Instead of only extending the yellow attack hitbox, Punk now performs
+a short forward lunge / slide during Elbow Frame 3.
+
+This makes the elbow attack look like Punk is using momentum / bwelo
+before connecting with the player.
+
+============================================================
+FINAL ELBOW ATTACK FLOW
+============================================================
+
+ELBOW FRAME 1
+- Wind-up / starting pose.
+- No yellow attack hitbox.
+- No slide.
+
+ELBOW FRAME 2
+- Freeze / hold before the attack.
+- Hold time:
+    0.32f
+- No yellow attack hitbox.
+- Punk does not slide yet.
+
+ELBOW FRAME 3
+- Actual elbow strike frame.
+- Frame 3 is held briefly.
+- Hold time:
+    0.30f
+- Yellow attack hitbox becomes active.
+- Punk's actual body / hurtbox slides forward.
+- The slide is not only a sprite offset.
+- enemy->hurtbox.x is moved during the lunge.
+
+ELBOW FRAME 4
+- Recovery frame.
+- No yellow attack hitbox.
+- No additional slide.
+
+============================================================
+FILES UPDATED
+============================================================
+
+1. include/enemy.h
+2. src/enemy/enemy_attack.c
+3. src/enemy/stage_1/punk.c
+
+============================================================
+ENEMY.H - NEW ELBOW LUNGE DATA
+============================================================
+
+Inside the Enemy struct:
+
+    // 0038 - ELBOW FRAME 3 LUNGE / SLIDE
+    float elbowLungeDistance;
+    float elbowLungeRemaining;
+
+PURPOSE:
+
+elbowLungeDistance
+- Maximum forward distance Punk can slide during Elbow Frame 3.
+- This is the main value used to adjust how far the lunge travels.
+
+elbowLungeRemaining
+- Tracks how much of the lunge distance is still unused.
+- Prevents Punk from moving the full distance every game frame.
+- Makes the movement controlled and frame-rate independent.
+
+IMPORTANT:
+These variables must only exist inside the Enemy struct.
+Duplicate declarations outside the struct were removed.
+
+============================================================
+PUNK.C - ELBOW RANGE / SLIDE SETTINGS
+============================================================
+
+Punk elbow attack start range:
+
+    enemy.elbowAttackRange = 200.0f;
+
+This allows Punk to begin the elbow attack from farther away.
+
+Elbow stop distance:
+
+    enemy.elbowStopDistance = 120.0f;
+
+Main elbow slide setting:
+
+    enemy.elbowLungeDistance = 70.0f;
+    enemy.elbowLungeRemaining = 0.0f;
+
+============================================================
+HOW TO ADJUST THE ELBOW SLIDE
+============================================================
+
+Main value:
+
+    enemy.elbowLungeDistance = 70.0f;
+
+Examples:
+
+Shorter slide:
+
+    enemy.elbowLungeDistance = 40.0f;
+
+Current/default slide:
+
+    enemy.elbowLungeDistance = 70.0f;
+
+More obvious slide:
+
+    enemy.elbowLungeDistance = 100.0f;
+
+Long test slide:
+
+    enemy.elbowLungeDistance = 120.0f;
+
+Very obvious testing value:
+
+    enemy.elbowLungeDistance = 150.0f;
+
+IMPORTANT:
+This value controls Punk's BODY movement.
+
+It is separate from:
+
+    enemy.elbowHitboxWidth
+    enemy.elbowHitboxHeight
+    enemy.elbowHitboxOffsetX
+    enemy.elbowHitboxOffsetY
+
+Those values control the yellow attack box only.
+
+============================================================
+ENEMY_ATTACK.C - FRAME TIMING
+============================================================
+
+The elbow attack has custom timing.
+
+Frame 2:
+
+    if (
+        enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
+        frame == 1
+    )
+    {
+        return 0.32f;
+    }
+
+Remember:
+Code frame index 1 = visible Frame 2.
+
+Frame 3:
+
+    if (
+        enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
+        frame == 2
+    )
+    {
+        return 0.30f;
+    }
+
+Remember:
+Code frame index 2 = visible Frame 3.
+
+This gives Frame 3 enough time for the slide/lunge to be visible.
+
+============================================================
+ENEMY_ATTACK.C - ACTUAL FRAME 3 MOVEMENT
+============================================================
+
+During Elbow Frame 3:
+
+    if (
+        enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
+        enemy->attackFrame == 2 &&
+        enemy->elbowLungeRemaining > 0.0f
+    )
+    {
+        const float frame3HoldTime = 0.30f;
+
+        float slideAmount =
+            (enemy->elbowLungeDistance / frame3HoldTime) *
+            deltaTime;
+
+        if (slideAmount > enemy->elbowLungeRemaining)
+        {
+            slideAmount = enemy->elbowLungeRemaining;
+        }
+
+        enemy->hurtbox.x +=
+            slideAmount * (float)enemy->attackDirection;
+
+        enemy->elbowLungeRemaining -= slideAmount;
+    }
+
+IMPORTANT:
+
+    enemy->hurtbox.x += ...
+
+means the actual Punk enemy position moves.
+
+This is not only:
+- spriteOffsetX
+- yellow hitbox offset
+- drawing adjustment
+
+The Punk hurtbox/body itself moves forward.
+
+============================================================
+ATTACK DIRECTION
+============================================================
+
+The slide follows:
+
+    enemy->attackDirection
+
+If Punk attacks to the right:
+- hurtbox.x increases.
+
+If Punk attacks to the left:
+- hurtbox.x decreases.
+
+This keeps the same lunge system working for both directions.
+
+============================================================
+FRAME 3 YELLOW HITBOX
+============================================================
+
+The active attack frame remains:
+
+    enemy->attackFrame == 2
+
+Code frame index 2 = visible Elbow Frame 3.
+
+The yellow box can still be adjusted independently in punk.c:
+
+    enemy.elbowHitboxWidth = 120.0f;
+    enemy.elbowHitboxHeight = 80.0f;
+    enemy.elbowHitboxOffsetX = -45.90f;
+    enemy.elbowHitboxOffsetY = -65.0f;
+
+The yellow box does NOT control how far Punk slides.
+
+============================================================
+WHY ELBOW ATTACK RANGE WAS CHANGED
+============================================================
+
+Old:
+
+    enemy.elbowAttackRange = 140.0f;
+
+New:
+
+    enemy.elbowAttackRange = 200.0f;
+
+Reason:
+
+The additional attack range gives Punk room to begin the elbow
+sequence before he is directly beside the player.
+
+The distance is then visually justified by the Frame 3 lunge.
+
+Instead of:
+
+    farther range = magically longer elbow
+
+the behavior becomes:
+
+    farther range
+        ->
+    wind-up
+        ->
+    Frame 2 hold
+        ->
+    Frame 3 forward lunge
+        ->
+    elbow hit
+        ->
+    recovery
+
+============================================================
+RESET / STATE CONTROL
+============================================================
+
+elbowLungeRemaining must be initialized/reset correctly so Punk does
+not reuse old movement from a previous elbow attack.
+
+At the beginning of a new elbow attack, the remaining lunge distance
+is prepared from:
+
+    enemy->elbowLungeDistance
+
+When the attack ends or is interrupted, the remaining lunge state is
+reset.
+
+This prevents:
+- repeated unwanted sliding
+- leftover slide distance
+- movement continuing after recovery
+- a later Punch accidentally using elbow lunge state
+
+============================================================
+RESULT
+============================================================
+
+Punk's elbow attack now has a more natural forward attack motion.
+
+Final behavior:
+
+Frame 1
+    Wind-up
+
+Frame 2
+    Freeze / hold
+    No yellow box
+
+Frame 3
+    Freeze / hold
+    Punk slides forward
+    Yellow hitbox active
+
+Frame 4
+    Recovery
+
+The main user-adjustable slide value is:
+
+    enemy.elbowLungeDistance = 70.0f;
+
+============================================================
+0039 STATUS
+============================================================
+
+DONE

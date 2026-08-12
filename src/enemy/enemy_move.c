@@ -1,4 +1,5 @@
 #include "enemy_internal.h"
+#include <stddef.h>
 
 
 static float GetNextEnemyAttackStopDistance(
@@ -302,6 +303,131 @@ void EnemyUpdateChase(
 
             enemy->facingRight =
                 (context->distanceX >= 0.0f);
+        }
+    }
+}
+
+// ============================================================
+// 0040 - MULTI-ENEMY SPACING / ANTI-OVERLAP
+// ============================================================
+//
+// Keeps enemies that are standing on nearly the same depth line from
+// stacking on top of each other. Attacking / hit enemies act as anchors;
+// free enemies are pushed away from them instead of interrupting attacks.
+void ResolveEnemySpacing(
+    Enemy *enemies,
+    int enemyCount,
+    float deltaTime,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    if (enemies == NULL || enemyCount <= 1)
+    {
+        return;
+    }
+
+    for (int i = 0; i < enemyCount; i++)
+    {
+        Enemy *a = &enemies[i];
+
+        if (!a->isAlive || a->isEntering)
+        {
+            continue;
+        }
+
+        for (int j = i + 1; j < enemyCount; j++)
+        {
+            Enemy *b = &enemies[j];
+
+            if (!b->isAlive || b->isEntering)
+            {
+                continue;
+            }
+
+            float aCenterX = a->hurtbox.x + a->hurtbox.width * 0.5f;
+            float bCenterX = b->hurtbox.x + b->hurtbox.width * 0.5f;
+
+            float aStageY = a->hurtbox.y + a->stageAnchorOffsetY;
+            float bStageY = b->hurtbox.y + b->stageAnchorOffsetY;
+
+            float differenceX = bCenterX - aCenterX;
+            float differenceY = bStageY - aStageY;
+
+            float absoluteX = (differenceX < 0.0f) ? -differenceX : differenceX;
+            float absoluteY = (differenceY < 0.0f) ? -differenceY : differenceY;
+
+            float requiredX =
+                (a->separationRadiusX + b->separationRadiusX) * 0.5f;
+
+            float allowedDepth =
+                (a->separationDepthTolerance + b->separationDepthTolerance) * 0.5f;
+
+            // Different depth lanes may overlap visually in X.
+            if (absoluteY > allowedDepth || absoluteX >= requiredX)
+            {
+                continue;
+            }
+
+            float overlapX = requiredX - absoluteX;
+            float direction = (differenceX >= 0.0f) ? 1.0f : -1.0f;
+
+            // If their centers are exactly equal, use array order to choose
+            // a stable left/right direction instead of jittering each frame.
+            if (absoluteX < 0.01f)
+            {
+                direction = (i < j) ? 1.0f : -1.0f;
+            }
+
+            bool aLocked = a->isAttacking || a->isHit;
+            bool bLocked = b->isAttacking || b->isHit;
+
+            float pushSpeed =
+                (a->separationPushSpeed + b->separationPushSpeed) * 0.5f;
+
+            float maxPush = pushSpeed * deltaTime;
+
+            if (aLocked && bLocked)
+            {
+                // Do not disturb two enemies that are both inside a committed
+                // attack/hit reaction. They will separate once one becomes free.
+                continue;
+            }
+            else if (aLocked)
+            {
+                float push = overlapX;
+                if (push > maxPush) push = maxPush;
+                b->hurtbox.x += direction * push;
+            }
+            else if (bLocked)
+            {
+                float push = overlapX;
+                if (push > maxPush) push = maxPush;
+                a->hurtbox.x -= direction * push;
+            }
+            else
+            {
+                float halfPush = overlapX * 0.5f;
+                if (halfPush > maxPush) halfPush = maxPush;
+
+                a->hurtbox.x -= direction * halfPush;
+                b->hurtbox.x += direction * halfPush;
+            }
+
+            EnemyClampToStage(
+                a,
+                screenWidth,
+                walkAreaTop,
+                walkAreaBottom
+            );
+
+            EnemyClampToStage(
+                b,
+                screenWidth,
+                walkAreaTop,
+                walkAreaBottom
+            );
         }
     }
 }
