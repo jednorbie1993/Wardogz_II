@@ -1,0 +1,83 @@
+WARDOGZ II
+0049 - DYNAMIC ENEMY HP HUD SYSTEM
+==================================
+
+PURPOSE
+--------------------------------------------------
+Move enemy HP information away from the enemy sprite and
+into a clean arcade-style HUD.
+
+FINAL HUD POSITION
+--------------------------------------------------
+Enemy HP rows are displayed at:
+
+    TOP-RIGHT
+
+Rows are stacked downward.
+
+Example:
+
+PUNK  [##########]
+PUNK  [######----]
+PUNK  [###-------]
+
+DISPLAY CONTENT
+--------------------------------------------------
+Each active enemy row contains:
+
+- Enemy name
+- HP bar
+
+Numeric HP values such as:
+
+    78 / 100
+
+are not displayed in normal gameplay.
+
+This keeps the HUD cleaner and more arcade-like.
+
+DYNAMIC ENEMY ROWS
+--------------------------------------------------
+Only relevant enemies are shown.
+
+A new enemy HP row does not immediately appear while the
+enemy is still off-screen / entering.
+
+The row appears only after the enemy has entered the
+active stage area.
+
+DEATH BEHAVIOR
+--------------------------------------------------
+When an enemy reaches 0 HP:
+
+- The empty/depleted HP row remains visible briefly.
+- Death HUD hold duration:
+
+    1.50 seconds
+
+- After 1.50 seconds, the row disappears.
+- Remaining enemy rows move upward automatically.
+
+When a new enemy later becomes active, a new HP row can
+appear again.
+
+SPRITE HP BAR REMOVAL
+--------------------------------------------------
+The old HP bar drawn directly above each Punk sprite was
+removed.
+
+Enemy HP is now represented only by the top-right HUD.
+
+MAX ENEMY DESIGN
+--------------------------------------------------
+The layout is intended to support the planned maximum of
+approximately 6 active enemies.
+
+RESULT
+--------------------------------------------------
+The game HUD is cleaner, easier to read, and closer to a
+classic arcade beat-'em-up presentation.
+
+STATUS
+--------------------------------------------------
+DONE / TESTED

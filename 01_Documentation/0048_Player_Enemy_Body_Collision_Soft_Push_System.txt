@@ -1,0 +1,69 @@
+WARDOGZ II
+0048 - PLAYER / ENEMY BODY COLLISION + SOFT PUSH SYSTEM
+=======================================================
+
+PURPOSE
+--------------------------------------------------
+Prevent the player from simply passing through Punk
+enemies when standing at similar depth.
+
+The system adds physical presence without creating a
+heavy knockback effect.
+
+FINAL BEHAVIOR
+--------------------------------------------------
+- Player and enemy body contact is checked near the
+  ground / foot area.
+- When their body contact areas overlap at similar depth,
+  a small separation correction is applied.
+- The player can still move around enemies by going
+  toward the top or bottom.
+- Directly walking through an enemy is no longer allowed
+  as easily.
+
+SOFT PUSH
+--------------------------------------------------
+The collision response is intentionally gentle.
+
+Normal contact:
+- Player moves slightly away.
+- Enemy also moves slightly away.
+
+This avoids a rigid wall feeling.
+
+PLANTED ENEMY STATES
+--------------------------------------------------
+When a Punk is:
+
+- attacking,
+- performing dash-back retreat, or
+- standing during the post-retreat pause,
+
+the Punk behaves as more planted.
+
+During these states:
+- more of the separation correction is applied to the
+  player,
+- less movement is applied to the Punk.
+
+This protects attack, retreat, and pause animations from
+being visually disrupted.
+
+INTERACTION WITH DEPTH
+--------------------------------------------------
+0048 works together with 0047.
+
+0047:
+Controls who is drawn in front.
+
+0048:
+Controls physical body contact.
+
+RESULT
+--------------------------------------------------
+Characters now have more believable physical presence
+while still allowing free top/bottom beat-'em-up movement.
+
+STATUS
+--------------------------------------------------
+DONE / TESTED

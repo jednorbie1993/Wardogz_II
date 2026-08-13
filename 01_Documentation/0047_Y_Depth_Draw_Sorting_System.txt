@@ -1,0 +1,67 @@
+WARDOGZ II
+0047 - Y-DEPTH DRAW SORTING SYSTEM
+==================================
+
+PURPOSE
+--------------------------------------------------
+Fix sprite overlap so characters at lower screen depth
+are drawn above characters positioned farther toward the
+top of the stage.
+
+FINAL BEHAVIOR
+--------------------------------------------------
+Characters are sorted by their ground / foot position,
+not by sprite size or full image rectangle.
+
+General draw order:
+
+TOP
+  ->
+MIDDLE
+  ->
+BOTTOM
+
+The character with the larger / lower foot Y position is
+drawn later and therefore appears in front.
+
+PLAYER + ENEMY SORTING
+--------------------------------------------------
+The player and Punk enemies use the same depth reference.
+
+Depth reference:
+
+    center Y of the character foot marker
+
+This keeps the player and enemies consistent when moving
+between top, middle, and bottom stage areas.
+
+EXAMPLE
+--------------------------------------------------
+Player at TOP
+Punk at MIDDLE
+
+Result:
+Punk appears in front of the player.
+
+Player at BOTTOM
+Punk at MIDDLE
+
+Result:
+Player appears in front of the Punk.
+
+IMPORTANT
+--------------------------------------------------
+0047 is a rendering / draw-order system only.
+
+It does not prevent characters from physically passing
+through each other. Body collision is handled separately
+by 0048.
+
+RESULT
+--------------------------------------------------
+Sprite overlap now follows beat-'em-up depth correctly
+and gives a clearer sense of foreground/background.
+
+STATUS
+--------------------------------------------------
+DONE / TESTED
