@@ -1,0 +1,82 @@
+WARDOGZ II
+0051 - PLAYER RUNNING SYSTEM
+============================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0051
+
+TITLE:
+Player Running System
+
+
+PURPOSE
+-------
+Adds a faster movement state for the player while preserving the existing
+walking, attack, facing, stage-boundary, and depth-movement systems.
+
+
+MAIN BEHAVIOR
+-------------
+The player can switch from normal walking speed to a faster running speed.
+
+The running system is integrated into the existing player movement code instead
+of creating a completely separate movement controller.
+
+The player still uses the same directional movement rules:
+- LEFT
+- RIGHT
+- UP
+- DOWN
+- diagonal movement
+
+Running only changes the movement speed/state.
+
+
+RUN INPUT
+---------
+Running uses the configured run input in the current movement system.
+
+The run state is handled inside the player movement update and uses the same
+movement direction that the player is already pressing.
+
+
+MOVEMENT RULES
+--------------
+While running:
+
+- Horizontal movement remains supported.
+- Vertical movement remains supported.
+- Diagonal movement remains supported.
+- Stage boundaries still apply.
+- Existing attack movement restrictions still apply.
+- Existing animation/movement state logic continues to work.
+
+
+WHY RUNNING IS A SEPARATE SYSTEM
+--------------------------------
+The running state provides a foundation for later movement mechanics such as:
+
+- faster approach movement
+- enemy chase balancing
+- stage traversal
+- dash integration
+- running attacks
+- animation changes
+
+
+FILES INVOLVED
+--------------
+include/player/player.h
+src/player/player.c
+src/player/player_move.c
+
+
+0051 STATUS
+-----------
+DONE
+
+NEXT SYSTEM:
+0052 - Player Facing Turn Distance System

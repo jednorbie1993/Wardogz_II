@@ -1,0 +1,108 @@
+WARDOGZ II
+0052 - PLAYER FACING TURN DISTANCE SYSTEM
+=========================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0052
+
+TITLE:
+Player Facing Turn Distance System
+
+
+PURPOSE
+-------
+Allows the player to move a short distance backward before changing horizontal
+facing direction.
+
+This gives the movement a more natural fighting-game feel.
+
+
+FINAL BEHAVIOR
+--------------
+Facing RIGHT + move LEFT:
+
+- Player moves LEFT immediately.
+- Player keeps facing RIGHT temporarily.
+- Backward distance is accumulated.
+- When the configured distance is reached, player faces LEFT.
+
+Facing LEFT + move RIGHT:
+
+- Player moves RIGHT immediately.
+- Player keeps facing LEFT temporarily.
+- Backward distance is accumulated.
+- When the configured distance is reached, player faces RIGHT.
+
+
+FINAL SYSTEM TYPE
+-----------------
+The final facing system is DISTANCE-BASED.
+
+An earlier version used:
+
+    turnDirectionDelay
+    turnDirectionTimer
+
+That timer-based facing logic was removed.
+
+The final version uses movement distance instead.
+
+
+MAIN SETTING
+------------
+Main adjustment:
+
+    player.turnDirectionDistance = 30.0f;
+
+Example:
+
+    15.0f
+    -> faster turn / shorter backward movement
+
+    30.0f
+    -> normal short backward movement
+
+    50.0f
+    -> longer backward movement before turning
+
+
+RESET RULE
+----------
+If the player stops moving opposite the current facing before reaching the
+required distance, the accumulated turn distance resets.
+
+Moving again in the current facing direction also cancels the pending turn.
+
+
+VERTICAL MOVEMENT
+-----------------
+UP and DOWN movement do not directly change LEFT/RIGHT facing.
+
+
+WHY DISTANCE-BASED
+------------------
+Distance-based facing was chosen because it is:
+
+- easier to control visually
+- independent of frame timing
+- more predictable at different movement speeds
+- better suited for backward movement
+- compatible with back dash
+
+
+FILES INVOLVED
+--------------
+include/player/player.h
+src/player/player.c
+src/player/player_move.c
+
+
+0052 STATUS
+-----------
+DONE
+
+NEXT SYSTEM:
+0053 - Forward Dash / Back Dash System

@@ -108,6 +108,8 @@ Player InitPlayer(const char *texturePath)
     // PLAYER STATE
     // ============================================================
     player.isWalking = false;
+    player.isRunning = false;
+    player.runSpeedMultiplier = 1.60f;
     player.currentAttack = ATTACK_NONE;
 
     // 0026 - No buffered attack when the player is created.
@@ -140,6 +142,29 @@ Player InitPlayer(const char *texturePath)
     player.knockbackDirection = 0;
 
     player.facingRight = true;
+    player.turnDirectionTravel = 0.0f;
+    // Horizontal backward distance before the sprite turns.
+    // Increase this value if you want the player to stay facing
+    // the old direction for a longer backward movement.
+    player.turnDirectionDistance = 50.0f;
+    player.pendingFacingDirection = 0;
+
+    // ============================================================
+    // 0052 - FORWARD / BACK DASH
+    // ============================================================
+    player.dashTapTimer = 0.0f;
+    player.dashTapWindow = 0.25f;
+    player.lastDashTapDirection = 0;
+    player.dashTapFacingRight = player.facingRight;
+    player.isDashing = false;
+    player.dashDirection = 0;
+    player.dashLockedFacingRight = player.facingRight;
+    player.dashTimer = 0.0f;
+
+    // Approximate slide distance = dashSpeed * dashDuration.
+    // 900 * 0.10 = about 90 pixels.
+    player.dashDuration = 0.12f;
+    player.dashSpeed = 900.0f;
 
     // ============================================================
     // PLAYER POSITION / SIZE

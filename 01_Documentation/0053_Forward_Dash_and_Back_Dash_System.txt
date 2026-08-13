@@ -1,0 +1,128 @@
+WARDOGZ II
+0053 - FORWARD DASH / BACK DASH SYSTEM
+======================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0053
+
+TITLE:
+Forward Dash and Back Dash System
+
+
+PURPOSE
+-------
+Adds horizontal double-tap dash commands.
+
+The type of dash depends on the player's current facing direction.
+
+
+COMMAND TABLE
+-------------
+CURRENT FACING     INPUT          RESULT
+------------------------------------------------
+RIGHT              RIGHT RIGHT    Forward Dash Right
+RIGHT              LEFT LEFT      Back Dash Left
+LEFT               LEFT LEFT      Forward Dash Left
+LEFT               RIGHT RIGHT    Back Dash Right
+
+
+FORWARD DASH
+------------
+Facing RIGHT:
+
+    RIGHT + RIGHT
+    -> forward dash RIGHT
+
+Facing LEFT:
+
+    LEFT + LEFT
+    -> forward dash LEFT
+
+
+BACK DASH
+---------
+Facing RIGHT:
+
+    LEFT + LEFT
+    -> back dash LEFT
+    -> remain facing RIGHT
+
+Facing LEFT:
+
+    RIGHT + RIGHT
+    -> back dash RIGHT
+    -> remain facing LEFT
+
+
+BACK DASH FACING LOCK
+---------------------
+The back dash preserves the original facing direction during the dash.
+
+This prevents the player from turning toward the direction of the backward
+movement.
+
+
+DOUBLE-TAP WINDOW
+-----------------
+The allowed time between directional taps is controlled by:
+
+    player.dashTapWindow
+
+Example:
+
+    player.dashTapWindow = 0.25f;
+
+
+DASH MOVEMENT
+-------------
+Dash movement still uses speed and duration internally because the dash is a
+short sliding motion.
+
+Example:
+
+    player.dashDuration = 0.10f;
+    player.dashSpeed = 900.0f;
+
+Approximate dash travel:
+
+    dashSpeed x dashDuration
+
+
+IMPORTANT DISTINCTION
+---------------------
+Facing turn:
+    DISTANCE-BASED
+
+Dash motion:
+    SPEED + DURATION
+
+The duration removed from 0052 was only the old facing-turn timer.
+Dash duration is still needed for the dash slide.
+
+
+RELATION TO 0052
+----------------
+0052 controls normal backward movement and when the player changes facing.
+
+0053 detects double-tap input and starts either:
+
+- Forward Dash
+or
+- Back Dash
+
+Back dash temporarily preserves the player's current facing.
+
+
+FILES INVOLVED
+--------------
+include/player/player.h
+src/player/player.c
+src/player/player_move.c
+
+
+0053 STATUS
+-----------
+DONE

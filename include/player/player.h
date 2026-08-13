@@ -63,6 +63,8 @@ typedef struct Player
 
     // PLAYER STATE
     bool isWalking;
+    bool isRunning;
+    float runSpeedMultiplier;
     AttackType currentAttack;
 
     // 0026 - COMBO INPUT BUFFER
@@ -98,6 +100,29 @@ typedef struct Player
     // false = LEFT
     // true  = RIGHT
     bool facingRight;
+
+    // 0051 - DISTANCE-BASED HORIZONTAL TURN
+    // When moving opposite the current facing direction, the player
+    // keeps the old facing until enough horizontal distance is travelled.
+    float turnDirectionTravel;
+    float turnDirectionDistance;
+    int pendingFacingDirection; // -1 = LEFT, 0 = NONE, 1 = RIGHT
+
+    // 0052 - FORWARD / BACK DASH
+    // Facing RIGHT + RIGHT, RIGHT = forward dash RIGHT.
+    // Facing RIGHT + LEFT, LEFT   = back dash LEFT.
+    // Facing LEFT  + LEFT, LEFT   = forward dash LEFT.
+    // Facing LEFT  + RIGHT, RIGHT = back dash RIGHT.
+    float dashTapTimer;
+    float dashTapWindow;
+    int lastDashTapDirection;   // -1 = LEFT, 0 = NONE, 1 = RIGHT
+    bool dashTapFacingRight;    // Facing captured on the first tap
+    bool isDashing;
+    int dashDirection;          // -1 = LEFT, 1 = RIGHT
+    bool dashLockedFacingRight; // Facing stays locked during any dash
+    float dashTimer;
+    float dashDuration;
+    float dashSpeed;
 
 } Player;
 

@@ -168,6 +168,10 @@ int main(void)
     //
     #define PUNK_COUNT 4
 
+    // TEMPORARY: Disable all Punk gameplay while building/testing Stage 1.
+    // Change this to true when the stage/map is ready for enemy placement.
+    const bool enemiesEnabled = false;
+
     Enemy punks[PUNK_COUNT];
 
     // 0049 - Each enemy HUD row remains briefly after HP reaches zero.
@@ -204,88 +208,92 @@ int main(void)
             walkAreaBottom
         );
 
-        // 0042 - Keep free Punks distributed around the player.
-        // Attack-slot owners still chase the player directly.
-        ResolveEnemySurroundFormation(
-            punks,
-            PUNK_COUNT
-        );
-
-        // 0043 - Choose/swap the two active attackers dynamically.
-        ResolveEnemyAttackSlot(
-            punks,
-            PUNK_COUNT,
-            &player
-        );
-
-        // 0044 - Stagger attack starts so the two active Punks do not
-        // punch/elbow at the same instant.
-        ResolveEnemyAttackTurnTiming(
-            punks,
-            PUNK_COUNT,
-            &player,
-            deltaTime
-        );
-
-        // 0046 - If an active attacker is blocked behind another Punk,
-        // side-step to an upper/lower lane before continuing the approach.
-        ResolveEnemyApproachLanes(
-            punks,
-            PUNK_COUNT,
-            &player,
-            walkAreaTop,
-            walkAreaBottom
-        );
-
-        // Update each Punk independently.
-        for (int i = 0; i < PUNK_COUNT; i++)
+        if (enemiesEnabled)
         {
-            UpdateEnemyHit(
-                &punks[i],
+            // 0042 - Keep free Punks distributed around the player.
+            // Attack-slot owners still chase the player directly.
+            ResolveEnemySurroundFormation(
+                punks,
+                PUNK_COUNT
+            );
+
+            // 0043 - Choose/swap the two active attackers dynamically.
+            ResolveEnemyAttackSlot(
+                punks,
+                PUNK_COUNT,
+                &player
+            );
+
+            // 0044 - Stagger attack starts so the two active Punks do not
+            // punch/elbow at the same instant.
+            ResolveEnemyAttackTurnTiming(
+                punks,
+                PUNK_COUNT,
                 &player,
+                deltaTime
+            );
+
+            // 0046 - If an active attacker is blocked behind another Punk,
+            // side-step to an upper/lower lane before continuing the approach.
+            ResolveEnemyApproachLanes(
+                punks,
+                PUNK_COUNT,
+                &player,
+                walkAreaTop,
+                walkAreaBottom
+            );
+
+            // Update each Punk independently.
+            for (int i = 0; i < PUNK_COUNT; i++)
+            {
+                UpdateEnemyHit(
+                    &punks[i],
+                    &player,
+                    deltaTime,
+                    (float)screenWidth,
+                    walkAreaTop,
+                    walkAreaBottom
+                );
+            }
+
+            // 0049 - Keep a dead enemy's HUD row visible for a short moment.
+            UpdateEnemyHudDeathTimers(
+                punks,
+                PUNK_COUNT,
+                enemyHudDeathTimers,
+                deltaTime
+            );
+
+            // 0040 - Push nearby Punks apart so they do not stack.
+            ResolveEnemySpacing(
+                punks,
+                PUNK_COUNT,
                 deltaTime,
                 (float)screenWidth,
                 walkAreaTop,
                 walkAreaBottom
             );
+
+            // 0048 - Give the player and Punks physical body presence.
+            // Same-depth actors softly separate instead of passing through.
+            ResolvePlayerEnemyBodyCollision(
+                &player,
+                punks,
+                PUNK_COUNT,
+                (float)screenWidth,
+                walkAreaTop,
+                walkAreaBottom
+            );
+
+            // 0043 - Refresh after attacks/cancellations so a nearby waiting
+            // Punk can take over a released attack slot immediately.
+            ResolveEnemyAttackSlot(
+                punks,
+                PUNK_COUNT,
+                &player
+            );
+
         }
-
-        // 0049 - Keep a dead enemy's HUD row visible for a short moment.
-        UpdateEnemyHudDeathTimers(
-            punks,
-            PUNK_COUNT,
-            enemyHudDeathTimers,
-            deltaTime
-        );
-
-        // 0040 - Push nearby Punks apart so they do not stack.
-        ResolveEnemySpacing(
-            punks,
-            PUNK_COUNT,
-            deltaTime,
-            (float)screenWidth,
-            walkAreaTop,
-            walkAreaBottom
-        );
-
-        // 0048 - Give the player and Punks physical body presence.
-        // Same-depth actors softly separate instead of passing through.
-        ResolvePlayerEnemyBodyCollision(
-            &player,
-            punks,
-            PUNK_COUNT,
-            (float)screenWidth,
-            walkAreaTop,
-            walkAreaBottom
-        );
-
-        // 0043 - Refresh after attacks/cancellations so a nearby waiting
-        // Punk can take over a released attack slot immediately.
-        ResolveEnemyAttackSlot(
-            punks,
-            PUNK_COUNT,
-            &player
-        );
 
         // ========================================================
         // DRAW
@@ -338,16 +346,19 @@ int main(void)
             -1
         };
 
-        for (int i = 0; i < PUNK_COUNT; i++)
+        if (enemiesEnabled)
         {
-            Rectangle enemyFeet = GetEnemyFootMarker(&punks[i]);
-
-            drawActors[drawActorCount++] = (DrawActor)
+            for (int i = 0; i < PUNK_COUNT; i++)
             {
-                DRAW_ACTOR_ENEMY,
-                enemyFeet.y + (enemyFeet.height * 0.5f),
-                i
-            };
+                Rectangle enemyFeet = GetEnemyFootMarker(&punks[i]);
+
+                drawActors[drawActorCount++] = (DrawActor)
+                {
+                    DRAW_ACTOR_ENEMY,
+                    enemyFeet.y + (enemyFeet.height * 0.5f),
+                    i
+                };
+            }
         }
 
         SortDrawActorsByDepth(drawActors, drawActorCount);
@@ -365,11 +376,14 @@ int main(void)
         }
 
         // 0049 - Active enemy HP list. Dead rows disappear after a short delay.
-        DrawEnemyHud(
-            punks,
-            PUNK_COUNT,
-            enemyHudDeathTimers
-        );
+        if (enemiesEnabled)
+        {
+            DrawEnemyHud(
+                punks,
+                PUNK_COUNT,
+                enemyHudDeathTimers
+            );
+        }
 
         // Controls stay at the bottom; enemy HUD is now at the top-right.
         DrawText(
