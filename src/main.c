@@ -143,6 +143,14 @@ int main(void)
     const int screenWidth = 1280;
     const int screenHeight = 720;
 
+    // ============================================================
+    // 0054 - STAGE 1 WORLD LENGTH / WALK TEST
+    // ============================================================
+    // Stage width is calculated automatically after all background
+    // textures are loaded. This prevents black/empty world space when
+    // panel widths or file formats change.
+    float stageWorldWidth = 0.0f;
+
     // Walkable area ng stage
     const float walkAreaTop = 410.0f;
     const float walkAreaBottom = 820.0f;
@@ -158,6 +166,13 @@ int main(void)
     // Load player and background
     Player player =
         InitPlayer("assets/sprites/player/player.png");
+
+    // 0054 - Horizontal camera for the long Stage 1 walk test.
+    Camera2D camera = {0};
+    camera.offset = (Vector2){screenWidth * 0.5f, screenHeight * 0.5f};
+    camera.target = (Vector2){screenWidth * 0.5f, screenHeight * 0.5f};
+    camera.rotation = 0.0f;
+    camera.zoom = 1.0f;
 
     // ============================================================
     // 0040 - MULTI-PUNK TEST SETUP
@@ -190,8 +205,53 @@ int main(void)
     StartEnemyEntrance(&punks[2], 1080.0f, 620.0f, 140.0f);
     StartEnemyEntrance(&punks[3],  320.0f, 430.0f, 140.0f);
 
-    Texture2D background =
-        LoadTexture("assets/background/back_alley.png");
+    // ============================================================
+    // 0054 - STAGE 1 BACKGROUND SECTIONS
+    // ============================================================
+    // Final Stage 1 background sequence.
+    // Full panels keep their original aspect ratio at 720 px height.
+    // BA10 is a narrow final strip and is drawn at its proportional width.
+    #define STAGE_BACKGROUND_COUNT 10
+
+    Texture2D stageBackgrounds[STAGE_BACKGROUND_COUNT] =
+    {
+        LoadTexture("assets/background/B1.png"),
+        LoadTexture("assets/background/B2.png"),
+        LoadTexture("assets/background/BA3.png"),
+        LoadTexture("assets/background/BA4.png"),
+        LoadTexture("assets/background/BA5.png"),
+        LoadTexture("assets/background/BA6.png"),
+        LoadTexture("assets/background/BA7.png"),
+        LoadTexture("assets/background/BA8.png"),
+        LoadTexture("assets/background/BA9.png"),
+        LoadTexture("assets/background/BA10.png")
+    };
+
+    // Calculate the real Stage 1 width from every valid texture.
+    // Each panel is scaled proportionally to the 720 px game height.
+    for (int i = 0; i < STAGE_BACKGROUND_COUNT; i++)
+    {
+        if (stageBackgrounds[i].id == 0 ||
+            stageBackgrounds[i].width <= 0 ||
+            stageBackgrounds[i].height <= 0)
+        {
+            TraceLog(LOG_WARNING,
+                "STAGE BACKGROUND FAILED TO LOAD: index %d", i);
+            continue;
+        }
+
+        float panelScale =
+            (float)screenHeight / (float)stageBackgrounds[i].height;
+
+        stageWorldWidth +=
+            (float)stageBackgrounds[i].width * panelScale;
+    }
+
+    // Never allow a world narrower than the game window.
+    if (stageWorldWidth < (float)screenWidth)
+    {
+        stageWorldWidth = (float)screenWidth;
+    }
 
     while (!WindowShouldClose())
     {
@@ -203,7 +263,7 @@ int main(void)
         UpdatePlayer(
             &player,
             deltaTime,
-            (float)screenWidth,
+            stageWorldWidth,
             walkAreaTop,
             walkAreaBottom
         );
@@ -250,7 +310,7 @@ int main(void)
                     &punks[i],
                     &player,
                     deltaTime,
-                    (float)screenWidth,
+                    stageWorldWidth,
                     walkAreaTop,
                     walkAreaBottom
                 );
@@ -269,7 +329,7 @@ int main(void)
                 punks,
                 PUNK_COUNT,
                 deltaTime,
-                (float)screenWidth,
+                stageWorldWidth,
                 walkAreaTop,
                 walkAreaBottom
             );
@@ -280,7 +340,7 @@ int main(void)
                 &player,
                 punks,
                 PUNK_COUNT,
-                (float)screenWidth,
+                stageWorldWidth,
                 walkAreaTop,
                 walkAreaBottom
             );
@@ -296,35 +356,108 @@ int main(void)
         }
 
         // ========================================================
+        // 0054 - CAMERA FOLLOW / WORLD CLAMP
+        // ========================================================
+        // Follow the player's horizontal position, but do not show
+        // anything before x=0 or after the Stage 1 background end.
+        float playerCenterX =
+            player.rectangle.x + (player.rectangle.width * 0.5f);
+
+        float cameraTargetX = playerCenterX;
+        float halfScreenWidth = screenWidth * 0.5f;
+
+        if (cameraTargetX < halfScreenWidth)
+        {
+            cameraTargetX = halfScreenWidth;
+        }
+
+        if (cameraTargetX > stageWorldWidth - halfScreenWidth)
+        {
+            cameraTargetX = stageWorldWidth - halfScreenWidth;
+        }
+
+        camera.target = (Vector2)
+        {
+            cameraTargetX,
+            screenHeight * 0.5f
+        };
+
+        // ========================================================
         // DRAW
         // ========================================================
         BeginDrawing();
 
         ClearBackground(BLACK);
 
-        Rectangle source =
-        {
-            0.0f,
-            0.0f,
-            (float)background.width,
-            (float)background.height
-        };
+        BeginMode2D(camera);
 
-        Rectangle destination =
-        {
-            0.0f,
-            0.0f,
-            (float)screenWidth,
-            (float)screenHeight
-        };
+        // 0054 - Draw every Stage 1 panel at the same 720 px height.
+        // Width is calculated from each texture's real aspect ratio,
+        // so BA10 can stay narrow without being stretched.
+        float backgroundX = 0.0f;
 
-        DrawTexturePro(
-            background,
-            source,
-            destination,
-            (Vector2){0.0f, 0.0f},
-            0.0f,
-            WHITE
+        for (int i = 0; i < STAGE_BACKGROUND_COUNT; i++)
+        {
+            Texture2D currentBackground = stageBackgrounds[i];
+
+            // Safety: a failed texture must not corrupt backgroundX.
+            // Without this guard, height == 0 causes division by zero and
+            // every panel after it can disappear into a black screen.
+            if (currentBackground.id == 0 ||
+                currentBackground.width <= 0 ||
+                currentBackground.height <= 0)
+            {
+                continue;
+            }
+
+            float backgroundScale =
+                (float)screenHeight / (float)currentBackground.height;
+
+            float backgroundWidth =
+                (float)currentBackground.width * backgroundScale;
+
+            Rectangle source =
+            {
+                0.0f,
+                0.0f,
+                (float)currentBackground.width,
+                (float)currentBackground.height
+            };
+
+            Rectangle destination =
+            {
+                backgroundX,
+                0.0f,
+                backgroundWidth,
+                (float)screenHeight
+            };
+
+            DrawTexturePro(
+                currentBackground,
+                source,
+                destination,
+                (Vector2){0.0f, 0.0f},
+                0.0f,
+                WHITE
+            );
+
+            backgroundX += backgroundWidth;
+        }
+
+        // Temporary visual marker so the end of the walk test is obvious.
+        DrawLineEx(
+            (Vector2){stageWorldWidth - 8.0f, 0.0f},
+            (Vector2){stageWorldWidth - 8.0f, (float)screenHeight},
+            8.0f,
+            RED
+        );
+
+        DrawText(
+            "STAGE 1 END",
+            (int)stageWorldWidth - 430,
+            80,
+            30,
+            RED
         );
 
         // ====================================================
@@ -375,6 +508,8 @@ int main(void)
             }
         }
 
+        EndMode2D();
+
         // 0049 - Active enemy HP list. Dead rows disappear after a short delay.
         if (enemiesEnabled)
         {
@@ -384,6 +519,22 @@ int main(void)
                 enemyHudDeathTimers
             );
         }
+
+        // 0054 - Walk-test progress HUD (screen-space, not affected by camera).
+        float stageProgress = playerCenterX / stageWorldWidth;
+        if (stageProgress < 0.0f) stageProgress = 0.0f;
+        if (stageProgress > 1.0f) stageProgress = 1.0f;
+
+        DrawText(
+            TextFormat("Stage X: %.0f / %.0f px  (%.0f%%)",
+                playerCenterX,
+                stageWorldWidth,
+                stageProgress * 100.0f),
+            30,
+            25,
+            22,
+            YELLOW
+        );
 
         // Controls stay at the bottom; enemy HUD is now at the top-right.
         DrawText(
@@ -400,7 +551,13 @@ int main(void)
     // ============================================================
     // UNLOAD
     // ============================================================
-    UnloadTexture(background);
+    for (int i = 0; i < STAGE_BACKGROUND_COUNT; i++)
+    {
+        if (stageBackgrounds[i].id != 0)
+        {
+            UnloadTexture(stageBackgrounds[i]);
+        }
+    }
 
     for (int i = 0; i < PUNK_COUNT; i++)
     {
