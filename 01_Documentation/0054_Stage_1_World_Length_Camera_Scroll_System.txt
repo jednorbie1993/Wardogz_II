@@ -1,0 +1,128 @@
+WARDOGZ II
+0054 - STAGE 1 WORLD LENGTH / CAMERA SCROLL SYSTEM
+=================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0054
+
+TITLE:
+Stage 1 World Length / Camera Scroll System
+
+
+PURPOSE
+-------
+Creates the first real horizontally scrolling Stage 1 environment.
+
+Before this system, the playable horizontal area was effectively limited to
+approximately one screen width.
+
+This update allows the player to walk through a long Stage 1 world while the
+camera follows horizontally.
+
+
+INITIAL WALK TEST
+-----------------
+The first Stage 1 walk test used an approximate world length of:
+
+    8000 pixels
+
+The purpose of this test was not to finalize enemy placement yet.
+
+The goal was only to test:
+
+- how long Stage 1 feels
+- camera scrolling
+- player traversal speed
+- stage start and stage end
+- whether the level feels too short or too long
+
+
+CAMERA FOLLOW
+-------------
+The camera now follows the player horizontally.
+
+The camera:
+
+- follows player X movement
+- does not scroll before the stage start
+- does not scroll beyond the stage end
+- keeps the game window showing the current section of the world
+
+
+CAMERA CLAMP
+------------
+The camera position is clamped so it cannot show empty space outside the world.
+
+Concept:
+
+    cameraX >= 0
+
+and:
+
+    cameraX <= stageWorldWidth - screenWidth
+
+
+PLAYER WORLD MOVEMENT
+---------------------
+The player now moves using world coordinates instead of being restricted to the
+original single-screen horizontal boundary.
+
+This allows:
+
+    start of Stage 1
+        ->
+    long horizontal traversal
+        ->
+    final stage section
+
+
+WALK TEST MODE
+--------------
+During the first test:
+
+- enemies were disabled
+- boss logic was not yet added
+- combat waves were not yet active
+
+This allowed the stage length and scrolling behavior to be tested separately
+from combat.
+
+
+STAGE END TEST
+--------------
+A temporary stage-end marker / walk-test end area was used to confirm that the
+player could reach the end of the world.
+
+This was useful before adding enemy waves and progression locks.
+
+
+IMPORTANT DEVELOPMENT DECISION
+------------------------------
+The initial 8000-pixel width was a TEST TARGET.
+
+After the final background panels were prepared, the stage length was allowed to
+be based on the actual background panel widths instead of forcing every image
+into exactly 8000 pixels.
+
+This prevents visual stretching and distortion.
+
+
+FILES INVOLVED
+--------------
+src/main.c
+
+
+0054 STATUS
+-----------
+DONE
+
+RESULT
+------
+Wardogz II now supports a horizontally scrolling Stage 1 world with camera
+follow and world-boundary clamping.
+
+NEXT SYSTEM:
+0055 - Stage 1 Multi-Background System

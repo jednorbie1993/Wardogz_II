@@ -1,0 +1,177 @@
+WARDOGZ II
+0055 - STAGE 1 MULTI-BACKGROUND SYSTEM
+======================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0055
+
+TITLE:
+Stage 1 Multi-Background System
+
+
+PURPOSE
+-------
+Replaces the temporary repeated background with multiple unique Stage 1 alley
+background panels.
+
+This turns Stage 1 into a visually progressing street / alley environment.
+
+
+FINAL BACKGROUND ORDER
+----------------------
+The Stage 1 background sequence is:
+
+    B1
+    B2
+    BA3
+    BA4
+    BA5
+    BA6
+    BA7
+    BA8
+    BA9
+    BA10
+
+
+BACKGROUND FOLDER
+-----------------
+The files are stored under:
+
+    assets/background/
+
+
+BACKGROUND STYLE
+----------------
+The Stage 1 environment follows a consistent theme:
+
+- dark urban alley
+- industrial brick buildings
+- warehouse areas
+- pipes
+- warning signs
+- dumpsters
+- fences
+- graffiti
+- red warning lights
+- cracked street / pavement
+- open foreground for beat-'em-up movement
+
+
+BACKGROUND PANEL SIZE
+---------------------
+Most Stage 1 background panels use approximately:
+
+    1672 x 941
+
+BA10 is intentionally much narrower.
+
+BA10 is used as a short final extension / ending piece instead of being
+stretched to the same width as the other panels.
+
+
+WHY BA10 IS NOT STRETCHED
+-------------------------
+Stretching BA10 to the full width of the other images would distort:
+
+- wall details
+- props
+- pavement
+- lighting
+- perspective
+
+Instead, BA10 keeps its proportional width and acts as the final stage strip.
+
+
+RENDER SCALE
+------------
+The backgrounds are scaled to match the gameplay height while preserving their
+aspect ratio.
+
+The system does NOT force every background panel to have an identical world
+width.
+
+Each panel contributes its own scaled width to the stage.
+
+
+STAGE LENGTH
+------------
+Originally, Stage 1 was planned around approximately:
+
+    8000 pixels
+
+However, after adding all prepared background panels, forcing them into 8000
+pixels would compress or distort the artwork.
+
+The final approach is:
+
+    total stage width =
+        sum of the scaled widths of all valid background panels
+
+
+ADVANTAGE
+---------
+This allows:
+
+- no horizontal stretching
+- consistent image proportions
+- natural stage length
+- easier background replacement
+- easy addition/removal of future sections
+
+
+SEAM TESTING
+------------
+Before applying the full Stage 1 sequence, B1 and B2 were tested first.
+
+The purpose was to verify:
+
+- matching source dimensions
+- matching ground height
+- matching wall height
+- transition between panels
+- camera scrolling across a seam
+
+After the initial seam test, the rest of the panels were added.
+
+
+GAMEPLAY AREA
+-------------
+The lower portion of each background remains mostly open for:
+
+- player movement
+- enemy movement
+- combat
+- depth movement
+- future wave locking
+
+
+FILES INVOLVED
+--------------
+src/main.c
+
+assets/background/B1.png
+assets/background/B2.png
+assets/background/BA3.png
+assets/background/BA4.png
+assets/background/BA5.png
+assets/background/BA6.png
+assets/background/BA7.png
+assets/background/BA8.png
+assets/background/BA9.png
+assets/background/BA10.png
+
+
+0055 STATUS
+-----------
+DONE
+
+RESULT
+------
+Stage 1 now uses multiple connected background sections instead of one repeated
+image.
+
+NEXT SYSTEM:
+0056 - Background Loading / PNG Compatibility Fix System

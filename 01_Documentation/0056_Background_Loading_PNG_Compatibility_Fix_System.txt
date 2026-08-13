@@ -1,0 +1,172 @@
+WARDOGZ II
+0056 - BACKGROUND LOADING / PNG COMPATIBILITY FIX SYSTEM
+========================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0056
+
+TITLE:
+Background Loading / PNG Compatibility Fix System
+
+
+PURPOSE
+-------
+Fixes the issue where Stage 1 displayed correctly only up to BA4 and then showed
+a black background while the player could still continue walking.
+
+
+PROBLEM OBSERVED
+----------------
+During the full Stage 1 test:
+
+- B1 displayed correctly
+- B2 displayed correctly
+- BA3 displayed correctly
+- BA4 displayed correctly
+- after BA4, the world became black
+- player movement still continued
+
+This confirmed that:
+
+- stage world movement was still active
+- camera scrolling was still active
+- the problem was in background texture loading / drawing
+
+
+ROOT CAUSE
+----------
+The current project contained mixed image formats.
+
+Most background files were PNG.
+
+However:
+
+    BA5 = JPG
+    BA7 = JPG
+
+The raylib build being used could fail to load those JPG textures depending on
+the image-format support included in the build.
+
+When BA5 failed to load, its texture width could become invalid / zero.
+
+Because the background-position calculation depended on texture width, this
+could also prevent all later backgrounds from being positioned correctly.
+
+
+FORMAT FIX
+----------
+The following files were converted:
+
+    BA5.jpg -> BA5.png
+    BA7.jpg -> BA7.png
+
+The background loader was updated to use:
+
+    assets/background/BA5.png
+    assets/background/BA7.png
+
+
+FINAL FORMAT RULE
+-----------------
+For Stage 1 backgrounds, PNG is now the preferred format.
+
+Recommended:
+
+    .png
+
+This keeps background loading consistent with the rest of the Wardogz II
+project.
+
+
+BACKGROUND SAFETY CHECK
+-----------------------
+The background drawing logic was also made safer.
+
+Before using a texture in world-width / drawing calculations, the code checks
+whether the texture loaded successfully.
+
+Concept:
+
+    if texture is valid
+        -> calculate scaled width
+        -> add to stage width
+        -> draw texture
+
+    if texture failed
+        -> skip invalid texture
+        -> do not destroy the position of later backgrounds
+
+
+AUTOMATIC WORLD WIDTH
+---------------------
+The stage world width is now calculated automatically from successfully loaded
+background textures.
+
+Instead of relying on one fixed number:
+
+    stageWorldWidth = sum of valid scaled background widths
+
+This means the camera boundary matches the actual Stage 1 artwork.
+
+
+WHY THIS IS BETTER
+------------------
+The system is now more robust if:
+
+- one file is missing
+- one filename is incorrect
+- an unsupported image format is used
+- a background is replaced
+- a new background panel is added
+- panel widths are different
+
+
+FINAL BACKGROUND ORDER
+----------------------
+The corrected Stage 1 sequence remains:
+
+    B1
+    B2
+    BA3
+    BA4
+    BA5
+    BA6
+    BA7
+    BA8
+    BA9
+    BA10
+
+
+FILES INVOLVED
+--------------
+src/main.c
+
+assets/background/BA5.png
+assets/background/BA7.png
+
+
+0056 STATUS
+-----------
+DONE / FIXED
+
+RESULT
+------
+All Stage 1 background sections can continue loading after BA4 without the
+remaining world becoming black.
+
+The stage width is now based on successfully loaded background textures and the
+background format is standardized around PNG.
+
+
+CURRENT DOCUMENTATION SEQUENCE
+------------------------------
+0050 - Enemy Death / 2-Frame Dead Sprite System
+0051 - Player Running System
+0052 - Player Facing Turn Distance System
+0053 - Forward Dash / Back Dash System
+0054 - Stage 1 World Length / Camera Scroll System
+0055 - Stage 1 Multi-Background System
+0056 - Background Loading / PNG Compatibility Fix System
