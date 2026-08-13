@@ -1,0 +1,78 @@
+WARDOGZ II
+0046 - BETTER SURROUND POSITIONS / BYPASS LANE SYSTEM
+=====================================================
+
+PURPOSE
+--------------------------------------------------
+Prevent a Punk that is behind another Punk from endlessly
+walking forward into the enemy in front.
+
+The rear Punk should have a real chance to reach the
+player and attack.
+
+FINAL BEHAVIOR
+--------------------------------------------------
+When a Punk detects another Punk blocking the direct path:
+
+1. The rear Punk does not keep pushing straight forward.
+2. The rear Punk chooses an alternate vertical lane:
+   TOP or BOTTOM.
+3. The Punk moves toward that bypass lane first.
+4. Once the path becomes clear, normal approach toward
+   the player resumes.
+5. The Punk can then move into attack range.
+
+IMPORTANT MOVEMENT RULE
+--------------------------------------------------
+The bypass direction is not randomly changed every frame.
+
+The Punk keeps the chosen side long enough to move around
+the blocking enemy, avoiding unstable left-right or
+top-bottom shaking.
+
+STAGE BOUNDARY SAFETY
+--------------------------------------------------
+The selected bypass position is kept inside the valid
+stage walk area so the Punk does not attempt to move
+outside the top or bottom boundary.
+
+INTERACTION WITH 0045
+--------------------------------------------------
+0045 remains active.
+
+Example:
+
+Punk 1 -> attacks
+       -> dash back
+       -> short stand pause
+
+Punk 2 -> if blocked
+       -> moves TOP or BOTTOM
+       -> gets a clearer lane
+       -> approaches player
+       -> gets a better chance to attack
+
+RESULT
+--------------------------------------------------
+Multiple enemies no longer behave like one straight line.
+
+Enemies can begin to spread vertically and create a more
+natural beat-'em-up surround pattern around the player.
+
+STATUS
+--------------------------------------------------
+DONE / TESTED
+
+NEXT
+--------------------------------------------------
+0047 - Y-DEPTH DRAW SORTING
+
+Enemies and the player should be drawn according to their
+Y/depth position:
+
+TOP -> drawn first
+MIDDLE -> drawn above TOP
+BOTTOM -> drawn above MIDDLE
+
+This will fix incorrect sprite overlap when characters
+stand at different vertical depths.

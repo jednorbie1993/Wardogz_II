@@ -1,0 +1,48 @@
+WARDOGZ II
+0044 - ENEMY ATTACK COOLDOWN / TURN TIMING SYSTEM
+==================================================
+
+PURPOSE
+--------------------------------------------------
+Prevent multiple active Punk enemies from starting
+their attacks at exactly the same time.
+
+The system gives enemies a short shared delay between
+attack starts so combat does not look like attack spam.
+
+FINAL BEHAVIOR
+--------------------------------------------------
+- Two Punk enemies can still approach and stay active.
+- Only one Punk should begin an attack first.
+- After an attack begins, the other Punk must wait for
+  a short attack-start gap.
+- The current shared attack-start gap is approximately:
+
+    0.55 seconds
+
+- Existing Punch and Elbow attack sequences are preserved.
+
+EXAMPLE
+--------------------------------------------------
+Punk 1 -> starts attack
+          |
+          | 0.55 sec attack-start gap
+          v
+Punk 2 -> allowed to start attack
+
+IMPORTANT
+--------------------------------------------------
+0044 controls attack START timing only.
+
+It does not automatically force enemies to move far away
+from each other. Visual separation between attackers is
+handled by later movement systems such as 0045 and 0046.
+
+RESULT
+--------------------------------------------------
+Enemy attacks feel less simultaneous and provide a base
+for alternating enemy pressure around the player.
+
+STATUS
+--------------------------------------------------
+DONE / TESTED

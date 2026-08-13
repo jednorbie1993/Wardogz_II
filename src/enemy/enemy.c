@@ -35,10 +35,17 @@ Enemy InitEnemyBase(void)
     enemy.hitPlayerThisAttack = false;
     enemy.attackSlotGranted = false;
 
-    // 0044 rollback/fix:
-    // Keep attack permission open so the working 0043 attack flow is restored.
-    // We will add shared turn timing again only after the basic attacks work.
-    enemy.attackTurnAllowed = true;
+    // 0044 - Shared turn controller grants this before a new attack starts.
+    enemy.attackTurnAllowed = false;
+
+    // 0045 - Post-attack backward retreat defaults.
+    enemy.isRetreating = false;
+    enemy.retreatTimer = 0.0f;
+    enemy.retreatDuration = 1.50f;
+    enemy.retreatSpeed = 105.0f;
+    enemy.retreatDirection = 0;
+    enemy.retreatPauseTimer = 0.0f;
+    enemy.retreatPauseDuration = 0.55f;
 
     enemy.attackDamage = 10;
     enemy.attackRange = 210.0f;
@@ -96,6 +103,11 @@ Enemy InitEnemyBase(void)
     enemy.surroundOffsetX = 0.0f;
     enemy.surroundOffsetY = 0.0f;
     enemy.surroundArrivalTolerance = 18.0f;
+
+    // 0046 - Blocked-approach lane bypass defaults.
+    enemy.isLaneBypassing = false;
+    enemy.laneBypassTargetY = 0.0f;
+    enemy.laneBypassDirection = 0;
 
     // ============================================================
     // 0035 - ENEMY STOP / ATTACK RANGE DEFAULTS
@@ -403,6 +415,132 @@ void ResolveEnemyAttackSlot(
 
         enemies[bestIndex].attackSlotGranted = true;
         granted++;
+    }
+}
+
+
+// ============================================================
+// 0044 - ATTACK COOLDOWN / TURN TIMING SYSTEM
+// ============================================================
+// Two Punks may still own the 0043 attack slots, but only one Punk is
+// allowed to START a new attack at a time. After any Punk begins an attack,
+// the group waits briefly before another Punk may start. This prevents the
+// two active attackers from looking synchronized or spammy.
+void ResolveEnemyAttackTurnTiming(
+    Enemy *enemies,
+    int enemyCount,
+    const Player *player,
+    float deltaTime
+)
+{
+    if (enemies == 0 || enemyCount <= 0 || player == 0)
+    {
+        return;
+    }
+
+    // Small gap between attack STARTS. Existing attacks keep playing.
+    const float attackStartGap = 0.55f;
+
+    // This controller is for the current enemy group used by the stage.
+    // MAX_TRACKED_ENEMIES is intentionally larger than the current 4 Punks.
+    enum { MAX_TRACKED_ENEMIES = 32 };
+    static bool previousAttackState[MAX_TRACKED_ENEMIES] = {0};
+    static float groupStartCooldown = 0.0f;
+    static int turnCursor = 0;
+
+    int trackedCount = enemyCount;
+    if (trackedCount > MAX_TRACKED_ENEMIES)
+    {
+        trackedCount = MAX_TRACKED_ENEMIES;
+    }
+
+    // By default nobody may START a fresh attack this frame.
+    // Punks already attacking do not need this permission to finish.
+    for (int i = 0; i < enemyCount; i++)
+    {
+        enemies[i].attackTurnAllowed = false;
+    }
+
+    // Detect a new attack that started since the previous frame.
+    // As soon as one Punk begins, restart the shared start-gap timer.
+    bool sawNewAttackStart = false;
+
+    for (int i = 0; i < trackedCount; i++)
+    {
+        if (enemies[i].isAttacking && !previousAttackState[i])
+        {
+            sawNewAttackStart = true;
+        }
+
+        previousAttackState[i] = enemies[i].isAttacking;
+    }
+
+    if (sawNewAttackStart)
+    {
+        groupStartCooldown = attackStartGap;
+    }
+    else if (groupStartCooldown > 0.0f)
+    {
+        groupStartCooldown -= deltaTime;
+
+        if (groupStartCooldown < 0.0f)
+        {
+            groupStartCooldown = 0.0f;
+        }
+    }
+
+    // During the shared gap, no second Punk may begin yet.
+    if (groupStartCooldown > 0.0f || !player->isAlive)
+    {
+        return;
+    }
+
+    // Pick one eligible slot owner, rotating the search start so the same
+    // Punk does not always win when both are ready at the same time.
+    if (turnCursor < 0 || turnCursor >= enemyCount)
+    {
+        turnCursor = 0;
+    }
+
+    for (int step = 0; step < enemyCount; step++)
+    {
+        int i = (turnCursor + step) % enemyCount;
+        Enemy *enemy = &enemies[i];
+
+        if (
+            !enemy->isAlive ||
+            enemy->isEntering ||
+            !enemy->hasEnteredStage ||
+            enemy->isHit ||
+            enemy->isAttacking ||
+            !enemy->attackSlotGranted ||
+            enemy->attackCooldownTimer > 0.0f ||
+            !enemy->isInAttackRange
+        )
+        {
+            continue;
+        }
+
+        EnemyCombatContext context =
+            EnemyBuildCombatContext(enemy, player);
+
+        float requiredAttackRange =
+            (enemy->nextAttackMove == ENEMY_ATTACK_ELBOW)
+            ? enemy->elbowAttackRange
+            : enemy->punchAttackRange;
+
+        if (
+            !context.playerDetected ||
+            context.absoluteDistanceX > requiredAttackRange ||
+            !EnemyIsPlayerInVerticalRange(enemy, player)
+        )
+        {
+            continue;
+        }
+
+        enemy->attackTurnAllowed = true;
+        turnCursor = (i + 1) % enemyCount;
+        break;
     }
 }
 

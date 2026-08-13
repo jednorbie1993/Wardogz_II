@@ -236,6 +236,10 @@ void EnemyUpdateAttack(
         enemy->attackFrame = 0;
         enemy->attackFrameTimer = 0.0f;
         enemy->elbowLungeRemaining = 0.0f;
+        enemy->isRetreating = false;
+        enemy->retreatTimer = 0.0f;
+        enemy->retreatDirection = 0;
+        enemy->retreatPauseTimer = 0.0f;
         return;
     }
 
@@ -330,6 +334,17 @@ void EnemyUpdateAttack(
         enemy->attackFrame = 0;
         enemy->attackFrameTimer = 0.0f;
         enemy->elbowLungeRemaining = 0.0f;
+
+        // ========================================================
+        // 0045 - RETREAT AFTER A COMPLETED ATTACK
+        // ========================================================
+        // Save the backward direction NOW, before normal chase AI can
+        // recalculate attackDirection. Facing remains unchanged while
+        // retreating, so Punk appears to back away from the player.
+        enemy->isRetreating = true;
+        enemy->retreatTimer = enemy->retreatDuration;
+        enemy->retreatDirection = -enemy->attackDirection;
+        enemy->retreatPauseTimer = 0.0f;
 
         // 0037 FIX - Alternate only after a completed attack.
         if (enemy->currentAttackMove == ENEMY_ATTACK_PUNCH)

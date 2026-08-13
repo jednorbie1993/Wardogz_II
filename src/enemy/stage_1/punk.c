@@ -98,6 +98,16 @@ Enemy InitPunk(float x, float y)
     enemy.separationPushSpeed = 300.0f;
 
     // ============================================================
+    // 0045 - PUNK RETREAT AFTER ATTACK
+    // ============================================================
+    // Back away for 1.50 seconds while keeping the attack-facing
+    // direction. Adjust these two values later if you want a shorter
+    // retreat or faster/slower backward movement.
+    enemy.retreatDuration = 0.24f;
+    enemy.retreatSpeed = 480.0f;
+    enemy.retreatPauseDuration = 0.55f;
+
+    // ============================================================
     // 0037 - PUNK PUNCH / ELBOW DISTANCE SETTINGS
     // ============================================================
 
@@ -106,18 +116,18 @@ Enemy InitPunk(float x, float y)
     enemy.punchAttackRange = 230.0f;
 
     // Distance where Punk stops walking before Punch.
-    enemy.punchStopDistance = 190.0f;
+    enemy.punchStopDistance = 158.0f;
 
     // ELBOW
     // Maximum distance where Elbow may START.
     enemy.elbowAttackRange = 200.0f;
 
     // Distance where Punk stops walking before Elbow.
-    enemy.elbowStopDistance = 120.0f;
+    enemy.elbowStopDistance = 180.0f;
 
     // 0038 - Frame 3 forward lunge / slide.
     // Adjust this value to control how far Punk slides.
-    enemy.elbowLungeDistance = 70.0f;
+    enemy.elbowLungeDistance = 120.0f;
     enemy.elbowLungeRemaining = 0.0f;
 
     // ============================================================

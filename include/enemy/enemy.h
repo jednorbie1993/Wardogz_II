@@ -57,6 +57,16 @@ typedef struct Enemy
     // when the group controller grants this short start permission.
     bool attackTurnAllowed;
 
+    // 0045 - Retreat after a completed attack.
+    // The Punk walks backward without changing facing until this timer ends.
+    bool isRetreating;
+    float retreatTimer;
+    float retreatDuration;
+    float retreatSpeed;
+    int retreatDirection;
+    float retreatPauseTimer;
+    float retreatPauseDuration;
+
     int attackDamage;
     float attackRange;
     float attackHitboxWidth;
@@ -130,6 +140,12 @@ typedef struct Enemy
     float surroundOffsetX;
     float surroundOffsetY;
     float surroundArrivalTolerance;
+
+    // 0046 - When another Punk blocks the direct approach lane,
+    // this Punk temporarily moves to an upper/lower bypass lane first.
+    bool isLaneBypassing;
+    float laneBypassTargetY;
+    int laneBypassDirection;
 
     // ============================================================
     // 0035 - ENEMY STOP / ATTACK RANGE
@@ -244,6 +260,27 @@ void ResolveEnemyAttackTurnTiming(
 void ResolveEnemySurroundFormation(
     Enemy *enemies,
     int enemyCount
+);
+
+// 0046 - Route a blocked active attacker through an upper/lower lane.
+void ResolveEnemyApproachLanes(
+    Enemy *enemies,
+    int enemyCount,
+    const Player *player,
+    float walkAreaTop,
+    float walkAreaBottom
+);
+
+
+// 0048 - Prevent the player and active enemies from walking through
+// each other. Uses a compact ground/body footprint and soft push.
+void ResolvePlayerEnemyBodyCollision(
+    Player *player,
+    Enemy *enemies,
+    int enemyCount,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
 );
 
 

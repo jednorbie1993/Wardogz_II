@@ -190,43 +190,4 @@ void DrawEnemy(const Enemy *enemy)
     }
 #endif
 
-    // ============================================================
-    // HP BAR
-    // ============================================================
-
-    float hpPercent =
-        (float)enemy->hp /
-        (float)enemy->maxHp;
-
-    Rectangle hpBack =
-    {
-        scaledHurtbox.x,
-        scaledHurtbox.y - 24.0f,
-        scaledHurtbox.width,
-        12.0f
-    };
-
-    Rectangle hpFill =
-    {
-        hpBack.x,
-        hpBack.y,
-        hpBack.width * hpPercent,
-        hpBack.height
-    };
-
-    DrawRectangleRec(hpBack, BLACK);
-    DrawRectangleRec(hpFill, RED);
-    DrawRectangleLinesEx(
-        hpBack,
-        2.0f,
-        WHITE
-    );
-
-    DrawText(
-        TextFormat("HP: %d", enemy->hp),
-        (int)scaledHurtbox.x,
-        (int)scaledHurtbox.y - 50,
-        20,
-        WHITE
-    );
 }

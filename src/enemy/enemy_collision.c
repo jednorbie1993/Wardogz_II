@@ -183,3 +183,165 @@ bool EnemyIsSameGroundDepth(
         playerFeet
     );
 }
+// ============================================================
+// 0048 - PLAYER / ENEMY BODY COLLISION + SOFT PUSH
+// ============================================================
+// Uses a compact ground-contact area instead of the full sprite/hurtbox.
+// This prevents the player from walking straight through a Punk while
+// still allowing normal top/bottom movement around the enemy.
+void ResolvePlayerEnemyBodyCollision(
+    Player *player,
+    Enemy *enemies,
+    int enemyCount,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    if (!player || !enemies || enemyCount <= 0 || !player->isAlive)
+    {
+        return;
+    }
+
+    for (int i = 0; i < enemyCount; i++)
+    {
+        Enemy *enemy = &enemies[i];
+
+        if (!enemy->isAlive || enemy->isEntering || !enemy->hasEnteredStage)
+        {
+            continue;
+        }
+
+        Rectangle playerHurtbox = GetPlayerHurtbox(player);
+        Rectangle enemyHurtbox = EnemyGetScaledHurtbox(enemy);
+        Rectangle playerFeet = GetPlayerFootMarker(player);
+        Rectangle enemyFeet = GetEnemyFootMarker(enemy);
+
+        float playerCenterX =
+            playerHurtbox.x + playerHurtbox.width * 0.5f;
+
+        float enemyCenterX =
+            enemyHurtbox.x + enemyHurtbox.width * 0.5f;
+
+        float playerGroundY =
+            playerFeet.y + playerFeet.height * 0.5f;
+
+        float enemyGroundY =
+            enemyFeet.y + enemyFeet.height * 0.5f;
+
+        float differenceX = playerCenterX - enemyCenterX;
+        float differenceY = playerGroundY - enemyGroundY;
+
+        float absoluteX = fabsf(differenceX);
+        float absoluteY = fabsf(differenceY);
+
+        // Compact body footprint. The full hurtboxes are intentionally
+        // NOT used because that would block the player too far away.
+        float minimumDistanceX =
+            playerHurtbox.width * 0.28f +
+            enemyHurtbox.width * 0.28f;
+
+        const float minimumDepthDistance = 32.0f;
+
+        if (
+            absoluteX >= minimumDistanceX ||
+            absoluteY >= minimumDepthDistance
+        )
+        {
+            continue;
+        }
+
+        float overlapX = minimumDistanceX - absoluteX;
+        float overlapY = minimumDepthDistance - absoluteY;
+
+        // Normally both actors give a little. During an enemy attack,
+        // retreat, or retreat pause, keep the Punk more planted while
+        // still allowing a small nudge instead of making him immovable.
+        float playerShare = 0.50f;
+        float enemyShare = 0.50f;
+
+        if (
+            enemy->isAttacking ||
+            enemy->isRetreating ||
+            enemy->retreatPauseTimer > 0.0f
+        )
+        {
+            playerShare = 0.75f;
+            enemyShare = 0.25f;
+        }
+
+        // Resolve through the axis requiring the smaller relative move.
+        float normalizedX = overlapX / minimumDistanceX;
+        float normalizedY = overlapY / minimumDepthDistance;
+
+        if (normalizedX <= normalizedY)
+        {
+            float directionX;
+
+            if (absoluteX < 0.001f)
+            {
+                directionX = player->facingRight ? -1.0f : 1.0f;
+            }
+            else
+            {
+                directionX = (differenceX > 0.0f) ? 1.0f : -1.0f;
+            }
+
+            player->rectangle.x +=
+                directionX * overlapX * playerShare;
+
+            enemy->hurtbox.x -=
+                directionX * overlapX * enemyShare;
+        }
+        else
+        {
+            float directionY;
+
+            if (absoluteY < 0.001f)
+            {
+                directionY = (player->rectangle.y >= enemy->hurtbox.y)
+                    ? 1.0f
+                    : -1.0f;
+            }
+            else
+            {
+                directionY = (differenceY > 0.0f) ? 1.0f : -1.0f;
+            }
+
+            player->rectangle.y +=
+                directionY * overlapY * playerShare;
+
+            enemy->hurtbox.y -=
+                directionY * overlapY * enemyShare;
+        }
+
+        // Keep both actors inside the playable stage after separation.
+        if (player->rectangle.x < 0.0f)
+        {
+            player->rectangle.x = 0.0f;
+        }
+
+        if (player->rectangle.x + player->rectangle.width > screenWidth)
+        {
+            player->rectangle.x =
+                screenWidth - player->rectangle.width;
+        }
+
+        if (player->rectangle.y < walkAreaTop)
+        {
+            player->rectangle.y = walkAreaTop;
+        }
+
+        if (player->rectangle.y > walkAreaBottom)
+        {
+            player->rectangle.y = walkAreaBottom;
+        }
+
+        EnemyClampToStage(
+            enemy,
+            screenWidth,
+            walkAreaTop,
+            walkAreaBottom
+        );
+    }
+}
