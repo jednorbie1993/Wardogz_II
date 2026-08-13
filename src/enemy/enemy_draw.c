@@ -60,15 +60,66 @@ static Texture2D GetEnemyCurrentTexture(
     return enemy->idleTextures[idleFrame];
 }
 
+
+static Texture2D GetEnemyDeathTexture(
+    const Enemy *enemy
+)
+{
+    if (enemy->deathFrameCount <= 0)
+    {
+        return GetEnemyCurrentTexture(enemy);
+    }
+
+    int frame = enemy->deathFrame;
+    if (frame < 0) frame = 0;
+    if (frame >= enemy->deathFrameCount)
+        frame = enemy->deathFrameCount - 1;
+
+    Texture2D texture = enemy->deathTextures[frame];
+
+    // Safe fallback while the new PNG files are still being prepared.
+    if (texture.id == 0)
+    {
+        return GetEnemyCurrentTexture(enemy);
+    }
+
+    return texture;
+}
+
 void DrawEnemy(const Enemy *enemy)
 {
+    // 0050 - Remove the body only after the full death hold finishes.
+    if (enemy->deathFinished)
+    {
+        return;
+    }
+
     if (enemy->idleFrameCount <= 0)
     {
         return;
     }
 
-    Texture2D currentTexture =
-        GetEnemyCurrentTexture(enemy);
+    bool drawDeathSprite =
+        enemy->isDying &&
+        enemy->deathFreezeTimer <= 0.0f;
+
+    Texture2D currentTexture;
+
+    if (
+        enemy->isDying &&
+        enemy->deathFreezeTimer > 0.0f &&
+        enemy->deathFreezeTexture.id != 0
+    )
+    {
+        currentTexture = enemy->deathFreezeTexture;
+    }
+    else
+    {
+        currentTexture =
+            drawDeathSprite
+            ? GetEnemyDeathTexture(enemy)
+            : GetEnemyCurrentTexture(enemy);
+    }
 
     Rectangle source =
     {
@@ -124,9 +175,23 @@ void DrawEnemy(const Enemy *enemy)
 
     Color spriteTint = WHITE;
 
-    if (!enemy->isAlive)
+    if (enemy->isDying)
     {
-        spriteTint = GRAY;
+        if (enemy->deathTimer <= 1.3f)
+        {
+            // Gray during final 1 second
+            spriteTint = GRAY;
+
+            // Final 0.5 sec = fade out
+            if (enemy->deathTimer <= 0.5f)
+            {
+                float alpha =
+                    enemy->deathTimer / 0.7f;
+
+                spriteTint =
+                    Fade(GRAY, alpha);
+            }
+        }
     }
     else if (enemy->isHit)
     {

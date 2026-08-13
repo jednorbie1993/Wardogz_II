@@ -114,6 +114,15 @@ void EnemyUpdateHitReaction(
     float walkAreaBottom
 );
 
+// 0050 - Update death freeze, 2-frame death sprite sequence, and body hold.
+void EnemyUpdateDeath(
+    Enemy *enemy,
+    float deltaTime,
+    float screenWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+);
+
 void EnemyCheckPlayerAttack(
     Enemy *enemy,
     Player *player

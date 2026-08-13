@@ -7,6 +7,7 @@
 #define MAX_ENEMY_IDLE_FRAMES 8
 #define MAX_ENEMY_WALK_FRAMES 8
 #define MAX_ENEMY_ATTACK_FRAMES 4
+#define MAX_ENEMY_DEATH_FRAMES 2
 
 typedef enum EnemyAttackMove
 {
@@ -40,6 +41,29 @@ typedef struct Enemy
     float hitReactionTimer;
     float knockbackSpeed;
     int knockbackDirection;
+
+    // ============================================================
+    // 0050 - ENEMY DEATH FREEZE + DEAD SPRITE SYSTEM
+    // ============================================================
+
+    bool isDying;
+    bool deathFinished;
+
+    // Short freeze/black flash immediately after the lethal hit.
+    float deathFreezeTimer;
+    float deathFreezeDuration;
+    Texture2D deathFreezeTexture;
+
+    // Total time the death body remains on screen before disappearing.
+    float deathTimer;
+    float deathDuration;
+
+    // Two-frame death sequence: punk_dead1.png -> punk_death2.png.
+    Texture2D deathTextures[MAX_ENEMY_DEATH_FRAMES];
+    int deathFrameCount;
+    int deathFrame;
+    float deathFrameTimer;
+    float deathFrameTime;
 
     // ============================================================
     // 0030 - BASIC ENEMY ATTACK

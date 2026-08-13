@@ -26,6 +26,26 @@ Enemy InitEnemyBase(void)
     enemy.knockbackDirection = 0;
 
     // ============================================================
+    // 0050 - ENEMY DEATH FREEZE + DEAD SPRITE DEFAULTS
+    // ============================================================
+
+    enemy.isDying = false;
+    enemy.deathFinished = false;
+
+    enemy.deathFreezeTimer = 0.0f;
+    enemy.deathFreezeDuration = 0.10f;
+    enemy.deathFreezeTexture = (Texture2D){0};
+
+    // Keep the final body on screen briefly before it disappears.
+    enemy.deathTimer = 0.0f;
+    enemy.deathDuration = 3.00f; //death duration
+
+    enemy.deathFrameCount = 0;
+    enemy.deathFrame = 0;
+    enemy.deathFrameTimer = 0.0f;
+    enemy.deathFrameTime = 0.50f;
+
+    // ============================================================
     // 0030 - BASIC ENEMY ATTACK DEFAULTS
     // ============================================================
 
@@ -175,6 +195,15 @@ void UpdateEnemyHit(
 {
     if (!enemy->isAlive)
     {
+        // 0050 - Dead enemies leave combat immediately, but their
+        // freeze/death sprite sequence continues updating.
+        EnemyUpdateDeath(
+            enemy,
+            deltaTime,
+            screenWidth,
+            walkAreaTop,
+            walkAreaBottom
+        );
         return;
     }
 
@@ -570,5 +599,10 @@ void UnloadEnemy(Enemy *enemy)
     for (int i = 0; i < enemy->elbowFrameCount; i++)
     {
         UnloadTexture(enemy->elbowTextures[i]);
+    }
+
+    for (int i = 0; i < enemy->deathFrameCount; i++)
+    {
+        UnloadTexture(enemy->deathTextures[i]);
     }
 }

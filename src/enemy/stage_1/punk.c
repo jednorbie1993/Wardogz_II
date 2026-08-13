@@ -10,6 +10,7 @@ static Texture2D punkIdleTextures[3];
 static Texture2D punkWalkTextures[6];
 static Texture2D punkPunchTextures[4];
 static Texture2D punkElbowTextures[4];
+static Texture2D punkDeathTextures[2];
 
 void LoadPunkSharedTextures(void)
 {
@@ -39,6 +40,10 @@ void LoadPunkSharedTextures(void)
     punkElbowTextures[2] = LoadTexture("assets/sprites/enemy/stage_1/punk/PUNKE3.png");
     punkElbowTextures[3] = LoadTexture("assets/sprites/enemy/stage_1/punk/PUNKE4.png");
 
+    // 0050 - Two-frame Punk death sequence.
+    punkDeathTextures[0] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_death1.png");
+    punkDeathTextures[1] = LoadTexture("assets/sprites/enemy/stage_1/punk/punk_death2.png");
+
     punkTexturesLoaded = true;
 }
 
@@ -53,6 +58,7 @@ void UnloadPunkSharedTextures(void)
     for (int i = 0; i < 6; i++) UnloadTexture(punkWalkTextures[i]);
     for (int i = 0; i < 4; i++) UnloadTexture(punkPunchTextures[i]);
     for (int i = 0; i < 4; i++) UnloadTexture(punkElbowTextures[i]);
+    for (int i = 0; i < 2; i++) UnloadTexture(punkDeathTextures[i]);
 
     punkTexturesLoaded = false;
 }
@@ -80,7 +86,7 @@ Enemy InitPunk(float x, float y)
     // PUNK - STATS
     // ============================================================
 
-    enemy.maxHp = 100;
+    enemy.maxHp = 10;
     enemy.hp = enemy.maxHp;
 
     // ============================================================
@@ -185,6 +191,20 @@ Enemy InitPunk(float x, float y)
     {
         enemy.elbowTextures[i] = punkElbowTextures[i];
     }
+
+    // ============================================================
+    // 0050 - PUNK DEATH TEXTURES (SHARED)
+    // ============================================================
+    enemy.deathFrameCount = 2;
+    for (int i = 0; i < enemy.deathFrameCount; i++)
+    {
+        enemy.deathTextures[i] = punkDeathTextures[i];
+    }
+    enemy.deathFrame = 0;
+    enemy.deathFrameTimer = 0.0f;
+    enemy.deathFrameTime = 0.28f;
+    enemy.deathFreezeDuration = 0.0f;
+    enemy.deathDuration = 2.70f;
 
     enemy.attackFrame = 0;
     enemy.attackFrameTimer = 0.0f;

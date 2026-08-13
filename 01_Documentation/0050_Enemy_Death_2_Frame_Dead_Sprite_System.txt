@@ -1,0 +1,224 @@
+0050 - ENEMY DEATH / 2-FRAME DEAD SPRITE SYSTEM
+================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0050
+
+TITLE:
+Enemy Death / 2-Frame Dead Sprite System
+
+
+PURPOSE
+-------
+Adds a cleaner enemy death sequence for Punk enemies without using artificial
+sprite rotation or long knockback movement.
+
+Instead of rotating the normal standing sprite, the system uses dedicated
+death sprite images so the enemy can fall and remain on the ground naturally.
+
+
+FINAL DEATH FLOW
+----------------
+1. Punk receives lethal damage.
+2. Enemy HP becomes 0.
+3. Punk immediately leaves normal combat behavior.
+4. Death animation starts.
+5. punk_death1.png is shown first.
+6. punk_death2.png is shown as the final fallen pose.
+7. Final death sprite stays visible in normal color.
+8. Near the end of the death timer, the sprite becomes GRAY.
+9. During the final part of the timer, the gray sprite gradually fades out.
+10. Enemy disappears after the death timer reaches 0.
+
+
+DEATH SPRITE FILES
+------------------
+Location:
+
+assets/sprites/enemy/stage_1/punk/
+
+Required files:
+
+punk_death1.png
+punk_death2.png
+
+
+IMPORTANT
+---------
+The filename must exactly match the filename used in punk.c.
+
+The first frame originally failed to display because the code was looking for:
+
+punk_dead1.png
+
+while the actual image was named:
+
+punk_death1.png
+
+The code and asset filename must remain identical.
+
+
+DEATH FRAME TIMING
+------------------
+The death animation frame speed is controlled by:
+
+enemy.deathFrameTime
+
+Example:
+
+enemy.deathFrameTime = 0.40f;
+
+Higher value:
+- Frame 1 stays longer.
+
+Lower value:
+- Frame 1 changes to Frame 2 faster.
+
+
+DEATH FRAME UPDATE LOGIC
+------------------------
+The death frame timer increases using deltaTime.
+
+When:
+
+enemy->deathFrameTimer >= enemy->deathFrameTime
+
+the system advances:
+
+enemy->deathFrame++
+
+
+TOTAL DEATH BODY TIME
+---------------------
+The full time before the dead enemy disappears is controlled by:
+
+enemy.deathDuration
+
+Recommended setup:
+
+enemy.deathDuration = 2.50f;
+
+
+FINAL COLOR / DISAPPEAR FLOW
+-----------------------------
+Recommended timing:
+
+2.50s -> 1.00s
+- Death sprite remains in normal color.
+
+1.00s -> 0.50s
+- Death sprite becomes GRAY.
+
+0.50s -> 0.00s
+- Gray death sprite gradually fades out.
+
+0.00s
+- Enemy disappears.
+
+
+GRAY + FADE LOGIC
+-----------------
+Example logic used in enemy_draw.c:
+
+Color spriteTint = WHITE;
+
+if (enemy->isDying)
+{
+    if (enemy->deathTimer <= 1.0f)
+    {
+        spriteTint = GRAY;
+
+        if (enemy->deathTimer <= 0.5f)
+        {
+            float alpha =
+                enemy->deathTimer / 0.5f;
+
+            spriteTint =
+                Fade(GRAY, alpha);
+        }
+    }
+}
+else if (enemy->isHit)
+{
+    spriteTint = ORANGE;
+}
+
+
+DAMAGE COLOR
+------------
+Normal enemy hit reaction remains:
+
+spriteTint = ORANGE;
+
+This keeps the existing visual feedback when Punk receives damage.
+
+
+REMOVED / ABANDONED APPROACH
+----------------------------
+The earlier 0050 test used:
+
+- sprite rotation
+- deathDirection
+- deathKnockbackSpeed
+- bottom-center rotation pivot
+- artificial knockdown angle
+
+This approach was removed because the body position became difficult to control
+and the enemy appeared to fall too far away or too low from the original spot.
+
+The dedicated sprite approach is cleaner and easier to position.
+
+
+WHY THE NEW SYSTEM IS BETTER
+----------------------------
+- No artificial body rotation.
+- No excessive death knockback.
+- Easier sprite positioning.
+- Death body stays close to the enemy's original position.
+- Dedicated artwork gives a more natural knockdown.
+- Easier to expand later with more death frames.
+- Gray state clearly shows that the enemy is already defeated.
+- Fade-out gives a smoother disappearance instead of instantly removing the body.
+
+
+FILES INVOLVED
+--------------
+include/enemy/enemy.h
+include/enemy/enemy_internal.h
+src/enemy/enemy.c
+src/enemy/enemy_hit.c
+src/enemy/enemy_draw.c
+src/enemy/stage_1/punk.c
+
+
+0050 STATUS
+-----------
+DONE
+
+Final behavior:
+
+LETHAL HIT
+    ->
+DEATH FRAME 1
+    ->
+DEATH FRAME 2
+    ->
+NORMAL COLOR HOLD
+    ->
+GRAY
+    ->
+FADE OUT
+    ->
+DISAPPEAR
+
+
+NEXT POSSIBLE SYSTEM
+--------------------
+0051 - Enemy Spawn / Replacement System
+
+Possible goal:
+When a Punk disappears after death, a new enemy can enter the stage after a
+controlled delay instead of appearing instantly.
