@@ -97,6 +97,11 @@ typedef struct Player
     float knockbackSpeed;
     int knockbackDirection;
 
+    // 0069 - Alternating impact sounds when an enemy actually hits the player.
+    Sound enemyHitSound;
+    Sound enemyHitSoundAlternate;
+    bool useAlternateEnemyHitSound;
+
     // false = LEFT
     // true  = RIGHT
     bool facingRight;

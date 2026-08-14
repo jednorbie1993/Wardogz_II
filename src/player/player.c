@@ -141,6 +141,13 @@ Player InitPlayer(const char *texturePath)
     player.knockbackSpeed = 0.0f;
     player.knockbackDirection = 0;
 
+    // 0069 - These play only after an enemy attack successfully damages Jamber.
+    player.enemyHitSound =
+        LoadSound("assets/music/punch.wav");
+    player.enemyHitSoundAlternate =
+        LoadSound("assets/music/punch1.wav");
+    player.useAlternateEnemyHitSound = false;
+
     player.facingRight = true;
     player.turnDirectionTravel = 0.0f;
     // Horizontal backward distance before the sprite turns.
@@ -183,6 +190,16 @@ Player InitPlayer(const char *texturePath)
 
 void UnloadPlayer(Player *player)
 {
+    if (player->enemyHitSound.frameCount > 0)
+    {
+        UnloadSound(player->enemyHitSound);
+    }
+
+    if (player->enemyHitSoundAlternate.frameCount > 0)
+    {
+        UnloadSound(player->enemyHitSoundAlternate);
+    }
+
     UnloadTexture(player->texture);
 
     for (int i = 0; i < IDLE_BREATH_FRAME_COUNT; i++)
@@ -217,6 +234,8 @@ void UnloadPlayer(Player *player)
     }
 
     player->texture = (Texture2D){0};
+    player->enemyHitSound = (Sound){0};
+    player->enemyHitSoundAlternate = (Sound){0};
 }
 
 // ============================================================
@@ -321,6 +340,21 @@ void DamagePlayer(
     }
 
     player->hp -= damage;
+
+    // The sound is triggered here, not when the enemy merely starts attacking.
+    // DamagePlayer() is called only after the enemy hitbox connects with Jamber.
+    Sound hitSound =
+        player->useAlternateEnemyHitSound
+        ? player->enemyHitSoundAlternate
+        : player->enemyHitSound;
+
+    if (hitSound.frameCount > 0)
+    {
+        PlaySound(hitSound);
+    }
+
+    player->useAlternateEnemyHitSound =
+        !player->useAlternateEnemyHitSound;
 
     if (player->hp < 0)
     {

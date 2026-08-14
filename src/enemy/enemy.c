@@ -14,6 +14,11 @@ Enemy InitEnemyBase(void)
     enemy.hp = enemy.maxHp;
     enemy.displayName = "ENEMY";
     enemy.isAlive = true;
+    // Normal enemies keep the optional enrage phase disabled.
+    enemy.enrageHpThreshold = 0;
+    enemy.enrageMovementSpeedMultiplier = 1.0f;
+    enemy.enrageAnimationSpeedMultiplier = 1.0f;
+    enemy.enrageTint = WHITE;
     enemy.hitByCurrentAttack = false;
     enemy.ownsTextures = true;
 

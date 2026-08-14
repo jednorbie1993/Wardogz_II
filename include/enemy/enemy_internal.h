@@ -30,6 +30,46 @@ typedef struct EnemyCombatContext
 
 
 // ============================================================
+// 0068 - OPTIONAL LOW-HP ENRAGE PHASE
+// ============================================================
+
+static inline bool EnemyIsEnraged(const Enemy *enemy)
+{
+    return
+        enemy->isAlive &&
+        enemy->hp > 0 &&
+        enemy->enrageHpThreshold > 0 &&
+        enemy->hp <= enemy->enrageHpThreshold;
+}
+
+static inline float EnemyGetMovementSpeedMultiplier(const Enemy *enemy)
+{
+    if (
+        EnemyIsEnraged(enemy) &&
+        enemy->enrageMovementSpeedMultiplier > 0.0f
+    )
+    {
+        return enemy->enrageMovementSpeedMultiplier;
+    }
+
+    return 1.0f;
+}
+
+static inline float EnemyGetAnimationSpeedMultiplier(const Enemy *enemy)
+{
+    if (
+        EnemyIsEnraged(enemy) &&
+        enemy->enrageAnimationSpeedMultiplier > 0.0f
+    )
+    {
+        return enemy->enrageAnimationSpeedMultiplier;
+    }
+
+    return 1.0f;
+}
+
+
+// ============================================================
 // COLLISION / DEPTH / SCALE
 // ============================================================
 

@@ -7,13 +7,28 @@ void EnemyUpdateAnimation(
     bool isWalking
 )
 {
+    float animationSpeed =
+        EnemyGetAnimationSpeedMultiplier(enemy);
+
+    float retreatFrameDuration =
+        enemy->retreatFrameTime / animationSpeed;
+
+    float walkFrameDuration =
+        enemy->walkFrameTime / animationSpeed;
+
+    float battleIdleFrameDuration =
+        enemy->battleIdleFrameTime / animationSpeed;
+
+    float idleFrameDuration =
+        enemy->idleFrameTime / animationSpeed;
+
     if (enemy->isRetreating && enemy->retreatFrameCount > 0)
     {
         enemy->retreatFrameTimer += deltaTime;
 
-        while (enemy->retreatFrameTimer >= enemy->retreatFrameTime)
+        while (enemy->retreatFrameTimer >= retreatFrameDuration)
         {
-            enemy->retreatFrameTimer -= enemy->retreatFrameTime;
+            enemy->retreatFrameTimer -= retreatFrameDuration;
             enemy->retreatFrame++;
 
             if (enemy->retreatFrame >= enemy->retreatFrameCount)
@@ -35,11 +50,11 @@ void EnemyUpdateAnimation(
 
         if (
             enemy->walkTimer >=
-            enemy->walkFrameTime
+            walkFrameDuration
         )
         {
             enemy->walkTimer -=
-                enemy->walkFrameTime;
+                walkFrameDuration;
 
             enemy->walkFrame++;
 
@@ -66,9 +81,9 @@ void EnemyUpdateAnimation(
     {
         enemy->battleIdleTimer += deltaTime;
 
-        if (enemy->battleIdleTimer >= enemy->battleIdleFrameTime)
+        if (enemy->battleIdleTimer >= battleIdleFrameDuration)
         {
-            enemy->battleIdleTimer -= enemy->battleIdleFrameTime;
+            enemy->battleIdleTimer -= battleIdleFrameDuration;
             enemy->battleIdleFrame += enemy->battleIdleDirection;
 
             if (enemy->battleIdleFrame >= enemy->battleIdleFrameCount - 1)
@@ -92,11 +107,11 @@ void EnemyUpdateAnimation(
 
         if (
             enemy->idleTimer >=
-            enemy->idleFrameTime
+            idleFrameDuration
         )
         {
             enemy->idleTimer -=
-                enemy->idleFrameTime;
+                idleFrameDuration;
 
             enemy->idleFrame +=
                 enemy->idleDirection;

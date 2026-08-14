@@ -239,6 +239,10 @@ void DrawEnemy(const Enemy *enemy)
     {
         spriteTint = ORANGE;
     }
+    else if (EnemyIsEnraged(enemy))
+    {
+        spriteTint = enemy->enrageTint;
+    }
 
     DrawTexturePro(
         currentTexture,

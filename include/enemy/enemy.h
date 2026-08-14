@@ -34,6 +34,12 @@ typedef struct Enemy
     int maxHp;
     bool isAlive;
 
+    // Optional low-HP enrage phase. A threshold of 0 disables it.
+    int enrageHpThreshold;
+    float enrageMovementSpeedMultiplier;
+    float enrageAnimationSpeedMultiplier;
+    Color enrageTint;
+
     // Prevents one player attack from damaging the enemy more than once.
     bool hitByCurrentAttack;
 

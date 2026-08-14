@@ -161,6 +161,9 @@ int main(void)
         "Wardogz II"
     );
 
+    // 0069 - Audio must be ready before InitPlayer() loads the hit sounds.
+    InitAudioDevice();
+
     SetTargetFPS(60);
 
     // Load player and background
@@ -561,6 +564,7 @@ int main(void)
 
     UnloadPlayer(&player);
 
+    CloseAudioDevice();
     CloseWindow();
 
     return 0;

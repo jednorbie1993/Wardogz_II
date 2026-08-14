@@ -207,6 +207,10 @@ void EnemyUpdateChase(
     EnemyCombatContext *context
 )
 {
+    float movementSpeed =
+        enemy->chaseSpeed *
+        EnemyGetMovementSpeedMultiplier(enemy);
+
     // ============================================================
     // 0045 - ENEMY RETREAT AFTER ATTACK + FACING HOLD
     // ============================================================
@@ -436,12 +440,12 @@ void EnemyUpdateChase(
 
         enemy->hurtbox.x +=
             moveX *
-            enemy->chaseSpeed *
+            movementSpeed *
             deltaTime;
 
         enemy->hurtbox.y +=
             moveY *
-            enemy->chaseSpeed *
+            movementSpeed *
             deltaTime;
 
         EnemyClampToStage(

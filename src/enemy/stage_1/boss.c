@@ -91,6 +91,13 @@ Enemy InitBoss(float x, float y)
     enemy.maxHp = 400;
     enemy.hp = enemy.maxHp;
 
+    // Vargas phase 2: starts at 150 HP or lower.
+    // These values can be adjusted independently without changing other enemies.
+    enemy.enrageHpThreshold = 150;
+    enemy.enrageMovementSpeedMultiplier = 2.90f;
+    enemy.enrageAnimationSpeedMultiplier = 1.25f;
+    enemy.enrageTint = (Color){255, 170, 170, 255};
+
     enemy.facingRight = false;
     enemy.chaseSpeed = 155.0f;
     enemy.chaseStopDistance = 165.0f;

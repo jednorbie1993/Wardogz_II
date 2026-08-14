@@ -128,7 +128,7 @@ static float GetEnemyAttackFrameDuration(
     int frame
 )
 {
-    // Vargas Combo, Knee, and Uppercut hold visible Frame 1 for 0.90s.
+    // Vargas Combo, Knee, and Uppercut hold visible Frame 1 for 0.70s.
     // The forward slide begins only after this freeze finishes.
     if (
         frame == 0 &&
@@ -368,7 +368,11 @@ void EnemyUpdateAttack(
         return;
     }
 
-    AdvanceEnemyAttackAnimation(enemy, deltaTime);
+    float attackDeltaTime =
+        deltaTime *
+        EnemyGetAnimationSpeedMultiplier(enemy);
+
+    AdvanceEnemyAttackAnimation(enemy, attackDeltaTime);
     // ============================================================
     // 0038 - ELBOW FRAME 3 FORWARD SLIDE
     // ============================================================
@@ -407,7 +411,9 @@ void EnemyUpdateAttack(
 
         float fullDistance = GetBossLungeDistance(enemy);
         float slideDuration = enemy->attackFrameTime * (float)slideFrameCount;
-        float slideAmount = (fullDistance / slideDuration) * deltaTime;
+        float slideAmount =
+            (fullDistance / slideDuration) *
+            attackDeltaTime;
 
         if (slideAmount > enemy->bossLungeRemaining)
         {
@@ -473,7 +479,7 @@ void EnemyUpdateAttack(
         }
     }
 
-    enemy->attackTimer -= deltaTime;
+    enemy->attackTimer -= attackDeltaTime;
 
     if (enemy->attackTimer <= 0.0f)
     {
