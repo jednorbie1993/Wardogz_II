@@ -1,0 +1,550 @@
+WARDOGZ II
+0061 - VARGAS BOSS INTEGRATION / BATTLE IDLE TEST SYSTEM
+=========================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0061
+
+TITLE:
+Vargas Boss Integration / Battle Idle Test System
+
+
+PURPOSE
+-------
+Adds Vargas as the first Stage 1 Boss enemy and tests his complete sprite set
+inside the existing shared Enemy system.
+
+For this initial integration test:
+
+- Punk is temporarily hidden
+- Hooligan is temporarily hidden
+- Gangster is temporarily hidden
+- Vargas is the only active enemy
+- no final-meter Boss trigger yet
+- no loading screen yet
+- no Boss phases yet
+
+The first goal is to confirm that Vargas can appear, move, attack, change
+stance, receive damage, and play his death animation correctly.
+
+
+BOSS NAME
+---------
+The Stage 1 Boss name is:
+
+    VARGAS
+
+The enemy HUD displays:
+
+    VARGAS
+
+
+VARGAS SPRITE LOCATION
+----------------------
+All Vargas sprite files are stored in:
+
+    assets/sprites/enemy/stage_1/boss/
+
+
+NORMAL IDLE
+-----------
+Before Vargas performs his first attack, he uses:
+
+    boss_idle1.png
+    boss_idle2.png
+
+
+BATTLE IDLE
+-----------
+After Vargas starts his first punch or kick, his battle stance becomes active.
+
+Battle idle files:
+
+    boss_battle_idle1.png
+    boss_battle_idle2.png
+    boss_battle_idle3.png
+    boss_battle_idle4.png
+
+Behavior:
+
+    Vargas starts in normal idle
+    -> Vargas performs his first attack
+    -> battleIdleActive becomes true
+    -> Vargas uses battle idle after attacks
+    -> Vargas does not return to normal idle during the encounter
+
+The battle idle state is optional in the shared Enemy structure.
+
+Punk, Hooligan, and Gangster have:
+
+    battleIdleFrameCount = 0
+
+Therefore, they continue using their normal idle animations and are not
+affected by Vargas' battle-idle system.
+
+
+RUN ANIMATION
+-------------
+Vargas uses six run frames:
+
+    boss_run1.png
+    boss_run2.png
+    boss_run3.png
+    boss_run4.png
+    boss_run5.png
+    boss_run6.png
+
+
+PUNCH ANIMATION
+---------------
+Vargas uses four punch frames:
+
+    boss_punch1.png
+    boss_punch2.png
+    boss_punch3.png
+    boss_punch4.png
+
+
+KICK ANIMATION
+--------------
+Vargas uses four kick frames:
+
+    boss_kick1.png
+    boss_kick2.png
+    boss_kick3.png
+    boss_kick4.png
+
+The shared Enemy system currently calls its second attack slot:
+
+    ENEMY_ATTACK_ELBOW
+
+For Vargas, this shared second-attack slot displays the Boss kick animation.
+
+Concept:
+
+    shared punch slot -> Vargas punch
+    shared elbow slot -> Vargas kick
+
+
+DEATH ANIMATION
+---------------
+Vargas uses four death frames:
+
+    boss_death1.png
+    boss_death2.png
+    boss_death3.png
+    boss_death4.png
+
+The common frame capacity was updated from:
+
+    #define MAX_ENEMY_DEATH_FRAMES 3
+
+to:
+
+    #define MAX_ENEMY_DEATH_FRAMES 4
+
+This prevents an out-of-bounds texture-array write and safely supports Vargas'
+four-frame death animation.
+
+
+TOTAL VARGAS SPRITES
+--------------------
+Normal idle:
+
+    2
+
+Battle idle:
+
+    4
+
+Run:
+
+    6
+
+Punch:
+
+    4
+
+Kick:
+
+    4
+
+Death:
+
+    4
+
+Total:
+
+    24 PNG files
+
+
+SHARED TEXTURE CACHE
+--------------------
+Vargas textures are loaded once through:
+
+    LoadBossSharedTextures();
+
+They are released once during shutdown through:
+
+    UnloadBossSharedTextures();
+
+Vargas is initialized with:
+
+    Enemy InitBoss(float x, float y);
+
+The current version loads Vargas at startup because 0061 is only a direct Boss
+visual/gameplay test.
+
+On-demand loading at the final stage meters will be implemented separately
+after this test is stable.
+
+
+VARGAS-ONLY TEST SETUP
+----------------------
+The active enemy count is temporarily:
+
+    #define ENEMY_COUNT 1
+
+Vargas is created through:
+
+    enemies[0] = InitBoss(1380.0f, 540.0f);
+
+His entrance is:
+
+    StartEnemyEntrance(
+        &enemies[0],
+        1000.0f,
+        540.0f,
+        140.0f
+    );
+
+Meaning:
+
+    initial X       = 1380
+    initial Y       = 540
+    entrance target = X 1000, Y 540
+    entrance speed  = 140
+
+
+INITIAL BOSS TEST VALUES
+------------------------
+Vargas currently starts with values including:
+
+    display name = VARGAS
+    HP           = 60
+    attack damage = 14
+    chase speed  = 155
+    sprite size  = 650
+
+These are initial testing values and can be adjusted later after visual and
+combat testing.
+
+
+BATTLE IDLE DATA ADDED TO ENEMY
+-------------------------------
+The shared Enemy structure now supports:
+
+    Texture2D battleIdleTextures[MAX_ENEMY_IDLE_FRAMES];
+    int battleIdleFrameCount;
+    int battleIdleFrame;
+    int battleIdleDirection;
+    float battleIdleTimer;
+    float battleIdleFrameTime;
+    bool battleIdleActive;
+
+Default values are initialized in:
+
+    src/enemy/enemy.c
+
+Battle-idle frame movement is handled in:
+
+    src/enemy/enemy_animation.c
+
+The battle idle becomes active when the first attack starts in:
+
+    src/enemy/enemy_attack.c
+
+Battle-idle texture selection is handled in:
+
+    src/enemy/enemy_draw.c
+
+
+BUILD INTEGRATION
+-----------------
+The new Boss source file is included in build.bat:
+
+    src\enemy\stage_1\boss.c ^
+
+
+FILES ADDED
+-----------
+include/enemy/stage_1/boss.h
+src/enemy/stage_1/boss.c
+
+
+FILES UPDATED
+-------------
+src/main.c
+include/enemy/enemy.h
+src/enemy/enemy.c
+src/enemy/enemy_animation.c
+src/enemy/enemy_attack.c
+src/enemy/enemy_draw.c
+build.bat
+
+
+=========================================================
+FUTURE FEATURE FILE GUIDE
+=========================================================
+
+The following guide records which files should normally be changed when
+adding future Vargas features.
+
+
+NEW MOVE / NEW ATTACK ANIMATION
+-------------------------------
+Example:
+
+    boss_uppercut1.png
+    boss_uppercut2.png
+    boss_uppercut3.png
+    boss_uppercut4.png
+
+Files normally involved:
+
+    include/enemy/enemy.h
+    src/enemy/enemy_attack.c
+    src/enemy/enemy_draw.c
+    src/enemy/stage_1/boss.c
+
+Responsibilities:
+
+enemy.h:
+
+    - new move state/type
+    - texture array
+    - frame count
+    - timers or flags
+
+enemy_attack.c:
+
+    - attack activation
+    - frame timing
+    - damage timing
+    - hitbox activation
+    - move transition
+
+enemy_draw.c:
+
+    - choose the correct move texture
+
+boss.c:
+
+    - load/unload the Vargas PNG files
+    - assign Vargas-specific frame counts
+    - set range, damage, hitbox, and timing values
+
+
+EXISTING ATTACK IMAGE OR STAT CHANGE
+------------------------------------
+If only replacing Vargas' existing punch/kick images:
+
+    src/enemy/stage_1/boss.c
+
+If changing attack speed, damage, range, or hitbox:
+
+    src/enemy/stage_1/boss.c
+
+If one attack frame needs special timing or movement:
+
+    src/enemy/enemy_attack.c
+
+
+STATS ONLY
+----------
+Examples:
+
+- HP
+- damage
+- chase speed
+- attack range
+- retreat speed
+- sprite size
+- sprite alignment
+
+Primary file:
+
+    src/enemy/stage_1/boss.c
+
+Examples:
+
+    enemy.maxHp = 60;
+    enemy.chaseSpeed = 155.0f;
+    enemy.attackDamage = 14;
+    enemy.punchAttackRange = 240.0f;
+    enemy.spriteSize = 650.0f;
+
+
+MOVEMENT / AI BEHAVIOR
+----------------------
+Examples:
+
+- Vargas waits before approaching
+- Vargas circles the player
+- Vargas performs a forward dash
+- Vargas jumps or steps backward
+- Vargas becomes aggressive at half HP
+- Vargas changes behavior in Phase 2
+
+Files normally involved:
+
+    include/enemy/enemy.h
+    src/enemy/enemy.c
+    src/enemy/enemy_move.c
+    src/enemy/enemy_attack.c
+    src/enemy/stage_1/boss.c
+
+Responsibilities:
+
+enemy.h:
+
+    - new state, timer, or behavior flag
+
+enemy.c:
+
+    - safe default values
+
+enemy_move.c:
+
+    - chase, dash, retreat, or positioning movement
+
+enemy_attack.c:
+
+    - attack decisions and transitions
+
+boss.c:
+
+    - Vargas-specific settings
+
+
+VISUAL BEHAVIOR
+---------------
+Examples:
+
+- battle stance
+- red tint when enraged
+- Boss flashing effect
+- different idle when low HP
+- Phase 2 visual state
+
+Files normally involved:
+
+    include/enemy/enemy.h
+    src/enemy/enemy_animation.c
+    src/enemy/enemy_draw.c
+    src/enemy/stage_1/boss.c
+
+
+SPAWN / STAGE BEHAVIOR
+----------------------
+Examples:
+
+- Vargas appears only at the final meters
+- loading screen before the Boss
+- Boss arena camera lock
+- prevent the player from leaving the arena
+- Stage Clear after Vargas dies
+
+Primary files:
+
+    src/main.c
+    src/enemy/stage_1/boss.c
+
+A separate Stage 1 controller file may be created later so main.c does not
+become too large.
+
+
+BUILD CHANGES
+-------------
+Whenever a new .c source file is created, add it to:
+
+    build.bat
+
+
+QUICK FILE RULE
+---------------
+Use this short reference:
+
+    Vargas stats/images      -> boss.c
+    attack mechanics         -> enemy_attack.c
+    movement/AI              -> enemy_move.c
+    animation timing         -> enemy_animation.c
+    texture/drawing choice   -> enemy_draw.c
+    new variables/states     -> enemy.h + enemy.c
+    stage spawn/loading      -> main.c
+    new source compilation   -> build.bat
+
+
+SHARED SYSTEM SAFETY RULE
+-------------------------
+These files are shared by all enemy types:
+
+    enemy_move.c
+    enemy_animation.c
+    enemy_attack.c
+    enemy_draw.c
+
+Changing shared logic can affect:
+
+    Punk
+    Hooligan
+    Gangster
+    Vargas
+
+Boss-only behavior should therefore use an optional state, flag, or enemy-type
+check so normal enemies are not accidentally changed.
+
+The 0061 battle-idle system follows this rule:
+
+    Vargas has battleIdleFrameCount = 4
+    normal enemies have battleIdleFrameCount = 0
+
+Therefore, only Vargas activates and displays the new battle idle.
+
+
+0061 STATUS
+-----------
+DONE / TESTED IN GAME
+
+
+RESULT
+------
+Vargas now appears successfully as the only active Stage 1 enemy.
+
+He uses normal idle before combat, then permanently switches to his four-frame
+battle idle after starting his first attack.
+
+His run, punch, kick, HUD name, HP, and four-frame death data are integrated
+into the shared Enemy system.
+
+
+CURRENT DOCUMENTATION SEQUENCE
+------------------------------
+0050 - Enemy Death / 2-Frame Dead Sprite System
+0051 - Player Running System
+0052 - Player Facing Turn Distance System
+0053 - Forward Dash / Back Dash System
+0054 - Stage 1 World Length / Camera Scroll System
+0055 - Stage 1 Multi-Background System
+0056 - Background Loading / PNG Compatibility Fix System
+0057 - Hooligan Enemy Type / Sprite Integration System
+0058 - Gangster Enemy Type / Sprite Integration System
+0059 - Mixed Enemy Stage Test / Spawn Placement System
+0060 - Gangster Death-Frame Capacity / Memory Safety Fix
+0061 - Vargas Boss Integration / Battle Idle Test System
+
+
+END OF DOCUMENTATION

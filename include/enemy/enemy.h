@@ -12,7 +12,11 @@
 typedef enum EnemyAttackMove
 {
     ENEMY_ATTACK_PUNCH = 0,
-    ENEMY_ATTACK_ELBOW = 1
+    ENEMY_ATTACK_ELBOW = 1,
+    ENEMY_ATTACK_BOSS_COMBO = 2,
+    ENEMY_ATTACK_BOSS_KNEE = 3,
+    ENEMY_ATTACK_BOSS_UPPERCUT = 4,
+    ENEMY_ATTACK_BOSS_HEAVY_BLOW = 5
 } EnemyAttackMove;
 
 typedef struct Enemy
@@ -76,6 +80,8 @@ typedef struct Enemy
     float attackTimer;
     float attackCooldownTimer;
     bool hitPlayerThisAttack;
+    unsigned int attackHitFrames;
+    bool lockAttackMove;
 
     // 0041 - Only enemies holding the shared attack slot may start an attack.
     bool attackSlotGranted;
@@ -136,9 +142,17 @@ typedef struct Enemy
 
     Texture2D punchTextures[MAX_ENEMY_ATTACK_FRAMES];
     Texture2D elbowTextures[MAX_ENEMY_ATTACK_FRAMES];
+    Texture2D bossComboTextures[MAX_ENEMY_ATTACK_FRAMES];
+    Texture2D bossKneeTextures[MAX_ENEMY_ATTACK_FRAMES];
+    Texture2D bossUppercutTextures[MAX_ENEMY_ATTACK_FRAMES];
+    Texture2D bossHeavyBlowTextures[MAX_ENEMY_ATTACK_FRAMES];
 
     int punchFrameCount;
     int elbowFrameCount;
+    int bossComboFrameCount;
+    int bossKneeFrameCount;
+    int bossUppercutFrameCount;
+    int bossHeavyBlowFrameCount;
 
     int attackFrame;
     float attackFrameTimer;
@@ -146,6 +160,13 @@ typedef struct Enemy
 
     EnemyAttackMove currentAttackMove;
     EnemyAttackMove nextAttackMove;
+
+    // Vargas' four-frame backward dash after a completed attack.
+    Texture2D retreatTextures[MAX_ENEMY_ATTACK_FRAMES];
+    int retreatFrameCount;
+    int retreatFrame;
+    float retreatFrameTimer;
+    float retreatFrameTime;
 
     // ============================================================
     // 0031 - FACING + CHASE AI

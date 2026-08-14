@@ -14,14 +14,59 @@ static float GetNextEnemyAttackRange(
 }
 
 
+static bool IsBossAttackMove(EnemyAttackMove move)
+{
+    return
+        move == ENEMY_ATTACK_BOSS_COMBO ||
+        move == ENEMY_ATTACK_BOSS_KNEE ||
+        move == ENEMY_ATTACK_BOSS_UPPERCUT ||
+        move == ENEMY_ATTACK_BOSS_HEAVY_BLOW;
+}
+
+
+static EnemyAttackMove GetNextBossAttackMove(EnemyAttackMove move)
+{
+    switch (move)
+    {
+        case ENEMY_ATTACK_BOSS_COMBO:
+            return ENEMY_ATTACK_BOSS_KNEE;
+        case ENEMY_ATTACK_BOSS_KNEE:
+            return ENEMY_ATTACK_BOSS_UPPERCUT;
+        case ENEMY_ATTACK_BOSS_UPPERCUT:
+            return ENEMY_ATTACK_BOSS_HEAVY_BLOW;
+        case ENEMY_ATTACK_BOSS_HEAVY_BLOW:
+        default:
+            return ENEMY_ATTACK_BOSS_COMBO;
+    }
+}
+
+
 static int GetCurrentAttackFrameCount(
     const Enemy *enemy
 )
 {
-    int frameCount =
-        (enemy->currentAttackMove == ENEMY_ATTACK_ELBOW)
-        ? enemy->elbowFrameCount
-        : enemy->punchFrameCount;
+    int frameCount = enemy->punchFrameCount;
+
+    switch (enemy->currentAttackMove)
+    {
+        case ENEMY_ATTACK_ELBOW:
+            frameCount = enemy->elbowFrameCount;
+            break;
+        case ENEMY_ATTACK_BOSS_COMBO:
+            frameCount = enemy->bossComboFrameCount;
+            break;
+        case ENEMY_ATTACK_BOSS_KNEE:
+            frameCount = enemy->bossKneeFrameCount;
+            break;
+        case ENEMY_ATTACK_BOSS_UPPERCUT:
+            frameCount = enemy->bossUppercutFrameCount;
+            break;
+        case ENEMY_ATTACK_BOSS_HEAVY_BLOW:
+            frameCount = enemy->bossHeavyBlowFrameCount;
+            break;
+        default:
+            break;
+    }
 
     if (frameCount <= 0)
     {
@@ -67,6 +112,7 @@ static void StartEnemyAttack(Enemy *enemy)
 {
     enemy->isAttacking = true;
     enemy->hitPlayerThisAttack = false;
+    enemy->attackHitFrames = 0u;
 
     // 0061 - After the first attack, an enemy with an optional battle-idle
     // set remains in its fighting stance for the rest of the encounter.
@@ -302,9 +348,22 @@ void EnemyUpdateAttack(
         enemy->elbowLungeRemaining -= slideAmount;
     }
 
-    // Frame 3 (index 2) is the actual strike frame.
-    const bool attackHitboxActive =
-        (enemy->attackFrame == 2);
+    // Normal attacks hit once. Vargas' Combo hits separately on
+    // visible Frames 2 and 4 (indices 1 and 3).
+    bool attackHitboxActive = (enemy->attackFrame == 2);
+    if (enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO)
+    {
+        attackHitboxActive =
+            (enemy->attackFrame == 1 || enemy->attackFrame == 3);
+    }
+    else if (enemy->currentAttackMove == ENEMY_ATTACK_BOSS_HEAVY_BLOW)
+    {
+        // Heavy Blow has three images; visible Frame 2 is its impact.
+        attackHitboxActive = (enemy->attackFrame == 1);
+    }
+
+    unsigned int currentFrameBit =
+        1u << (unsigned int)enemy->attackFrame;
 
     if (attackHitboxActive)
     {
@@ -312,7 +371,7 @@ void EnemyUpdateAttack(
             GetEnemyAttackHitbox(enemy);
 
         if (
-            !enemy->hitPlayerThisAttack &&
+            (enemy->attackHitFrames & currentFrameBit) == 0u &&
             player->isAlive &&
             EnemyIsSameGroundDepth(enemy, player) &&
             CheckCollisionRecs(
@@ -329,6 +388,7 @@ void EnemyUpdateAttack(
                 enemy->attackHitReactionTime
             );
 
+            enemy->attackHitFrames |= currentFrameBit;
             enemy->hitPlayerThisAttack = true;
         }
     }
@@ -355,13 +415,22 @@ void EnemyUpdateAttack(
         enemy->retreatTimer = enemy->retreatDuration;
         enemy->retreatDirection = -enemy->attackDirection;
         enemy->retreatPauseTimer = 0.0f;
+        enemy->retreatFrame = 0;
+        enemy->retreatFrameTimer = 0.0f;
 
-        // 0037 FIX - Alternate only after a completed attack.
-        if (enemy->currentAttackMove == ENEMY_ATTACK_PUNCH)
+        // Vargas uses every completed special move once before repeating:
+        // Combo -> Knee -> Uppercut -> Heavy Blow -> Combo.
+        if (!enemy->lockAttackMove && IsBossAttackMove(enemy->currentAttackMove))
+        {
+            enemy->currentAttackMove =
+                GetNextBossAttackMove(enemy->currentAttackMove);
+        }
+        // 0037 FIX - Normal enemies alternate only after a completed attack.
+        else if (!enemy->lockAttackMove && enemy->currentAttackMove == ENEMY_ATTACK_PUNCH)
         {
             enemy->currentAttackMove = ENEMY_ATTACK_ELBOW;
         }
-        else
+        else if (!enemy->lockAttackMove)
         {
             enemy->currentAttackMove = ENEMY_ATTACK_PUNCH;
         }

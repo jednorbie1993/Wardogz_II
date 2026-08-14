@@ -7,6 +7,25 @@ void EnemyUpdateAnimation(
     bool isWalking
 )
 {
+    if (enemy->isRetreating && enemy->retreatFrameCount > 0)
+    {
+        enemy->retreatFrameTimer += deltaTime;
+
+        while (enemy->retreatFrameTimer >= enemy->retreatFrameTime)
+        {
+            enemy->retreatFrameTimer -= enemy->retreatFrameTime;
+            enemy->retreatFrame++;
+
+            if (enemy->retreatFrame >= enemy->retreatFrameCount)
+            {
+                enemy->retreatFrame = enemy->retreatFrameCount - 1;
+                break;
+            }
+        }
+
+        return;
+    }
+
     if (
         isWalking &&
         enemy->walkFrameCount > 0

@@ -7,6 +7,11 @@ static Texture2D bossRunTextures[6];
 static Texture2D bossPunchTextures[4];
 static Texture2D bossKickTextures[4];
 static Texture2D bossDeathTextures[4];
+static Texture2D bossComboTextures[4];
+static Texture2D bossDashTextures[4];
+static Texture2D bossKneeTextures[4];
+static Texture2D bossUppercutTextures[4];
+static Texture2D bossHeavyBlowTextures[3];
 
 void LoadBossSharedTextures(void)
 {
@@ -44,6 +49,17 @@ void LoadBossSharedTextures(void)
     bossDeathTextures[2] = LoadTexture("assets/sprites/enemy/stage_1/boss/boss_death3.png");
     bossDeathTextures[3] = LoadTexture("assets/sprites/enemy/stage_1/boss/boss_death4.png");
 
+    for (int i = 0; i < 4; i++)
+    {
+        bossComboTextures[i] = LoadTexture(TextFormat("assets/sprites/enemy/stage_1/boss/boss_combo%d.png", i + 1));
+        bossDashTextures[i] = LoadTexture(TextFormat("assets/sprites/enemy/stage_1/boss/boss_dash%d.png", i + 1));
+        bossKneeTextures[i] = LoadTexture(TextFormat("assets/sprites/enemy/stage_1/boss/boss_knee%d.png", i + 1));
+        bossUppercutTextures[i] = LoadTexture(TextFormat("assets/sprites/enemy/stage_1/boss/boss_uppercut%d.png", i + 1));
+    }
+
+    for (int i = 0; i < 3; i++)
+        bossHeavyBlowTextures[i] = LoadTexture(TextFormat("assets/sprites/enemy/stage_1/boss/boss_blow%d.png", i + 1));
+
     bossTexturesLoaded = true;
 }
 
@@ -57,6 +73,11 @@ void UnloadBossSharedTextures(void)
     for (int i = 0; i < 4; i++) UnloadTexture(bossPunchTextures[i]);
     for (int i = 0; i < 4; i++) UnloadTexture(bossKickTextures[i]);
     for (int i = 0; i < 4; i++) UnloadTexture(bossDeathTextures[i]);
+    for (int i = 0; i < 4; i++) UnloadTexture(bossComboTextures[i]);
+    for (int i = 0; i < 4; i++) UnloadTexture(bossDashTextures[i]);
+    for (int i = 0; i < 4; i++) UnloadTexture(bossKneeTextures[i]);
+    for (int i = 0; i < 4; i++) UnloadTexture(bossUppercutTextures[i]);
+    for (int i = 0; i < 3; i++) UnloadTexture(bossHeavyBlowTextures[i]);
 
     bossTexturesLoaded = false;
 }
@@ -122,6 +143,23 @@ Enemy InitBoss(float x, float y)
     for (int i = 0; i < enemy.elbowFrameCount; i++)
         enemy.elbowTextures[i] = bossKickTextures[i];
 
+    enemy.bossComboFrameCount = 4;
+    enemy.bossKneeFrameCount = 4;
+    enemy.bossUppercutFrameCount = 4;
+    enemy.bossHeavyBlowFrameCount = 3;
+    enemy.retreatFrameCount = 4;
+
+    for (int i = 0; i < 4; i++)
+    {
+        enemy.bossComboTextures[i] = bossComboTextures[i];
+        enemy.bossKneeTextures[i] = bossKneeTextures[i];
+        enemy.bossUppercutTextures[i] = bossUppercutTextures[i];
+        enemy.retreatTextures[i] = bossDashTextures[i];
+    }
+
+    for (int i = 0; i < 3; i++)
+        enemy.bossHeavyBlowTextures[i] = bossHeavyBlowTextures[i];
+
     enemy.deathFrameCount = 4;
     for (int i = 0; i < enemy.deathFrameCount; i++)
         enemy.deathTextures[i] = bossDeathTextures[i];
@@ -130,8 +168,13 @@ Enemy InitBoss(float x, float y)
     enemy.deathDuration = 3.20f;
 
     enemy.attackFrameTime = 0.20f;
-    enemy.currentAttackMove = ENEMY_ATTACK_PUNCH;
-    enemy.nextAttackMove = ENEMY_ATTACK_PUNCH;
+    // Vargas attack order:
+    // Combo -> Knee -> Uppercut -> Heavy Blow -> repeat.
+    // enemy_attack.c advances the move only after the full attack finishes.
+    enemy.currentAttackMove = ENEMY_ATTACK_BOSS_COMBO;
+    enemy.nextAttackMove = ENEMY_ATTACK_BOSS_COMBO;
+    enemy.lockAttackMove = false;
+    enemy.retreatFrameTime = 0.07f;
 
     enemy.punchHitboxWidth = 135.0f;
     enemy.punchHitboxHeight = 90.0f;

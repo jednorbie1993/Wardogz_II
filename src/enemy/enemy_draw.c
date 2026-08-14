@@ -8,6 +8,17 @@ static Texture2D GetEnemyCurrentTexture(
     const Enemy *enemy
 )
 {
+    if (enemy->isRetreating && enemy->retreatFrameCount > 0)
+    {
+        int frame = enemy->retreatFrame;
+        if (frame < 0) frame = 0;
+        if (frame >= enemy->retreatFrameCount)
+            frame = enemy->retreatFrameCount - 1;
+
+        Texture2D texture = enemy->retreatTextures[frame];
+        if (texture.id != 0) return texture;
+    }
+
     bool drawWalk =
         (enemy->isEntering || enemy->isChasing) &&
         !enemy->isAttacking &&
@@ -18,27 +29,44 @@ static Texture2D GetEnemyCurrentTexture(
     {
         int frame = enemy->attackFrame;
 
-        if (
-            enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
-            enemy->elbowFrameCount > 0
-        )
+        const Texture2D *textures = enemy->punchTextures;
+        int frameCount = enemy->punchFrameCount;
+
+        switch (enemy->currentAttackMove)
+        {
+            case ENEMY_ATTACK_ELBOW:
+                textures = enemy->elbowTextures;
+                frameCount = enemy->elbowFrameCount;
+                break;
+            case ENEMY_ATTACK_BOSS_COMBO:
+                textures = enemy->bossComboTextures;
+                frameCount = enemy->bossComboFrameCount;
+                break;
+            case ENEMY_ATTACK_BOSS_KNEE:
+                textures = enemy->bossKneeTextures;
+                frameCount = enemy->bossKneeFrameCount;
+                break;
+            case ENEMY_ATTACK_BOSS_UPPERCUT:
+                textures = enemy->bossUppercutTextures;
+                frameCount = enemy->bossUppercutFrameCount;
+                break;
+            case ENEMY_ATTACK_BOSS_HEAVY_BLOW:
+                textures = enemy->bossHeavyBlowTextures;
+                frameCount = enemy->bossHeavyBlowFrameCount;
+                break;
+            default:
+                break;
+        }
+
+        if (frameCount > 0)
         {
             if (frame < 0) frame = 0;
-            if (frame >= enemy->elbowFrameCount)
-                frame = enemy->elbowFrameCount - 1;
+            if (frame >= frameCount) frame = frameCount - 1;
 
-            Texture2D texture = enemy->elbowTextures[frame];
+            Texture2D texture = textures[frame];
             if (texture.id != 0) return texture;
         }
-        else if (enemy->punchFrameCount > 0)
-        {
-            if (frame < 0) frame = 0;
-            if (frame >= enemy->punchFrameCount)
-                frame = enemy->punchFrameCount - 1;
 
-            Texture2D texture = enemy->punchTextures[frame];
-            if (texture.id != 0) return texture;
-        }
     }
 
     if (drawWalk)
@@ -250,7 +278,17 @@ void DrawEnemy(const Enemy *enemy)
     // DEBUG ATTACK HITBOX
     if (
         enemy->isAttacking &&
-        enemy->attackFrame == 2
+        (
+            enemy->attackFrame == 2 ||
+            (
+                enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO &&
+                (enemy->attackFrame == 1 || enemy->attackFrame == 3)
+            ) ||
+            (
+                enemy->currentAttackMove == ENEMY_ATTACK_BOSS_HEAVY_BLOW &&
+                enemy->attackFrame == 1
+            )
+        )
     )
     {
         Rectangle attackHitbox =

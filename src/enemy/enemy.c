@@ -54,6 +54,8 @@ Enemy InitEnemyBase(void)
     enemy.attackTimer = 0.0f;
     enemy.attackCooldownTimer = 0.60f;
     enemy.hitPlayerThisAttack = false;
+    enemy.attackHitFrames = 0u;
+    enemy.lockAttackMove = false;
     enemy.attackSlotGranted = false;
 
     // 0044 - Shared turn controller grants this before a new attack starts.
@@ -67,6 +69,10 @@ Enemy InitEnemyBase(void)
     enemy.retreatDirection = 0;
     enemy.retreatPauseTimer = 0.0f;
     enemy.retreatPauseDuration = 0.55f;
+    enemy.retreatFrameCount = 0;
+    enemy.retreatFrame = 0;
+    enemy.retreatFrameTimer = 0.0f;
+    enemy.retreatFrameTime = 0.08f;
 
     enemy.attackDamage = 10;
     enemy.attackRange = 210.0f;
@@ -98,6 +104,10 @@ Enemy InitEnemyBase(void)
     // 0037 - Attack animation defaults.
     enemy.punchFrameCount = 0;
     enemy.elbowFrameCount = 0;
+    enemy.bossComboFrameCount = 0;
+    enemy.bossKneeFrameCount = 0;
+    enemy.bossUppercutFrameCount = 0;
+    enemy.bossHeavyBlowFrameCount = 0;
     enemy.attackFrame = 0;
     enemy.attackFrameTimer = 0.0f;
     enemy.attackFrameTime = 0.08f;
