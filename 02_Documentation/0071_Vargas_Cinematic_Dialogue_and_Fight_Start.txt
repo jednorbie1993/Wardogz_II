@@ -1,0 +1,289 @@
+WARDOGZ II
+0071 - VARGAS CINEMATIC DIALOGUE / FIGHT START SYSTEM
+============================================================
+
+PURPOSE
+-------
+Refines the 0070 Vargas loading intro and adds a controlled Boss encounter
+sequence before combat begins.
+
+0071 includes:
+
+- Vargas visibility fix
+- upper-lane Boss placement
+- left-facing intro portrait
+- three-page loading dialogue
+- Enter-controlled progression
+- smooth black fade-out
+- second dialogue when the player approaches Vargas
+- combat lock until the dialogue finishes
+- permanent screen-space Vargas HP bar during the fight
+
+
+CURRENT BOSS POSITION
+---------------------
+Current constants in src/main.c:
+
+    VARGAS_TRIGGER_PROGRESS = 0.86f
+    VARGAS_WORLD_X = 11452.0f
+    VARGAS_STAGE_Y = 390.0f
+
+Meaning:
+
+- Boss loading still starts at 86 percent.
+- Vargas remains near 98 percent at world X 11452.
+- Vargas now starts in the upper lane instead of the bottom lane.
+
+
+VARGAS DISAPPEARING FIX
+-----------------------
+Problem:
+
+Vargas disappeared when the player moved back below about 94 percent, but he
+could still move and attack.
+
+Root cause:
+
+The variable vargasHudVisible was incorrectly used to decide whether Vargas'
+body should be added to the Y-depth draw list.
+
+That condition required the player to be within 500 pixels of Vargas.
+Moving farther away removed only the sprite drawing, not the Boss AI.
+
+Fix:
+
+Vargas' body is now added to the draw list whenever:
+
+    enemiesEnabled == true
+
+The HP bar has its own separate screen-space condition.
+
+Result:
+
+- Vargas no longer becomes invisible when the player steps backward.
+- Normal camera clipping still occurs when Vargas is naturally off-screen.
+- AI state and body visibility no longer use the same proximity rule.
+
+
+LEFT-FACING INTRO PORTRAIT
+--------------------------
+The intro portrait is horizontally flipped through a negative source width:
+
+    source.x = portrait.width;
+    source.width = -portrait.width;
+
+This makes Vargas face left toward the dialogue text.
+
+
+LOADING INTRO DIALOGUE
+----------------------
+The loading intro contains three pages.
+Each page requires a separate Enter press:
+
+Page 1:
+
+    IT'S HIM!
+
+Page 2:
+
+    HE'S THE ONE WHO
+    RUNS THIS PLACE.
+
+Page 3:
+
+    WE NEED TO STOP HIM.
+
+The grammar was cleaned up while preserving the original meaning.
+
+
+SMALL LOADING CAPTION
+---------------------
+While Vargas textures are still loading, small text appears near the bottom:
+
+    NOW LOADING... PREPARING THE BOSS BATTLE
+
+When loading is complete, the bottom instruction changes to:
+
+    PRESS ENTER TO CONTINUE
+
+The loading caption uses a smaller font so it does not compete with the main
+dialogue.
+
+
+ENTER AND FADE-OUT FLOW
+-----------------------
+The first two Enter presses advance the dialogue pages.
+
+The third Enter press starts the fade-out instead of removing the black screen
+instantly.
+
+Current value:
+
+    VARGAS_INTRO_FADE_DURATION = 0.75f
+
+During the fade:
+
+- black overlay alpha gradually reaches zero
+- portrait alpha fades with the overlay
+- dialogue text fades with the overlay
+- Enter instructions are hidden
+- player controls remain paused until the fade finishes
+
+
+APPROACH DIALOGUE TRIGGER
+-------------------------
+After the intro, Vargas remains idle and cannot attack yet.
+
+The second dialogue starts when the player reaches within 500 pixels of
+Vargas:
+
+    VARGAS_DIALOGUE_TRIGGER_DISTANCE = 500.0f
+
+Player movement is paused while this dialogue is active.
+
+
+PRE-FIGHT DIALOGUE
+------------------
+Page 1 - Player:
+
+    IT'S OVER, VARGAS!
+
+Press Enter to continue.
+
+Page 2 - Vargas:
+
+    AMATEUR... YOUR TIME IS UP!
+
+Press Enter again to finish the dialogue and begin combat.
+
+The dialogue box is drawn in screen space near the bottom of the window.
+The Player page uses a light border, while the Vargas page uses a red border.
+
+
+COMBAT START LOCK
+-----------------
+New state:
+
+    bool vargasFightStarted;
+
+Before the approach dialogue finishes:
+
+    vargasFightStarted == false
+
+Therefore:
+
+- Vargas cannot chase
+- Vargas cannot start an attack
+- Vargas cannot damage the player
+- the Boss HP bar is hidden
+
+After the second approach-dialogue Enter:
+
+    vargasFightStarted = true;
+
+Only then does the shared enemy update/combat system begin running.
+
+
+SCREEN-SPACE VARGAS HP BAR
+--------------------------
+The Vargas HP bar is drawn after EndMode2D().
+
+This makes it screen-space UI instead of a world object.
+
+Once the fight starts:
+
+    vargasHudVisible = enemiesEnabled && vargasFightStarted;
+
+Result:
+
+- the HP bar follows the game screen
+- it does not stay behind at Vargas' world position
+- it does not disappear when the camera moves
+- it remains visible for the active Boss fight
+
+
+NEW INTRO STATE VARIABLES
+-------------------------
+The main Vargas intro uses:
+
+    bool vargasIntroFadingOut;
+    float vargasIntroFadeTimer;
+    int vargasIntroDialoguePage;
+
+The approach dialogue uses:
+
+    bool vargasApproachDialogueStarted;
+    bool vargasApproachDialogueActive;
+    int vargasApproachDialoguePage;
+    bool vargasFightStarted;
+
+
+COMPLETE CURRENT ENCOUNTER FLOW
+-------------------------------
+1. Player walks through Stage 1 normally.
+2. Player reaches 86 percent.
+3. Black/red Vargas loading intro covers the screen.
+4. Full Vargas textures load behind the overlay.
+5. Player advances three intro captions with Enter.
+6. Third Enter starts the 0.75-second fade-out.
+7. Player regains movement.
+8. Vargas waits at X 11452 in the upper lane.
+9. Player approaches within 500 pixels.
+10. Player says: IT'S OVER, VARGAS!
+11. Enter advances to Vargas' response.
+12. Vargas says: AMATEUR... YOUR TIME IS UP!
+13. Enter ends the dialogue.
+14. vargasFightStarted becomes true.
+15. Vargas AI and attacks activate.
+16. Vargas HP bar appears and remains attached to the screen.
+
+
+MANUAL ADJUSTMENT GUIDE
+-----------------------
+Loading trigger percentage:
+
+    VARGAS_TRIGGER_PROGRESS
+
+Boss horizontal location:
+
+    VARGAS_WORLD_X
+
+Boss upper/lower lane location:
+
+    VARGAS_STAGE_Y
+
+Delay before loading Boss textures:
+
+    VARGAS_INTRO_LOAD_DELAY
+
+Minimum wait before Enter can advance:
+
+    VARGAS_INTRO_CONTINUE_DELAY
+
+Fade-out speed:
+
+    VARGAS_INTRO_FADE_DURATION
+
+Distance that starts the approach dialogue:
+
+    VARGAS_DIALOGUE_TRIGGER_DISTANCE
+
+
+FILES UPDATED
+-------------
+1. src/main.c
+
+
+VALIDATION
+----------
+The updated main.c passed strict C syntax checking with warnings treated as
+errors.
+
+
+0071 STATUS
+-----------
+DONE / READY FOR IN-GAME TEST
+
+============================================================
+END OF DOCUMENTATION
+============================================================

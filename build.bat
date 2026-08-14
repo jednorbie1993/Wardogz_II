@@ -137,6 +137,7 @@ echo ==========================================
 echo.
 
 gcc src\main.c ^
+src\cinematic.c ^
 src\player\player.c ^
 src\player\player_move.c ^
 src\player\player_attack.c ^

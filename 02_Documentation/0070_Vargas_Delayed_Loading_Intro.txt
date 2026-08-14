@@ -1,0 +1,138 @@
+WARDOGZ II
+0070 - VARGAS DELAYED LOADING / BOSS INTRO
+============================================================
+
+PURPOSE
+-------
+Prevents all Vargas combat textures from loading during normal game startup.
+The heavy Boss loading is delayed until the player reaches 86 percent of
+Stage 1.
+
+This makes the executable reach normal gameplay sooner and hides the one-time
+Boss texture loading behind a cinematic overlay.
+
+
+INITIAL 0070 TRIGGER VALUES
+---------------------------
+The system was added in:
+
+    src/main.c
+
+Initial constants:
+
+    VARGAS_TRIGGER_PROGRESS = 0.86f
+    VARGAS_WORLD_X = 11452.0f
+    VARGAS_STAGE_Y = 540.0f
+    VARGAS_INTRO_LOAD_DELAY = 0.35f
+    VARGAS_INTRO_DURATION = 3.20f
+
+Meaning:
+
+- The loading intro starts when the player reaches 86 percent of the stage.
+- Vargas is created at world X 11452, near 98 percent of the stage.
+- The first version placed him in the lower/middle lane at Y 540.
+- The overlay appears before InitBoss() begins loading all Boss textures.
+- The first version ended automatically after 3.20 seconds.
+
+The Y position and automatic ending were changed later in 0071.
+
+
+DYNAMIC STAGE TRIGGER
+---------------------
+The trigger uses the real calculated Stage 1 width:
+
+    vargasTriggerX =
+        stageWorldWidth * VARGAS_TRIGGER_PROGRESS;
+
+This avoids hard-coding the 86-percent trigger to one exact background width.
+
+
+DELAYED TEXTURE LOADING
+-----------------------
+At program startup, only this single portrait texture is loaded:
+
+    boss_battle_idle1.png
+
+The complete Vargas texture set is not loaded until the intro has already
+covered the screen.
+
+After the overlay has been visible for 0.35 seconds:
+
+    enemies[0] = InitBoss(VARGAS_WORLD_X, VARGAS_STAGE_Y);
+
+InitBoss() performs the one-time loading of Vargas idle, battle idle, run,
+attack, dash, and death textures.
+
+
+GAMEPLAY PAUSE
+--------------
+While the Vargas intro is active:
+
+- player controls are paused
+- enemy AI is paused
+- Vargas is not exposed before loading finishes
+- the cinematic is drawn in screen space
+
+deltaTime is capped during the loading intro so a long synchronous loading
+frame cannot skip the entire cinematic.
+
+
+INITIAL CINEMATIC DESIGN
+------------------------
+The first 0070 version used:
+
+- dark black overlay
+- red scanlines
+- red vertical accent line
+- Vargas portrait
+- warning text
+- Vargas title reveal
+- animated red loading pulse
+
+The exact dialogue and Continue behavior were replaced by the improved 0071
+multi-page intro.
+
+
+TEMPORARY PORTRAIT CLEANUP
+--------------------------
+The startup portrait is a separate temporary Texture2D.
+
+After the Boss intro ends, it is unloaded because the Vargas shared texture
+cache already owns its normal battle-idle textures.
+
+A shutdown safety check also unloads the portrait if the program closes before
+the intro finishes.
+
+
+INITIAL DRAW-VISIBILITY PROBLEM
+-------------------------------
+The first implementation accidentally used the same 500-pixel proximity
+condition for both:
+
+- Vargas body drawing
+- Vargas HP HUD visibility
+
+Result:
+
+Vargas could disappear visually when the player moved back below about 94
+percent, even though his AI and attacks continued running.
+
+This was a drawing-condition problem, not an AI or texture problem.
+It was corrected in 0071 by separating body drawing from HUD visibility.
+
+
+FILES UPDATED
+-------------
+1. src/main.c
+
+The previously completed 0068 enrage system and 0069 audio initialization
+remain active in this version.
+
+
+0070 STATUS
+-----------
+IMPLEMENTED, THEN REFINED BY 0071
+
+============================================================
+END OF DOCUMENTATION
+============================================================

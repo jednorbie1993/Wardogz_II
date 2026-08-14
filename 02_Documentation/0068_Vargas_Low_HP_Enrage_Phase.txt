@@ -1,0 +1,191 @@
+WARDOGZ II
+0068 - VARGAS LOW-HP ENRAGE PHASE
+============================================================
+
+PURPOSE
+-------
+Gives Vargas a second combat phase when his HP becomes low.
+
+Vargas now has:
+
+    maximum HP       = 400
+    enrage threshold = 150 HP
+
+At 151-400 HP, Vargas uses his normal movement, animation speed, and color.
+At 150 HP or lower, Vargas enters the enraged state automatically.
+
+
+CURRENT VARGAS VALUES
+---------------------
+The Vargas-specific settings are located in:
+
+    src/enemy/stage_1/boss.c
+
+Current values:
+
+    enemy.maxHp = 400;
+    enemy.hp = enemy.maxHp;
+
+    enemy.enrageHpThreshold = 150;
+    enemy.enrageMovementSpeedMultiplier = 1.30f;
+    enemy.enrageAnimationSpeedMultiplier = 1.25f;
+    enemy.enrageTint = (Color){255, 170, 170, 255};
+
+
+ENRAGE EFFECTS
+--------------
+When Vargas reaches 150 HP or lower:
+
+1. Movement becomes 30 percent faster.
+2. Attack animation becomes 25 percent faster.
+3. Idle, run, retreat, and battle-idle animation timing becomes faster.
+4. Vargas receives a light red angry tint.
+
+The red effect is a fixed RGB tint:
+
+    Red   = 255
+    Green = 170
+    Blue  = 170
+    Alpha = 255
+
+It is not a continuously cycling rainbow RGB effect. A fixed red tint was
+used so the low-HP phase stays readable and clearly looks angry.
+
+
+OPTIONAL SHARED ENRAGE DATA
+---------------------------
+The following fields were added to Enemy in:
+
+    include/enemy/enemy.h
+
+Fields:
+
+    int enrageHpThreshold;
+    float enrageMovementSpeedMultiplier;
+    float enrageAnimationSpeedMultiplier;
+    Color enrageTint;
+
+Normal enemies keep this system disabled through the defaults in:
+
+    src/enemy/enemy.c
+
+Defaults:
+
+    enemy.enrageHpThreshold = 0;
+    enemy.enrageMovementSpeedMultiplier = 1.0f;
+    enemy.enrageAnimationSpeedMultiplier = 1.0f;
+    enemy.enrageTint = WHITE;
+
+A threshold of 0 means the enemy has no enrage phase.
+
+
+ENRAGE DETECTION
+----------------
+The shared helper is located in:
+
+    include/enemy/enemy_internal.h
+
+Vargas is considered enraged only when:
+
+    enemy is alive
+    HP is greater than 0
+    enrage threshold is enabled
+    HP is less than or equal to the threshold
+
+Helper functions:
+
+    EnemyIsEnraged()
+    EnemyGetMovementSpeedMultiplier()
+    EnemyGetAnimationSpeedMultiplier()
+
+
+MOVEMENT SPEED
+--------------
+The movement multiplier is applied in:
+
+    src/enemy/enemy_move.c
+
+Concept:
+
+    actual chase speed = chaseSpeed * movement multiplier
+
+For Vargas during enrage:
+
+    actual chase speed = chaseSpeed * 1.30
+
+
+ANIMATION AND ATTACK SPEED
+--------------------------
+Normal enemy animation timing is updated in:
+
+    src/enemy/enemy_animation.c
+
+Attack frame timing is updated in:
+
+    src/enemy/enemy_attack.c
+
+For Vargas during enrage:
+
+    animation speed multiplier = 1.25
+
+The system changes animation timing without changing the sprite images.
+
+
+RED VISUAL STATE
+----------------
+The red tint is selected in:
+
+    src/enemy/enemy_draw.c
+
+Priority remains safe:
+
+    death effect
+    -> hit flash
+    -> enraged red tint
+    -> normal white tint
+
+The hit flash can still appear correctly while Vargas is enraged.
+
+
+MANUAL ADJUSTMENT GUIDE
+-----------------------
+Make Vargas enter enrage earlier:
+
+    increase enemy.enrageHpThreshold
+
+Make him enter enrage later:
+
+    decrease enemy.enrageHpThreshold
+
+Make his movement faster:
+
+    increase enemy.enrageMovementSpeedMultiplier
+
+Make attack and animation frames faster:
+
+    increase enemy.enrageAnimationSpeedMultiplier
+
+Make the red tint stronger:
+
+    lower the Green and Blue values in enemy.enrageTint
+
+
+FILES UPDATED
+-------------
+1. include/enemy/enemy.h
+2. include/enemy/enemy_internal.h
+3. src/enemy/enemy.c
+4. src/enemy/enemy_move.c
+5. src/enemy/enemy_animation.c
+6. src/enemy/enemy_attack.c
+7. src/enemy/enemy_draw.c
+8. src/enemy/stage_1/boss.c
+
+
+0068 STATUS
+-----------
+DONE
+
+============================================================
+END OF DOCUMENTATION
+============================================================

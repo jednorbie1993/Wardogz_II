@@ -1,0 +1,166 @@
+WARDOGZ II
+0069 - ENEMY ATTACK HIT SOUND EFFECTS
+============================================================
+
+PURPOSE
+-------
+Plays a punch sound only when an enemy attack successfully hits and damages
+the player.
+
+The sound must not play when:
+
+- the enemy only starts an attack
+- the enemy attack misses
+- the player is outside the hitbox
+- the player is already dead
+
+
+SOUND FILES
+-----------
+The two sound files are:
+
+    assets/sfx/punch.wav
+    assets/sfx/punch1.wav
+
+The sounds alternate after every successful enemy hit:
+
+    first successful hit  -> punch.wav
+    second successful hit -> punch1.wav
+    third successful hit  -> punch.wav
+    fourth successful hit -> punch1.wav
+
+This prevents every impact from sounding exactly the same.
+
+
+IMPORTANT HIT RULE
+------------------
+The sound is played inside:
+
+    DamagePlayer()
+
+File:
+
+    src/player/player.c
+
+DamagePlayer() is called only after the enemy attack hitbox connects with the
+player. This is why the sound matches the real impact instead of the attack
+animation start.
+
+The system applies to Vargas and any other enemy that damages the player
+through the shared DamagePlayer() function.
+
+
+PLAYER AUDIO DATA
+-----------------
+The following fields were added to Player in:
+
+    include/player/player.h
+
+Fields:
+
+    Sound enemyHitSound;
+    Sound enemyHitSoundAlternate;
+    bool useAlternateEnemyHitSound;
+
+Meaning:
+
+    enemyHitSound          -> punch.wav
+    enemyHitSoundAlternate -> punch1.wav
+    useAlternate...        -> chooses which sound plays next
+
+
+LOADING THE SOUNDS
+------------------
+The sounds are loaded inside InitPlayer():
+
+    player.enemyHitSound =
+        LoadSound("assets/sfx/punch.wav");
+
+    player.enemyHitSoundAlternate =
+        LoadSound("assets/sfx/punch1.wav");
+
+    player.useAlternateEnemyHitSound = false;
+
+
+PLAYING THE SOUND
+-----------------
+After HP damage is accepted, DamagePlayer() selects one sound:
+
+    Sound hitSound =
+        player->useAlternateEnemyHitSound
+        ? player->enemyHitSoundAlternate
+        : player->enemyHitSound;
+
+It plays only when the sound loaded successfully:
+
+    if (hitSound.frameCount > 0)
+    {
+        PlaySound(hitSound);
+    }
+
+The alternate flag then switches for the next successful hit.
+
+
+AUDIO DEVICE ORDER
+------------------
+The audio device must be initialized before InitPlayer() loads the sounds.
+
+Correct startup order in src/main.c:
+
+    InitWindow(...);
+    InitAudioDevice();
+    SetTargetFPS(60);
+    Player player = InitPlayer(...);
+
+Correct shutdown order:
+
+    UnloadPlayer(&player);
+    CloseAudioDevice();
+    CloseWindow();
+
+
+UNLOADING
+---------
+UnloadPlayer() releases both Sound objects when their frameCount is valid.
+This prevents audio-resource leaks during shutdown.
+
+
+MANUAL ADJUSTMENT GUIDE
+-----------------------
+To replace the sounds without changing the C code, keep the same filenames:
+
+    punch.wav
+    punch1.wav
+
+Place the replacement files inside:
+
+    assets/sfx/
+
+Recommended format:
+
+- WAV
+- short impact sound
+- no long silence at the beginning
+- similar volume between both files
+
+
+FILES UPDATED
+-------------
+1. include/player/player.h
+2. src/player/player.c
+3. src/main.c
+
+
+ASSET FILES USED
+----------------
+1. assets/sfx/punch.wav
+2. assets/sfx/punch1.wav
+
+
+0069 STATUS
+-----------
+DONE
+
+============================================================
+END OF DOCUMENTATION
+============================================================

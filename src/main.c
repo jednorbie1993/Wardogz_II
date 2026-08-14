@@ -2,6 +2,7 @@
 #include "player.h"
 #include "enemy.h"
 #include "boss.h"
+#include "cinematic.h"
 
 // ============================================================
 // 0047 - Y-DEPTH DRAW SORTING
@@ -20,6 +21,241 @@ typedef struct DrawActor
     float depthY;
     int enemyIndex;
 } DrawActor;
+
+
+// ============================================================
+// 0071 - VARGAS BOSS LOADING / DIALOGUE / FIGHT START
+// ============================================================
+
+#define VARGAS_TRIGGER_PROGRESS 0.86f
+#define VARGAS_WORLD_X 11452.0f
+#define VARGAS_STAGE_Y 390.0f
+#define VARGAS_INTRO_LOAD_DELAY 0.35f
+#define VARGAS_INTRO_CONTINUE_DELAY 0.50f
+#define VARGAS_INTRO_FADE_DURATION 0.75f
+#define VARGAS_DIALOGUE_TRIGGER_DISTANCE 500.0f
+#define VARGAS_ENDING_DELAY 3.25f
+
+static float ClampIntroValue(float value)
+{
+    if (value < 0.0f) return 0.0f;
+    if (value > 1.0f) return 1.0f;
+    return value;
+}
+
+static void DrawVargasBossIntro(
+    Texture2D portrait,
+    float introTimer,
+    bool loadingFinished,
+    int dialoguePage,
+    bool fadingOut,
+    float fadeTimer,
+    int screenWidth,
+    int screenHeight
+)
+{
+    float fadeIn =
+        ClampIntroValue(introTimer / 0.25f);
+    float overlayAlpha = fadeIn;
+
+    if (fadingOut)
+    {
+        overlayAlpha *=
+            1.0f - ClampIntroValue(
+                fadeTimer / VARGAS_INTRO_FADE_DURATION
+            );
+    }
+
+    DrawRectangle(
+        0,
+        0,
+        screenWidth,
+        screenHeight,
+        Fade(BLACK, 0.88f * overlayAlpha)
+    );
+
+    // Thin scanlines keep the reveal alive while Vargas textures load.
+    for (int y = 0; y < screenHeight; y += 18)
+    {
+        DrawLine(
+            0,
+            y,
+            screenWidth,
+            y,
+            Fade(RED, 0.07f * overlayAlpha)
+        );
+    }
+
+    DrawRectangle(
+        58,
+        88,
+        7,
+        520,
+        Fade(RED, overlayAlpha)
+    );
+
+    if (portrait.id != 0)
+    {
+        float portraitReveal =
+            ClampIntroValue((introTimer - 0.20f) / 0.65f);
+
+        float portraitSlide =
+            (1.0f - portraitReveal) * 110.0f;
+
+        Rectangle source =
+        {
+            (float)portrait.width,
+            0.0f,
+            -(float)portrait.width,
+            (float)portrait.height
+        };
+
+        Rectangle destination =
+        {
+            (float)screenWidth - 670.0f + portraitSlide,
+            35.0f,
+            650.0f,
+            650.0f
+        };
+
+        DrawTexturePro(
+            portrait,
+            source,
+            destination,
+            (Vector2){0.0f, 0.0f},
+            0.0f,
+            Fade(
+                (Color){255, 150, 150, 255},
+                portraitReveal * overlayAlpha
+            )
+        );
+    }
+
+    if (dialoguePage == 0)
+    {
+        DrawText(
+            "IT'S HIM!",
+            78,
+            214,
+            72,
+            Fade(WHITE, overlayAlpha)
+        );
+    }
+    else if (dialoguePage == 1)
+    {
+        DrawText(
+            "HE'S THE ONE WHO",
+            78,
+            204,
+            43,
+            Fade(WHITE, overlayAlpha)
+        );
+
+        DrawText(
+            "RUNS THIS PLACE.",
+            78,
+            258,
+            43,
+            Fade(WHITE, overlayAlpha)
+        );
+    }
+    else
+    {
+        DrawText(
+            "WE NEED TO STOP HIM.",
+            78,
+            228,
+            42,
+            Fade(WHITE, overlayAlpha)
+        );
+    }
+
+    if (!fadingOut)
+    {
+        DrawText(
+            loadingFinished
+                ? "PRESS ENTER TO CONTINUE"
+                : "NOW LOADING... PREPARING THE BOSS BATTLE",
+            85,
+            screenHeight - 54,
+            18,
+            Fade(
+                loadingFinished ? WHITE : LIGHTGRAY,
+                overlayAlpha
+            )
+        );
+    }
+
+    // Animated red pulse keeps the loading screen visually active.
+    int pulseWidth =
+        70 + ((int)(introTimer * 220.0f) % 230);
+
+    DrawRectangle(
+        85,
+        565,
+        pulseWidth,
+        5,
+        Fade(RED, overlayAlpha)
+    );
+}
+
+static void DrawVargasApproachDialogue(
+    int dialoguePage,
+    int screenWidth,
+    int screenHeight
+)
+{
+    int boxX = 48;
+    int boxY = screenHeight - 190;
+    int boxWidth = screenWidth - 96;
+    int boxHeight = 132;
+
+    DrawRectangle(
+        boxX,
+        boxY,
+        boxWidth,
+        boxHeight,
+        Fade(BLACK, 0.90f)
+    );
+
+    DrawRectangleLinesEx(
+        (Rectangle)
+        {
+            (float)boxX,
+            (float)boxY,
+            (float)boxWidth,
+            (float)boxHeight
+        },
+        3.0f,
+        dialoguePage == 0 ? WHITE : RED
+    );
+
+    DrawText(
+        dialoguePage == 0 ? "PLAYER" : "VARGAS",
+        boxX + 24,
+        boxY + 16,
+        21,
+        dialoguePage == 0 ? LIGHTGRAY : RED
+    );
+
+    DrawText(
+        dialoguePage == 0
+            ? "IT'S OVER, VARGAS!"
+            : "AMATEUR... YOUR TIME IS UP!",
+        boxX + 24,
+        boxY + 49,
+        32,
+        WHITE
+    );
+
+    DrawText(
+        "PRESS ENTER",
+        boxX + boxWidth - 174,
+        boxY + boxHeight - 27,
+        16,
+        LIGHTGRAY
+    );
+}
 
 
 // ============================================================
@@ -187,18 +423,39 @@ int main(void)
     //
     #define ENEMY_COUNT 1
 
-    // Temporary Vargas gameplay switch.
-    const bool enemiesEnabled = true;
+    // Vargas does not exist yet. At 86% the intro covers his real loading,
+    // then he becomes active at world x = 11452 (about 98% of this stage).
+    bool enemiesEnabled = false;
+    bool vargasIntroStarted = false;
+    bool vargasIntroActive = false;
+    bool vargasIntroFadingOut = false;
+    bool vargasLoaded = false;
+    float vargasIntroTimer = 0.0f;
+    float vargasIntroFadeTimer = 0.0f;
+    int vargasIntroDialoguePage = 0;
 
-    Enemy enemies[ENEMY_COUNT];
+    bool vargasApproachDialogueStarted = false;
+    bool vargasApproachDialogueActive = false;
+    int vargasApproachDialoguePage = 0;
+    bool vargasFightStarted = false;
+    float vargasEndingTimer = 0.0f;
+
+    // 0072 - Stage 1 ending cinematic.
+    // The six scene textures are intentionally NOT loaded at startup.
+    // They are loaded only after Vargas' death animation has finished.
+    Stage1Cinematic stage1Ending = InitStage1Cinematic();
+
+    Enemy enemies[ENEMY_COUNT] = {0};
 
     // 0049 - Each enemy HUD row remains briefly after HP reaches zero.
     float enemyHudDeathTimers[ENEMY_COUNT] = {0};
 
-    LoadBossSharedTextures();
-
-    enemies[0] = InitBoss(1380.0f, 540.0f);
-    StartEnemyEntrance(&enemies[0], 1000.0f, 540.0f, 140.0f);
+    // Only this single portrait is loaded at startup. The remaining Vargas
+    // images are delayed until the player reaches the 86% trigger.
+    Texture2D vargasIntroPortrait =
+        LoadTexture(
+            "assets/sprites/enemy/stage_1/boss/boss_battle_idle1.png"
+        );
 
     // ============================================================
     // 0054 - STAGE 1 BACKGROUND SECTIONS
@@ -252,18 +509,183 @@ int main(void)
     {
         float deltaTime = GetFrameTime();
 
+        // Wait for Vargas' 3.20-second death animation before leaving gameplay.
+        // Once the cinematic starts, gameplay is no longer updated or drawn.
+        if (
+            !IsStage1CinematicActive(&stage1Ending) &&
+            enemiesEnabled &&
+            vargasFightStarted &&
+            vargasLoaded &&
+            !enemies[0].isAlive
+        )
+        {
+            vargasEndingTimer += deltaTime;
+
+            if (vargasEndingTimer >= VARGAS_ENDING_DELAY)
+            {
+                StartStage1Cinematic(&stage1Ending);
+            }
+        }
+
+        if (IsStage1CinematicActive(&stage1Ending))
+        {
+            UpdateStage1Cinematic(&stage1Ending, deltaTime);
+
+            BeginDrawing();
+            ClearBackground(BLACK);
+            DrawStage1Cinematic(
+                &stage1Ending,
+                screenWidth,
+                screenHeight
+            );
+            EndDrawing();
+
+            continue;
+        }
+
         // ========================================================
         // UPDATE
         // ========================================================
-        UpdatePlayer(
-            &player,
-            deltaTime,
-            stageWorldWidth,
-            walkAreaTop,
-            walkAreaBottom
-        );
+        if (
+            !vargasIntroActive &&
+            !vargasApproachDialogueActive
+        )
+        {
+            UpdatePlayer(
+                &player,
+                deltaTime,
+                stageWorldWidth,
+                walkAreaTop,
+                walkAreaBottom
+            );
+        }
 
-        if (enemiesEnabled)
+        float playerCenterX =
+            player.rectangle.x +
+            (player.rectangle.width * 0.5f);
+
+        float vargasTriggerX =
+            stageWorldWidth *
+            VARGAS_TRIGGER_PROGRESS;
+
+        if (
+            !vargasIntroStarted &&
+            playerCenterX >= vargasTriggerX
+        )
+        {
+            vargasIntroStarted = true;
+            vargasIntroActive = true;
+            vargasIntroFadingOut = false;
+            vargasIntroTimer = 0.0f;
+            vargasIntroFadeTimer = 0.0f;
+            vargasIntroDialoguePage = 0;
+        }
+
+        if (vargasIntroActive)
+        {
+            // A texture-loading stall must not skip the whole reveal.
+            float introDeltaTime = deltaTime;
+            if (introDeltaTime > 0.10f)
+            {
+                introDeltaTime = 0.10f;
+            }
+
+            vargasIntroTimer += introDeltaTime;
+
+            // The overlay has already been visible for several frames before
+            // InitBoss() performs the one-time loading of all Vargas textures.
+            if (
+                !vargasLoaded &&
+                vargasIntroTimer >= VARGAS_INTRO_LOAD_DELAY
+            )
+            {
+                enemies[0] =
+                    InitBoss(
+                        VARGAS_WORLD_X,
+                        VARGAS_STAGE_Y
+                    );
+
+                vargasLoaded = true;
+            }
+
+            bool introDialogueReady =
+                vargasLoaded &&
+                vargasIntroTimer >= VARGAS_INTRO_CONTINUE_DELAY;
+
+            if (
+                introDialogueReady &&
+                !vargasIntroFadingOut &&
+                IsKeyPressed(KEY_ENTER)
+            )
+            {
+                if (vargasIntroDialoguePage < 2)
+                {
+                    vargasIntroDialoguePage++;
+                }
+                else
+                {
+                    vargasIntroFadingOut = true;
+                    vargasIntroFadeTimer = 0.0f;
+                }
+            }
+
+            if (vargasIntroFadingOut)
+            {
+                vargasIntroFadeTimer += introDeltaTime;
+
+                if (
+                    vargasIntroFadeTimer >=
+                        VARGAS_INTRO_FADE_DURATION
+                )
+                {
+                    vargasIntroActive = false;
+                    enemiesEnabled = true;
+
+                    // The normal Vargas sprite set now owns its own copy.
+                    // Release the temporary intro-only portrait.
+                    if (vargasIntroPortrait.id != 0)
+                    {
+                        UnloadTexture(vargasIntroPortrait);
+                        vargasIntroPortrait = (Texture2D){0};
+                    }
+                }
+            }
+        }
+
+        if (
+            enemiesEnabled &&
+            !vargasApproachDialogueStarted &&
+            playerCenterX >=
+                (VARGAS_WORLD_X - VARGAS_DIALOGUE_TRIGGER_DISTANCE)
+        )
+        {
+            vargasApproachDialogueStarted = true;
+            vargasApproachDialogueActive = true;
+            vargasApproachDialoguePage = 0;
+        }
+
+        if (
+            vargasApproachDialogueActive &&
+            IsKeyPressed(KEY_ENTER)
+        )
+        {
+            if (vargasApproachDialoguePage == 0)
+            {
+                vargasApproachDialoguePage = 1;
+            }
+            else
+            {
+                vargasApproachDialogueActive = false;
+                vargasFightStarted = true;
+            }
+        }
+
+        if (
+            !vargasIntroActive &&
+            !vargasApproachDialogueActive &&
+            enemiesEnabled &&
+            vargasFightStarted
+        )
         {
             // 0042 - Keep free Punks distributed around the player.
             // Attack-slot owners still chase the player directly.
@@ -355,9 +777,6 @@ int main(void)
         // ========================================================
         // Follow the player's horizontal position, but do not show
         // anything before x=0 or after the Stage 1 background end.
-        float playerCenterX =
-            player.rectangle.x + (player.rectangle.width * 0.5f);
-
         float cameraTargetX = playerCenterX;
         float halfScreenWidth = screenWidth * 0.5f;
 
@@ -474,6 +893,14 @@ int main(void)
             -1
         };
 
+        // Screen-space HUD: once combat begins, it follows the screen and
+        // never gets left behind in the world when the camera moves.
+        bool vargasHudVisible =
+            enemiesEnabled &&
+            vargasFightStarted;
+
+        // Once the reveal is accepted, Vargas stays drawable permanently.
+        // Only the HP bar below still depends on player proximity.
         if (enemiesEnabled)
         {
             for (int i = 0; i < ENEMY_COUNT; i++)
@@ -506,7 +933,7 @@ int main(void)
         EndMode2D();
 
         // 0049 - Active enemy HP list. Dead rows disappear after a short delay.
-        if (enemiesEnabled)
+        if (vargasHudVisible)
         {
             DrawEnemyHud(
                 enemies,
@@ -540,6 +967,30 @@ int main(void)
             WHITE
         );
 
+        if (vargasIntroActive)
+        {
+            DrawVargasBossIntro(
+                vargasIntroPortrait,
+                vargasIntroTimer,
+                vargasLoaded &&
+                    vargasIntroTimer >= VARGAS_INTRO_CONTINUE_DELAY,
+                vargasIntroDialoguePage,
+                vargasIntroFadingOut,
+                vargasIntroFadeTimer,
+                screenWidth,
+                screenHeight
+            );
+        }
+
+        if (vargasApproachDialogueActive)
+        {
+            DrawVargasApproachDialogue(
+                vargasApproachDialoguePage,
+                screenWidth,
+                screenHeight
+            );
+        }
+
         EndDrawing();
     }
 
@@ -554,13 +1005,23 @@ int main(void)
         }
     }
 
-    for (int i = 0; i < ENEMY_COUNT; i++)
+    if (vargasLoaded)
     {
-        UnloadEnemy(&enemies[i]);
+        for (int i = 0; i < ENEMY_COUNT; i++)
+        {
+            UnloadEnemy(&enemies[i]);
+        }
     }
 
     // Vargas' shared textures are released exactly once.
     UnloadBossSharedTextures();
+
+    if (vargasIntroPortrait.id != 0)
+    {
+        UnloadTexture(vargasIntroPortrait);
+    }
+
+    UnloadStage1Cinematic(&stage1Ending);
 
     UnloadPlayer(&player);
 
