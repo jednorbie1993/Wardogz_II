@@ -88,7 +88,7 @@ Enemy InitBoss(float x, float y)
 
     enemy.displayName = "VARGAS";
     enemy.hurtbox = (Rectangle){x, y - 200.0f, 160.0f, 290.0f};
-    enemy.maxHp = 60;
+    enemy.maxHp = 400;
     enemy.hp = enemy.maxHp;
 
     enemy.facingRight = false;

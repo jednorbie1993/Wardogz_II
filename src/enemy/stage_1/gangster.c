@@ -59,7 +59,7 @@ Enemy InitGangster(float x, float y)
 
     enemy.displayName = "GANGSTER";
     enemy.hurtbox = (Rectangle){x, y - 200.0f, 148.0f, 276.0f};
-    enemy.maxHp = 18;
+    enemy.maxHp = 200;
     enemy.hp = enemy.maxHp;
 
     enemy.facingRight = false;

@@ -59,7 +59,7 @@ Enemy InitHooligan(float x, float y)
 
     enemy.displayName = "HOOLIGAN";
     enemy.hurtbox = (Rectangle){x, y - 200.0f, 148.0f, 276.0f};
-    enemy.maxHp = 14;
+    enemy.maxHp = 100;
     enemy.hp = enemy.maxHp;
 
     enemy.facingRight = false;

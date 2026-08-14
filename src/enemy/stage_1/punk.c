@@ -87,7 +87,7 @@ Enemy InitPunk(float x, float y)
     // PUNK - STATS
     // ============================================================
 
-    enemy.maxHp = 10;
+    enemy.maxHp = 150;
     enemy.hp = enemy.maxHp;
 
     // ============================================================

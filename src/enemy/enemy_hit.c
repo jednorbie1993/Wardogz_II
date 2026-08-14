@@ -199,18 +199,14 @@ void EnemyCheckPlayerAttack(
 
     enemy->isHit = true;
 
-    // Cancel the enemy attack immediately when Punk gets hit.
-    enemy->isAttacking = false;
-    enemy->attackTimer = 0.0f;
-    enemy->hitPlayerThisAttack = false;
-    enemy->attackFrame = 0;
-    enemy->attackFrameTimer = 0.0f;
+    // Receiving a non-lethal hit no longer cancels or restarts an attack.
+    // Damage, hit reaction, and the small knockback still apply normally.
 
     enemy->hitReactionTimer =
         GetPlayerAttackHitReactionTime(player);
 
     enemy->knockbackSpeed =
-        GetPlayerAttackKnockbackSpeed(player);
+        GetPlayerAttackKnockbackSpeed(player) * 0.15f;
 
     enemy->knockbackDirection =
         player->facingRight

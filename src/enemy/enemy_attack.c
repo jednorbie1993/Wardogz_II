@@ -348,21 +348,6 @@ void EnemyUpdateAttack(
     const EnemyCombatContext *context
 )
 {
-    if (enemy->isHit)
-    {
-        enemy->isAttacking = false;
-        enemy->attackTimer = 0.0f;
-        enemy->hitPlayerThisAttack = false;
-        enemy->attackFrame = 0;
-        enemy->attackFrameTimer = 0.0f;
-        enemy->elbowLungeRemaining = 0.0f;
-        enemy->isRetreating = false;
-        enemy->retreatTimer = 0.0f;
-        enemy->retreatDirection = 0;
-        enemy->retreatPauseTimer = 0.0f;
-        return;
-    }
-
     if (
         !enemy->isAttacking &&
         enemy->attackSlotGranted &&
