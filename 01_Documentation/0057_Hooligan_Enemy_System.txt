@@ -1,0 +1,147 @@
+WARDOGZ II
+0057 - HOOLIGAN ENEMY TYPE / SPRITE INTEGRATION SYSTEM
+========================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0057
+
+TITLE:
+Hooligan Enemy Type / Sprite Integration System
+
+
+PURPOSE
+-------
+Adds Hooligan as a separate Stage 1 enemy type while continuing to use the
+shared Enemy AI, movement, collision, attack, damage, and drawing systems.
+
+The Hooligan is not another Punk instance. It has its own:
+
+- display name
+- HP and movement settings
+- sprite texture cache
+- idle animation
+- run animation
+- punch animation
+- kick animation
+- death animation
+- sprite size and alignment settings
+
+
+HOOLIGAN SPRITE FILES
+---------------------
+The Hooligan sprites are stored in:
+
+    assets/sprites/enemy/stage_1/hooligan/
+
+Idle:
+
+    hooligan_idle1.png
+    hooligan_idle2.png
+    hooligan_idle3.png
+
+Run:
+
+    hooligan_run1.png
+    hooligan_run2.png
+    hooligan_run3.png
+    hooligan_run4.png
+    hooligan_run5.png
+    hooligan_run6.png
+
+Punch:
+
+    hooligan_punch1.png
+    hooligan_punch2.png
+    hooligan_punch3.png
+    hooligan_punch4.png
+
+Kick:
+
+    hooligan_kick1.png
+    hooligan_kick2.png
+    hooligan_kick3.png
+    hooligan_kick4.png
+
+Death:
+
+    hooligan_death1.png
+    hooligan_death2.png
+
+
+SHARED TEXTURE CACHE
+--------------------
+The Hooligan textures are loaded only once through:
+
+    LoadHooliganSharedTextures();
+
+All Hooligan instances reuse the same loaded Texture2D handles.
+
+They are released once during shutdown through:
+
+    UnloadHooliganSharedTextures();
+
+This follows the same shared-texture design already used by Punk and avoids
+loading duplicate copies when multiple Hooligans exist.
+
+
+ATTACK COMPATIBILITY
+--------------------
+The common Enemy system currently names its second attack slot:
+
+    ENEMY_ATTACK_ELBOW
+
+For Hooligan, the same internal slot displays the four kick frames.
+
+Concept:
+
+    common punch slot -> Hooligan punch
+    common elbow slot -> Hooligan kick
+
+This allows Hooligan to use a kick without duplicating the entire shared enemy
+attack system.
+
+
+HOOLIGAN INITIALIZATION
+-----------------------
+Hooligan instances are created through:
+
+    Enemy InitHooligan(float x, float y);
+
+The initializer begins with:
+
+    Enemy enemy = InitEnemyBase();
+
+It then applies Hooligan-specific values, including:
+
+    enemy.displayName = "HOOLIGAN";
+    enemy.maxHp = 14;
+    enemy.chaseSpeed = 180.0f;
+    enemy.idleFrameCount = 3;
+    enemy.walkFrameCount = 6;
+    enemy.punchFrameCount = 4;
+    enemy.elbowFrameCount = 4;
+    enemy.deathFrameCount = 2;
+
+
+FILES INVOLVED
+--------------
+include/enemy/stage_1/hooligan.h
+src/enemy/stage_1/hooligan.c
+src/main.c
+build.bat
+
+assets/sprites/enemy/stage_1/hooligan/
+
+
+0057 STATUS
+-----------
+DONE
+
+RESULT
+------
+Hooligan is now a functional Stage 1 enemy type with its own complete sprite
+set while remaining compatible with the shared Enemy gameplay systems.
+

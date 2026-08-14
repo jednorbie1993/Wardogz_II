@@ -2,6 +2,8 @@
 #include "player.h"
 #include "enemy.h"
 #include "punk.h"
+#include "hooligan.h"
+#include "gangster.h"
 
 // ============================================================
 // 0047 - Y-DEPTH DRAW SORTING
@@ -56,7 +58,7 @@ static void DrawEnemyHud(
 {
     const float startY = 24.0f;
     const float rowHeight = 34.0f;
-    const float nameWidth = 70.0f;
+    const float nameWidth = 110.0f;
     const float barWidth = 170.0f;
     const float barHeight = 14.0f;
     const float rightMargin = 24.0f;
@@ -90,7 +92,7 @@ static void DrawEnemyHud(
         if (hpPercent > 1.0f) hpPercent = 1.0f;
 
         DrawText(
-            "PUNK",
+            enemies[i].displayName,
             (int)startX,
             (int)(y - 4.0f),
             20,
@@ -181,29 +183,29 @@ int main(void)
     // Stage 1 test limit: 4 Punks at the same time.
     // Each Punk keeps its own AI, HP, attack state, and animation.
     //
-    #define PUNK_COUNT 4
+    #define ENEMY_COUNT 3
 
     // TEMPORARY: Disable all Punk gameplay while building/testing Stage 1.
     // Change this to true when the stage/map is ready for enemy placement.
-    const bool enemiesEnabled = false;
+    const bool enemiesEnabled = true;
 
-    Enemy punks[PUNK_COUNT];
+    Enemy enemies[ENEMY_COUNT];
 
     // 0049 - Each enemy HUD row remains briefly after HP reaches zero.
-    float enemyHudDeathTimers[PUNK_COUNT] = {0};
+    float enemyHudDeathTimers[ENEMY_COUNT] = {0};
 
     // 0040 - Load the 17 Punk textures once, then share them across all Punks.
     LoadPunkSharedTextures();
+    LoadHooliganSharedTextures();
+    LoadGangsterSharedTextures();
 
-    punks[0] = InitPunk(1380.0f, 470.0f);
-    punks[1] = InitPunk(-180.0f, 540.0f);
-    punks[2] = InitPunk(1460.0f, 620.0f);
-    punks[3] = InitPunk(-260.0f, 430.0f);
+    enemies[0] = InitPunk(1380.0f, 470.0f);
+    enemies[1] = InitHooligan(-180.0f, 540.0f);
+    enemies[2] = InitGangster(1460.0f, 620.0f);
 
-    StartEnemyEntrance(&punks[0], 1000.0f, 470.0f, 140.0f);
-    StartEnemyEntrance(&punks[1],  220.0f, 540.0f, 140.0f);
-    StartEnemyEntrance(&punks[2], 1080.0f, 620.0f, 140.0f);
-    StartEnemyEntrance(&punks[3],  320.0f, 430.0f, 140.0f);
+    StartEnemyEntrance(&enemies[0], 1000.0f, 470.0f, 140.0f);
+    StartEnemyEntrance(&enemies[1],  220.0f, 540.0f, 140.0f);
+    StartEnemyEntrance(&enemies[2], 1080.0f, 620.0f, 140.0f);
 
     // ============================================================
     // 0054 - STAGE 1 BACKGROUND SECTIONS
@@ -273,22 +275,22 @@ int main(void)
             // 0042 - Keep free Punks distributed around the player.
             // Attack-slot owners still chase the player directly.
             ResolveEnemySurroundFormation(
-                punks,
-                PUNK_COUNT
+                enemies,
+                ENEMY_COUNT
             );
 
             // 0043 - Choose/swap the two active attackers dynamically.
             ResolveEnemyAttackSlot(
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 &player
             );
 
             // 0044 - Stagger attack starts so the two active Punks do not
             // punch/elbow at the same instant.
             ResolveEnemyAttackTurnTiming(
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 &player,
                 deltaTime
             );
@@ -296,18 +298,18 @@ int main(void)
             // 0046 - If an active attacker is blocked behind another Punk,
             // side-step to an upper/lower lane before continuing the approach.
             ResolveEnemyApproachLanes(
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 &player,
                 walkAreaTop,
                 walkAreaBottom
             );
 
             // Update each Punk independently.
-            for (int i = 0; i < PUNK_COUNT; i++)
+            for (int i = 0; i < ENEMY_COUNT; i++)
             {
                 UpdateEnemyHit(
-                    &punks[i],
+                    &enemies[i],
                     &player,
                     deltaTime,
                     stageWorldWidth,
@@ -318,16 +320,16 @@ int main(void)
 
             // 0049 - Keep a dead enemy's HUD row visible for a short moment.
             UpdateEnemyHudDeathTimers(
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 enemyHudDeathTimers,
                 deltaTime
             );
 
             // 0040 - Push nearby Punks apart so they do not stack.
             ResolveEnemySpacing(
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 deltaTime,
                 stageWorldWidth,
                 walkAreaTop,
@@ -338,8 +340,8 @@ int main(void)
             // Same-depth actors softly separate instead of passing through.
             ResolvePlayerEnemyBodyCollision(
                 &player,
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 stageWorldWidth,
                 walkAreaTop,
                 walkAreaBottom
@@ -348,8 +350,8 @@ int main(void)
             // 0043 - Refresh after attacks/cancellations so a nearby waiting
             // Punk can take over a released attack slot immediately.
             ResolveEnemyAttackSlot(
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 &player
             );
 
@@ -465,7 +467,7 @@ int main(void)
         // ====================================================
         // Draw actors from back to front using the bottom/feet Y.
         // This makes MIDDLE overlap TOP, and BOTTOM overlap MIDDLE.
-        DrawActor drawActors[PUNK_COUNT + 1];
+        DrawActor drawActors[ENEMY_COUNT + 1];
         int drawActorCount = 0;
 
         // Use the SAME ground-depth reference used by combat checks:
@@ -481,9 +483,9 @@ int main(void)
 
         if (enemiesEnabled)
         {
-            for (int i = 0; i < PUNK_COUNT; i++)
+            for (int i = 0; i < ENEMY_COUNT; i++)
             {
-                Rectangle enemyFeet = GetEnemyFootMarker(&punks[i]);
+                Rectangle enemyFeet = GetEnemyFootMarker(&enemies[i]);
 
                 drawActors[drawActorCount++] = (DrawActor)
                 {
@@ -504,7 +506,7 @@ int main(void)
             }
             else
             {
-                DrawEnemy(&punks[drawActors[i].enemyIndex]);
+                DrawEnemy(&enemies[drawActors[i].enemyIndex]);
             }
         }
 
@@ -514,8 +516,8 @@ int main(void)
         if (enemiesEnabled)
         {
             DrawEnemyHud(
-                punks,
-                PUNK_COUNT,
+                enemies,
+                ENEMY_COUNT,
                 enemyHudDeathTimers
             );
         }
@@ -559,13 +561,15 @@ int main(void)
         }
     }
 
-    for (int i = 0; i < PUNK_COUNT; i++)
+    for (int i = 0; i < ENEMY_COUNT; i++)
     {
-        UnloadEnemy(&punks[i]);
+        UnloadEnemy(&enemies[i]);
     }
 
     // Shared Punk textures are released exactly once.
     UnloadPunkSharedTextures();
+    UnloadHooliganSharedTextures();
+    UnloadGangsterSharedTextures();
 
     UnloadPlayer(&player);
 

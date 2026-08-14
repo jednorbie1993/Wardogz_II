@@ -1,0 +1,170 @@
+WARDOGZ II
+0059 - MIXED ENEMY STAGE TEST / SPAWN PLACEMENT SYSTEM
+========================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0059
+
+TITLE:
+Mixed Enemy Stage Test / Spawn Placement System
+
+
+PURPOSE
+-------
+Replaces the single-type or duplicate-enemy test with a mixed Stage 1 setup so
+Punk, Hooligan, and Gangster can be tested together inside the same shared
+Enemy array.
+
+
+FINAL TEST COUNT
+----------------
+The temporary mixed-enemy test uses:
+
+    1 Punk
+    1 Hooligan
+    1 Gangster
+
+Total:
+
+    #define ENEMY_COUNT 3
+
+
+HEADER INTEGRATION
+------------------
+The following enemy headers are included in src/main.c:
+
+    #include "punk.h"
+    #include "hooligan.h"
+    #include "gangster.h"
+
+
+SHARED TEXTURE LOADING
+----------------------
+Before creating the enemy instances, each enemy type loads its texture set:
+
+    LoadPunkSharedTextures();
+    LoadHooliganSharedTextures();
+    LoadGangsterSharedTextures();
+
+Each function is called only once even if multiple instances of the same enemy
+type are added later.
+
+
+MIXED ENEMY INITIALIZATION
+--------------------------
+The mixed array is initialized as:
+
+    enemies[0] = InitPunk(1380.0f, 470.0f);
+    enemies[1] = InitHooligan(-180.0f, 540.0f);
+    enemies[2] = InitGangster(1460.0f, 620.0f);
+
+This confirms that the common Enemy array can contain different enemy types at
+the same time.
+
+Each instance still keeps its own:
+
+- HP
+- display name
+- position
+- animation state
+- AI state
+- attack state
+- hit reaction
+- death state
+
+
+ENTRANCE PLACEMENT
+------------------
+The three enemies use separate entrance targets:
+
+    StartEnemyEntrance(&enemies[0], 1000.0f, 470.0f, 140.0f);
+    StartEnemyEntrance(&enemies[1],  220.0f, 540.0f, 140.0f);
+    StartEnemyEntrance(&enemies[2], 1080.0f, 620.0f, 140.0f);
+
+Meaning:
+
+Punk:
+
+    starts at X 1380, Y 470
+    enters toward X 1000, Y 470
+    uses the upper/back lane
+
+Hooligan:
+
+    starts at X -180, Y 540
+    enters toward X 220, Y 540
+    enters from the left in the middle lane
+
+Gangster:
+
+    starts at X 1460, Y 620
+    enters toward X 1080, Y 620
+    enters from the right in the lower/front lane
+
+Entrance speed for all three test enemies:
+
+    140.0f
+
+
+HUD RESULT
+----------
+The dynamic enemy HUD now displays the type-specific names:
+
+    PUNK
+    HOOLIGAN
+    GANGSTER
+
+The appearance of the GANGSTER HP row confirmed that the Gangster Enemy
+instance existed even during the later invisible-sprite bug investigation.
+
+
+SHARED DRAW / UPDATE COMPATIBILITY
+----------------------------------
+No separate Gangster or Hooligan draw loop was required.
+
+All three types continue through the same systems:
+
+    UpdateEnemyHit(...)
+    UpdateEnemyAttackSlots(...)
+    UpdateEnemyAttackTurns(...)
+    ResolveEnemySpacing(...)
+    DrawEnemy(...)
+
+Depth sorting also continues to use the shared foot/bottom Y position.
+
+
+SHARED TEXTURE UNLOADING
+------------------------
+At shutdown:
+
+    UnloadPunkSharedTextures();
+    UnloadHooliganSharedTextures();
+    UnloadGangsterSharedTextures();
+
+
+FILES INVOLVED
+--------------
+src/main.c
+
+include/enemy/stage_1/punk.h
+include/enemy/stage_1/hooligan.h
+include/enemy/stage_1/gangster.h
+
+src/enemy/stage_1/punk.c
+src/enemy/stage_1/hooligan.c
+src/enemy/stage_1/gangster.c
+
+build.bat
+
+
+0059 STATUS
+-----------
+DONE
+
+RESULT
+------
+Stage 1 can now run a mixed group containing one Punk, one Hooligan, and one
+Gangster while retaining the common enemy controllers, HUD, and depth sorting.

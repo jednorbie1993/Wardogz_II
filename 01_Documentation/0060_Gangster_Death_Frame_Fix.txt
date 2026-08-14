@@ -1,0 +1,177 @@
+WARDOGZ II
+0060 - GANGSTER DEATH-FRAME CAPACITY / MEMORY SAFETY FIX
+========================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0060
+
+TITLE:
+Gangster Death-Frame Capacity / Memory Safety Fix
+
+
+PURPOSE
+-------
+Fixes the issue where the GANGSTER HP bar appeared but the Gangster sprite did
+not render correctly even though all Gangster PNG files loaded successfully.
+
+
+PROBLEM OBSERVED
+----------------
+During the mixed-enemy test:
+
+- Punk appeared correctly
+- Hooligan appeared correctly
+- GANGSTER HP bar appeared
+- Gangster body/sprite did not appear correctly
+- build.bat already included gangster.c
+- all Gangster PNG filenames and paths were correct
+
+Because the HUD row appeared, the Gangster Enemy instance was confirmed to be
+alive and included in the main Enemy array.
+
+
+TEXTURE LOADING CHECK
+---------------------
+The raylib runtime log confirmed successful loading of every Gangster texture:
+
+- idle frames loaded
+- run frames loaded
+- punch frames loaded
+- kick frames loaded
+- death frames loaded
+
+All were loaded as:
+
+    1024 x 1024
+    R8G8B8A8
+
+Texture IDs:
+
+    82 through 101
+
+This ruled out:
+
+- missing Gangster folder
+- incorrect PNG filenames
+- unsupported image format
+- missing gangster.c in build.bat
+- failed texture loading
+
+
+ROOT CAUSE
+----------
+The common Enemy structure was configured with:
+
+    #define MAX_ENEMY_DEATH_FRAMES 2
+
+However, Gangster uses three death frames:
+
+    gangster_death1.png
+    gangster_death2.png
+    gangster_death3.png
+
+And gangster.c assigned:
+
+    enemy.deathFrameCount = 3;
+
+Writing the third texture into deathTextures[2] exceeded the two-element array.
+
+This caused an out-of-bounds memory write that could corrupt nearby Enemy
+fields, including animation or attack state values. The result could be an
+existing enemy with a visible HUD row but an invalid or unstable sprite state.
+
+
+FINAL FIX
+---------
+In include/enemy/enemy.h, the shared death-frame capacity was changed from:
+
+    #define MAX_ENEMY_DEATH_FRAMES 2
+
+to:
+
+    #define MAX_ENEMY_DEATH_FRAMES 3
+
+
+WHY THE SHARED LIMIT IS 3
+-------------------------
+Current death-frame counts:
+
+    Punk       = 2
+    Hooligan   = 2
+    Gangster   = 3
+
+The shared array capacity must be equal to or greater than the largest frame
+count used by any Enemy type.
+
+Therefore:
+
+    MAX_ENEMY_DEATH_FRAMES = 3
+
+supports all three current Stage 1 enemy types safely.
+
+
+FRAME CAPACITY RULE
+-------------------
+For every shared Enemy texture array:
+
+    MAX value >= largest frame count used by any enemy type
+
+Current recommended definitions:
+
+    #define MAX_ENEMY_IDLE_FRAMES 8
+    #define MAX_ENEMY_WALK_FRAMES 8
+    #define MAX_ENEMY_ATTACK_FRAMES 4
+    #define MAX_ENEMY_DEATH_FRAMES 3
+
+Whenever a future enemy has more frames, the corresponding shared MAX value
+must be checked before assigning its textures.
+
+
+FILES INVOLVED
+--------------
+include/enemy/enemy.h
+src/enemy/stage_1/gangster.c
+src/enemy/enemy_draw.c
+src/main.c
+
+
+0060 STATUS
+-----------
+DONE / FIXED
+
+RESULT
+------
+Gangster now appears correctly in the game.
+
+The shared Enemy death-texture array safely supports Gangster's three-frame
+death animation without corrupting neighboring Enemy state values.
+
+
+
+CURRENT DOCUMENTATION SEQUENCE
+------------------------------
+0050 - Enemy Death / 2-Frame Dead Sprite System
+0051 - Player Running System
+0052 - Player Facing Turn Distance System
+0053 - Forward Dash / Back Dash System
+0054 - Stage 1 World Length / Camera Scroll System
+0055 - Stage 1 Multi-Background System
+0056 - Background Loading / PNG Compatibility Fix System
+0057 - Hooligan Enemy Type / Sprite Integration System
+0058 - Gangster Enemy Type / Sprite Integration System
+0059 - Mixed Enemy Stage Test / Spawn Placement System
+0060 - Gangster Death-Frame Capacity / Memory Safety Fix
+
+
+DOCUMENTATION STATUS
+--------------------
+0057 - DONE
+0058 - DONE
+0059 - DONE
+0060 - DONE / FIXED
+
+
+END OF DOCUMENTATION

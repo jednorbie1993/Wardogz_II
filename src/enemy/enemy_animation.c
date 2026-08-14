@@ -14,7 +14,7 @@ void EnemyUpdateAnimation(
     {
         enemy->walkTimer += deltaTime;
 
-        while (
+        if (
             enemy->walkTimer >=
             enemy->walkFrameTime
         )

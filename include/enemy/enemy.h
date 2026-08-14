@@ -7,7 +7,7 @@
 #define MAX_ENEMY_IDLE_FRAMES 8
 #define MAX_ENEMY_WALK_FRAMES 8
 #define MAX_ENEMY_ATTACK_FRAMES 4
-#define MAX_ENEMY_DEATH_FRAMES 2
+#define MAX_ENEMY_DEATH_FRAMES 3
 
 typedef enum EnemyAttackMove
 {
@@ -22,6 +22,9 @@ typedef struct Enemy
     // ============================================================
 
     Rectangle hurtbox;
+
+    // Name shown in the enemy HP HUD.
+    const char *displayName;
 
     int hp;
     int maxHp;

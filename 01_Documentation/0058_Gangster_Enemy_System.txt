@@ -1,0 +1,146 @@
+WARDOGZ II
+0058 - GANGSTER ENEMY TYPE / SPRITE INTEGRATION SYSTEM
+========================================================
+
+PROJECT:
+Wardogz II
+
+SYSTEM ID:
+0058
+
+TITLE:
+Gangster Enemy Type / Sprite Integration System
+
+
+PURPOSE
+-------
+Adds Gangster as another separate Stage 1 enemy type with its own sprites,
+stats, shared texture cache, animation counts, and display name.
+
+Gangster uses the common Enemy systems instead of requiring duplicate AI,
+collision, animation, attack, hit, and draw code.
+
+
+GANGSTER SPRITE FILES
+---------------------
+The Gangster sprites are stored in:
+
+    assets/sprites/enemy/stage_1/gangster/
+
+Idle:
+
+    gangster_idle1.png
+    gangster_idle2.png
+    gangster_idle3.png
+
+Run:
+
+    gangster_run1.png
+    gangster_run2.png
+    gangster_run3.png
+    gangster_run4.png
+    gangster_run5.png
+    gangster_run6.png
+
+Punch:
+
+    gangster_punch1.png
+    gangster_punch2.png
+    gangster_punch3.png
+    gangster_punch4.png
+
+Kick:
+
+    gangster_kick1.png
+    gangster_kick2.png
+    gangster_kick3.png
+    gangster_kick4.png
+
+Death:
+
+    gangster_death1.png
+    gangster_death2.png
+    gangster_death3.png
+
+Total Gangster images:
+
+    20 PNG files
+
+
+SHARED TEXTURE CACHE
+--------------------
+Gangster textures are loaded once through:
+
+    LoadGangsterSharedTextures();
+
+They are released once during shutdown through:
+
+    UnloadGangsterSharedTextures();
+
+The runtime log confirmed that all Gangster files loaded successfully as
+1024 x 1024 textures.
+
+The loaded Gangster texture IDs covered:
+
+    ID 82 through ID 101
+
+
+ATTACK COMPATIBILITY
+--------------------
+The common second-attack slot is also reused for Gangster's kick animation:
+
+    common punch slot -> Gangster punch
+    common elbow slot -> Gangster kick
+
+
+GANGSTER INITIALIZATION
+-----------------------
+Gangster instances are created through:
+
+    Enemy InitGangster(float x, float y);
+
+The initializer begins with:
+
+    Enemy enemy = InitEnemyBase();
+
+It then applies Gangster-specific values, including:
+
+    enemy.displayName = "GANGSTER";
+    enemy.maxHp = 18;
+    enemy.chaseSpeed = 175.0f;
+    enemy.idleFrameCount = 3;
+    enemy.walkFrameCount = 6;
+    enemy.punchFrameCount = 4;
+    enemy.elbowFrameCount = 4;
+    enemy.deathFrameCount = 3;
+
+
+BUILD INTEGRATION
+-----------------
+The Gangster source file was added to the GCC build list:
+
+    src\enemy\stage_1\gangster.c ^
+
+The include search path already supports the Stage 1 enemy headers:
+
+    -Iinclude\enemy\stage_1
+
+
+FILES INVOLVED
+--------------
+include/enemy/stage_1/gangster.h
+src/enemy/stage_1/gangster.c
+src/main.c
+build.bat
+
+assets/sprites/enemy/stage_1/gangster/
+
+
+0058 STATUS
+-----------
+DONE
+
+RESULT
+------
+Gangster is now integrated as a Stage 1 enemy type with its own 20-image
+animation set and shared texture loading system.

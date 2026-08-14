@@ -22,6 +22,8 @@ src\enemy\enemy_hit.c ^
 src\enemy\enemy_collision.c ^
 src\enemy\enemy_draw.c ^
 src\enemy\stage_1\punk.c ^
+src\enemy\stage_1\hooligan.c ^
+src\enemy\stage_1\gangster.c ^
 -o build\Wardogz_II.exe ^
 -Iinclude ^
 -Iinclude\player ^

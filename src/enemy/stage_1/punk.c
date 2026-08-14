@@ -68,6 +68,7 @@ Enemy InitPunk(float x, float y)
 {
     // Start with the shared/common enemy defaults.
     Enemy enemy = InitEnemyBase();
+    enemy.displayName = "PUNK";
 
     // ============================================================
     // PUNK - HURTBOX SETTINGS

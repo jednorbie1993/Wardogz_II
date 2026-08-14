@@ -12,6 +12,7 @@ Enemy InitEnemyBase(void)
 
     enemy.maxHp = 100;
     enemy.hp = enemy.maxHp;
+    enemy.displayName = "ENEMY";
     enemy.isAlive = true;
     enemy.hitByCurrentAttack = false;
     enemy.ownsTextures = true;
