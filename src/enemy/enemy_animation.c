@@ -40,6 +40,33 @@ void EnemyUpdateAnimation(
     enemy->walkFrame = 0;
     enemy->walkTimer = 0.0f;
 
+    if (
+        enemy->battleIdleActive &&
+        enemy->battleIdleFrameCount > 1
+    )
+    {
+        enemy->battleIdleTimer += deltaTime;
+
+        if (enemy->battleIdleTimer >= enemy->battleIdleFrameTime)
+        {
+            enemy->battleIdleTimer -= enemy->battleIdleFrameTime;
+            enemy->battleIdleFrame += enemy->battleIdleDirection;
+
+            if (enemy->battleIdleFrame >= enemy->battleIdleFrameCount - 1)
+            {
+                enemy->battleIdleFrame = enemy->battleIdleFrameCount - 1;
+                enemy->battleIdleDirection = -1;
+            }
+            else if (enemy->battleIdleFrame <= 0)
+            {
+                enemy->battleIdleFrame = 0;
+                enemy->battleIdleDirection = 1;
+            }
+        }
+
+        return;
+    }
+
     if (enemy->idleFrameCount > 1)
     {
         enemy->idleTimer += deltaTime;

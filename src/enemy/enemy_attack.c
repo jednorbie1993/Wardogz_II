@@ -68,6 +68,16 @@ static void StartEnemyAttack(Enemy *enemy)
     enemy->isAttacking = true;
     enemy->hitPlayerThisAttack = false;
 
+    // 0061 - After the first attack, an enemy with an optional battle-idle
+    // set remains in its fighting stance for the rest of the encounter.
+    if (enemy->battleIdleFrameCount > 0)
+    {
+        enemy->battleIdleActive = true;
+        enemy->battleIdleFrame = 0;
+        enemy->battleIdleDirection = 1;
+        enemy->battleIdleTimer = 0.0f;
+    }
+
     // 0037 FIX - Do NOT switch moves at attack start.
     // currentAttackMove is the move that must finish first.
     // The Punch/Elbow switch happens only after the full animation

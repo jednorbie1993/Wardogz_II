@@ -52,6 +52,20 @@ static Texture2D GetEnemyCurrentTexture(
         if (texture.id != 0) return texture;
     }
 
+    if (
+        enemy->battleIdleActive &&
+        enemy->battleIdleFrameCount > 0
+    )
+    {
+        int battleFrame = enemy->battleIdleFrame;
+        if (battleFrame < 0) battleFrame = 0;
+        if (battleFrame >= enemy->battleIdleFrameCount)
+            battleFrame = enemy->battleIdleFrameCount - 1;
+
+        Texture2D texture = enemy->battleIdleTextures[battleFrame];
+        if (texture.id != 0) return texture;
+    }
+
     int idleFrame = enemy->idleFrame;
     if (idleFrame < 0) idleFrame = 0;
     if (idleFrame >= enemy->idleFrameCount)

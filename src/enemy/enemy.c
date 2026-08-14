@@ -164,6 +164,14 @@ Enemy InitEnemyBase(void)
     enemy.idleTimer = 0.0f;
     enemy.idleFrameTime = 0.19f;
 
+    // 0061 - Optional battle idle defaults.
+    enemy.battleIdleFrameCount = 0;
+    enemy.battleIdleFrame = 0;
+    enemy.battleIdleDirection = 1;
+    enemy.battleIdleTimer = 0.0f;
+    enemy.battleIdleFrameTime = 0.16f;
+    enemy.battleIdleActive = false;
+
     // ============================================================
     // 0036 - GENERIC WALK DEFAULTS
     // ============================================================
@@ -585,6 +593,11 @@ void UnloadEnemy(Enemy *enemy)
     for (int i = 0; i < enemy->idleFrameCount; i++)
     {
         UnloadTexture(enemy->idleTextures[i]);
+    }
+
+    for (int i = 0; i < enemy->battleIdleFrameCount; i++)
+    {
+        UnloadTexture(enemy->battleIdleTextures[i]);
     }
 
     for (int i = 0; i < enemy->walkFrameCount; i++)

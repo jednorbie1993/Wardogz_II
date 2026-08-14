@@ -7,7 +7,7 @@
 #define MAX_ENEMY_IDLE_FRAMES 8
 #define MAX_ENEMY_WALK_FRAMES 8
 #define MAX_ENEMY_ATTACK_FRAMES 4
-#define MAX_ENEMY_DEATH_FRAMES 3
+#define MAX_ENEMY_DEATH_FRAMES 4
 
 typedef enum EnemyAttackMove
 {
@@ -61,7 +61,7 @@ typedef struct Enemy
     float deathTimer;
     float deathDuration;
 
-    // Two-frame death sequence: punk_dead1.png -> punk_death2.png.
+    // Per-enemy death sequence, up to MAX_ENEMY_DEATH_FRAMES.
     Texture2D deathTextures[MAX_ENEMY_DEATH_FRAMES];
     int deathFrameCount;
     int deathFrame;
@@ -210,6 +210,16 @@ typedef struct Enemy
     int idleDirection;
     float idleTimer;
     float idleFrameTime;
+
+    // 0061 - Optional combat stance animation.
+    // Enemies with no battle-idle textures keep using normal idle.
+    Texture2D battleIdleTextures[MAX_ENEMY_IDLE_FRAMES];
+    int battleIdleFrameCount;
+    int battleIdleFrame;
+    int battleIdleDirection;
+    float battleIdleTimer;
+    float battleIdleFrameTime;
+    bool battleIdleActive;
 
     // ============================================================
     // 0036 - GENERIC WALK ANIMATION

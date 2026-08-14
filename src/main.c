@@ -1,9 +1,7 @@
 #include "raylib.h"
 #include "player.h"
 #include "enemy.h"
-#include "punk.h"
-#include "hooligan.h"
-#include "gangster.h"
+#include "boss.h"
 
 // ============================================================
 // 0047 - Y-DEPTH DRAW SORTING
@@ -177,16 +175,16 @@ int main(void)
     camera.zoom = 1.0f;
 
     // ============================================================
-    // 0040 - MULTI-PUNK TEST SETUP
+    // 0061 - VARGAS-ONLY BOSS TEST SETUP
     // ============================================================
     //
-    // Stage 1 test limit: 4 Punks at the same time.
-    // Each Punk keeps its own AI, HP, attack state, and animation.
+    // Punk, Hooligan, and Gangster are temporarily hidden.
+    // Vargas appears by himself so his complete sprite set and
+    // normal-idle -> battle-idle transition can be tested safely.
     //
-    #define ENEMY_COUNT 3
+    #define ENEMY_COUNT 1
 
-    // TEMPORARY: Disable all Punk gameplay while building/testing Stage 1.
-    // Change this to true when the stage/map is ready for enemy placement.
+    // Temporary Vargas gameplay switch.
     const bool enemiesEnabled = true;
 
     Enemy enemies[ENEMY_COUNT];
@@ -194,18 +192,10 @@ int main(void)
     // 0049 - Each enemy HUD row remains briefly after HP reaches zero.
     float enemyHudDeathTimers[ENEMY_COUNT] = {0};
 
-    // 0040 - Load the 17 Punk textures once, then share them across all Punks.
-    LoadPunkSharedTextures();
-    LoadHooliganSharedTextures();
-    LoadGangsterSharedTextures();
+    LoadBossSharedTextures();
 
-    enemies[0] = InitPunk(1380.0f, 470.0f);
-    enemies[1] = InitHooligan(-180.0f, 540.0f);
-    enemies[2] = InitGangster(1460.0f, 620.0f);
-
-    StartEnemyEntrance(&enemies[0], 1000.0f, 470.0f, 140.0f);
-    StartEnemyEntrance(&enemies[1],  220.0f, 540.0f, 140.0f);
-    StartEnemyEntrance(&enemies[2], 1080.0f, 620.0f, 140.0f);
+    enemies[0] = InitBoss(1380.0f, 540.0f);
+    StartEnemyEntrance(&enemies[0], 1000.0f, 540.0f, 140.0f);
 
     // ============================================================
     // 0054 - STAGE 1 BACKGROUND SECTIONS
@@ -566,10 +556,8 @@ int main(void)
         UnloadEnemy(&enemies[i]);
     }
 
-    // Shared Punk textures are released exactly once.
-    UnloadPunkSharedTextures();
-    UnloadHooliganSharedTextures();
-    UnloadGangsterSharedTextures();
+    // Vargas' shared textures are released exactly once.
+    UnloadBossSharedTextures();
 
     UnloadPlayer(&player);
 
