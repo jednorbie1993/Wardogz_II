@@ -1,0 +1,45 @@
+0066 - INDIVIDUAL KNEE ATTACK AND STOP DISTANCES
+============================================================
+
+Boss Knee received its own attack range and stop distance instead of always
+using the Boss Punch values.
+
+Required Enemy fields in include/enemy/enemy.h:
+
+    float bossKneeAttackRange;
+    float bossKneeStopDistance;
+
+Default initialization in src/enemy/enemy.c:
+
+    enemy.bossKneeAttackRange = 0.0f;
+    enemy.bossKneeStopDistance = 0.0f;
+
+Current Vargas tuning in src/enemy/stage_1/boss.c:
+
+    enemy.bossKneeAttackRange = 405.0f;
+    enemy.bossKneeStopDistance = 400.0f;
+    enemy.bossKneeLungeDistance = 300.0f;
+
+Meaning:
+
+- bossKneeAttackRange: maximum horizontal distance allowed for Knee attack.
+- bossKneeStopDistance: distance at which Vargas stops approaching for Knee.
+- bossKneeLungeDistance: forward movement during Knee Frames 2-3.
+
+Knee attack range selection was added to GetNextEnemyAttackRange() in:
+
+    src/enemy/enemy_attack.c
+
+Knee stop distance selection was added to GetNextEnemyAttackStopDistance() in:
+
+    src/enemy/enemy_move.c
+
+Files involved:
+
+- include/enemy/enemy.h
+- src/enemy/enemy.c
+- src/enemy/enemy_attack.c
+- src/enemy/enemy_move.c
+- src/enemy/stage_1/boss.c
+
+============================================================

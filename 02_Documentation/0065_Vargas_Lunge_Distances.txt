@@ -1,0 +1,43 @@
+0065 - INDIVIDUAL VARGAS LUNGE DISTANCES
+============================================================
+
+The three sliding moves have independently adjustable forward distances in
+src/enemy/stage_1/boss.c.
+
+Current tuning values:
+
+    enemy.bossComboLungeDistance = 230.0f;
+    enemy.bossKneeLungeDistance = 300.0f;
+    enemy.bossUppercutLungeDistance = 240.0f;
+    enemy.bossLungeRemaining = 0.0f;
+
+Meaning:
+
+- LungeDistance is the complete distance that Vargas travels during the move.
+- bossLungeRemaining is an internal runtime tracker.
+- Only the LungeDistance values should be adjusted manually.
+- bossLungeRemaining must start at 0.0f.
+
+Important cleanup:
+
+bossKneeLungeDistance must be assigned only once in boss.c. A duplicate Knee
+lunge assignment causes the last value to overwrite the earlier value.
+
+Required Enemy fields:
+
+    float bossComboLungeDistance;
+    float bossKneeLungeDistance;
+    float bossUppercutLungeDistance;
+    float bossLungeRemaining;
+
+The default values in src/enemy/enemy.c remain 0.0f so normal enemies do not
+receive Vargas slide movement.
+
+Files involved:
+
+- include/enemy/enemy.h
+- src/enemy/enemy.c
+- src/enemy/enemy_attack.c
+- src/enemy/stage_1/boss.c
+
+============================================================

@@ -1,0 +1,46 @@
+0064 - FRAME 1 FREEZE AND FORWARD SLIDE
+============================================================
+
+Combo, Knee, and Uppercut hold their first visible frame before moving.
+
+Current shared Frame 1 freeze:
+
+    return 0.70f;
+
+The value is located in GetEnemyAttackFrameDuration() inside:
+
+    src/enemy/enemy_attack.c
+
+Frame indexing reminder:
+
+- Code frame 0 = visible/image Frame 1
+- Code frame 1 = visible/image Frame 2
+- Code frame 2 = visible/image Frame 3
+- Code frame 3 = visible/image Frame 4
+
+Final slide frames:
+
+Boss Combo:
+
+- Frame 1: freeze/hold
+- Frames 2-4: forward slide
+
+Boss Knee:
+
+- Frame 1: freeze/hold
+- Frames 2-3: forward slide
+- Frame 4: recovery, no slide
+
+Boss Uppercut:
+
+- Frame 1: freeze/hold
+- Frames 2-3: forward slide
+- Frame 4: recovery, no slide
+
+Boss Punch and Boss Kick do not use this special freeze/slide system.
+
+Files involved:
+
+- src/enemy/enemy_attack.c
+
+============================================================

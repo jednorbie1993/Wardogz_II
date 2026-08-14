@@ -1,0 +1,47 @@
+0063 - VARGAS DAMAGE FRAME RULES
+============================================================
+
+Boss Punch:
+
+- Four animation frames.
+- Visible Frame 2 deals damage.
+- Visible Frame 3 deals damage.
+- The two frames represent the left and right punches.
+- No Frame 1 freeze.
+- No forward slide.
+
+Boss Kick:
+
+- Four animation frames.
+- Visible Frame 3 deals damage only.
+- No Frame 1 freeze.
+- No forward slide.
+- The Punk Elbow freeze/slide logic is blocked for Vargas.
+
+Boss Combo:
+
+- Existing separate Combo impact frames remain active.
+- Visible Frames 2 and 4 deal damage.
+
+Boss Knee:
+
+- Visible Frame 3 deals damage.
+
+Boss Uppercut:
+
+- Visible Frame 3 deals damage.
+
+Boss Heavy Blow:
+
+- Existing Heavy Blow impact behavior remains unchanged.
+
+The attackHitFrames bit mask allows Vargas Punch and Combo to damage the
+player on more than one animation frame without applying repeated damage on
+the same frame.
+
+Files involved:
+
+- src/enemy/enemy_attack.c
+- src/enemy/enemy_draw.c
+
+============================================================

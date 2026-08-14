@@ -1,0 +1,35 @@
+0062 - VARGAS COMPLETE ATTACK CYCLE
+============================================================
+
+The Vargas attack cycle was updated so every available move is used before
+the sequence repeats.
+
+Final attack order:
+
+1. Boss Punch
+2. Boss Kick
+3. Boss Combo
+4. Boss Knee
+5. Boss Uppercut
+6. Boss Heavy Blow
+7. Return to Boss Punch
+
+Internal attack mapping:
+
+ENEMY_ATTACK_PUNCH             = Boss Punch
+ENEMY_ATTACK_ELBOW             = Boss Kick
+ENEMY_ATTACK_BOSS_COMBO        = Boss Combo
+ENEMY_ATTACK_BOSS_KNEE         = Boss Knee
+ENEMY_ATTACK_BOSS_UPPERCUT     = Boss Uppercut
+ENEMY_ATTACK_BOSS_HEAVY_BLOW   = Boss Heavy Blow
+
+Note:
+The internal ELBOW slot is reused by Vargas for the Boss Kick animation.
+This does not mean Vargas performs the Punk Elbow move.
+
+Files involved:
+
+- src/enemy/enemy_attack.c
+- src/enemy/stage_1/boss.c
+
+============================================================

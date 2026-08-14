@@ -118,9 +118,18 @@ typedef struct Enemy
     float elbowAttackRange;
     float elbowStopDistance;
 
+    float bossKneeAttackRange;
+    float bossKneeStopDistance;
+
     // 0038 - ELBOW FRAME 3 LUNGE / SLIDE
     float elbowLungeDistance;
     float elbowLungeRemaining;
+
+    // Vargas forward slides. Each move has its own adjustable distance.
+    float bossComboLungeDistance;
+    float bossKneeLungeDistance;
+    float bossUppercutLungeDistance;
+    float bossLungeRemaining;
 
     // ============================================================
     // 0037 - PER-MOVE ATTACK HITBOX SETTINGS

@@ -1,0 +1,104 @@
+0067 - KNEE ATTACK TURN RANGE FIX
+============================================================
+
+Problem:
+
+Vargas stopped at the intended Knee distance but would not start Knee until
+the player moved much closer, around 190-200 pixels.
+
+Root cause:
+
+ResolveEnemyAttackTurnTiming() inside src/enemy/enemy.c still selected only
+the Punch or Elbow/Kick range. Knee therefore used:
+
+    enemy.punchAttackRange = 190.0f;
+
+even though:
+
+    enemy.bossKneeAttackRange = 405.0f;
+
+Fix:
+
+The requiredAttackRange selection inside ResolveEnemyAttackTurnTiming() was
+changed to include ENEMY_ATTACK_BOSS_KNEE:
+
+    float requiredAttackRange;
+
+    switch (enemy->nextAttackMove)
+    {
+        case ENEMY_ATTACK_ELBOW:
+            requiredAttackRange = enemy->elbowAttackRange;
+            break;
+
+        case ENEMY_ATTACK_BOSS_KNEE:
+            requiredAttackRange = enemy->bossKneeAttackRange;
+            break;
+
+        default:
+            requiredAttackRange = enemy->punchAttackRange;
+            break;
+    }
+
+The Knee distance must be recognized in three different systems:
+
+1. src/enemy/enemy_attack.c
+   - Confirms the attack can start within bossKneeAttackRange.
+
+2. src/enemy/enemy_move.c
+   - Stops Vargas at bossKneeStopDistance.
+
+3. src/enemy/enemy.c
+   - Allows the shared attack-turn controller to grant the Knee attack using
+     bossKneeAttackRange instead of punchAttackRange.
+
+Without the third update, Knee continues waiting for the old Punch range even
+when the Knee AttackRange and StopDistance values are correct.
+
+============================================================
+FINAL CURRENT VARGAS TUNING REFERENCE
+============================================================
+
+General attack animation:
+
+    enemy.attackFrameTime = 0.16f;
+    enemy.attackHitReactionTime = 0.17f;
+
+Punch:
+
+    enemy.punchAttackRange = 190.0f;
+    enemy.punchStopDistance = 189.0f;
+
+Kick (internal Elbow slot):
+
+    enemy.elbowAttackRange = 231.0f;
+    enemy.elbowStopDistance = 230.0f;
+
+Knee:
+
+    enemy.bossKneeAttackRange = 405.0f;
+    enemy.bossKneeStopDistance = 400.0f;
+    enemy.bossKneeLungeDistance = 300.0f;
+
+Other forward slides:
+
+    enemy.bossComboLungeDistance = 230.0f;
+    enemy.bossUppercutLungeDistance = 240.0f;
+
+Shared Combo/Knee/Uppercut Frame 1 freeze:
+
+    return 0.70f;
+
+============================================================
+FILES CHANGED / CHECKED FROM 0062-0067
+============================================================
+
+1. include/enemy/enemy.h
+2. src/enemy/enemy.c
+3. src/enemy/enemy_attack.c
+4. src/enemy/enemy_move.c
+5. src/enemy/enemy_draw.c
+6. src/enemy/stage_1/boss.c
+
+============================================================
+END OF DOCUMENTATION
+============================================================

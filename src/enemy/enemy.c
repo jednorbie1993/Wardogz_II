@@ -88,6 +88,12 @@ Enemy InitEnemyBase(void)
 
     enemy.elbowAttackRange = 110.0f;
     enemy.elbowStopDistance = 110.0f;
+    enemy.bossComboLungeDistance = 0.0f;
+    enemy.bossKneeLungeDistance = 0.0f;
+    enemy.bossUppercutLungeDistance = 0.0f;
+    enemy.bossKneeAttackRange = 0.0f;
+    enemy.bossKneeStopDistance = 0.0f;
+    enemy.bossLungeRemaining = 0.0f;
 
     // 0037 - Per-move attack hitbox defaults.
     // Punk overrides these values in punk.c.
@@ -572,10 +578,22 @@ void ResolveEnemyAttackTurnTiming(
         EnemyCombatContext context =
             EnemyBuildCombatContext(enemy, player);
 
-        float requiredAttackRange =
-            (enemy->nextAttackMove == ENEMY_ATTACK_ELBOW)
-            ? enemy->elbowAttackRange
-            : enemy->punchAttackRange;
+        float requiredAttackRange;
+
+        switch (enemy->nextAttackMove)
+        {
+            case ENEMY_ATTACK_ELBOW:
+                requiredAttackRange = enemy->elbowAttackRange;
+                break;
+
+            case ENEMY_ATTACK_BOSS_KNEE:
+                requiredAttackRange = enemy->bossKneeAttackRange;
+                break;
+
+            default:
+                requiredAttackRange = enemy->punchAttackRange;
+                break;
+        }
 
         if (
             !context.playerDetected ||

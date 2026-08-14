@@ -281,6 +281,11 @@ void DrawEnemy(const Enemy *enemy)
         (
             enemy->attackFrame == 2 ||
             (
+                enemy->bossComboFrameCount > 0 &&
+                enemy->currentAttackMove == ENEMY_ATTACK_PUNCH &&
+                enemy->attackFrame == 1
+            ) ||
+            (
                 enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO &&
                 (enemy->attackFrame == 1 || enemy->attackFrame == 3)
             ) ||

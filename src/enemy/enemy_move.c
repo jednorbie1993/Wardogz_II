@@ -6,12 +6,18 @@ static float GetNextEnemyAttackStopDistance(
     const Enemy *enemy
 )
 {
-    if (enemy->nextAttackMove == ENEMY_ATTACK_ELBOW)
+    switch (enemy->nextAttackMove)
     {
-        return enemy->elbowStopDistance;
-    }
+        case ENEMY_ATTACK_ELBOW:
+            // Boss Kick / Punk Elbow
+            return enemy->elbowStopDistance;
 
-    return enemy->punchStopDistance;
+        case ENEMY_ATTACK_BOSS_KNEE:
+            return enemy->bossKneeStopDistance;
+
+        default:
+            return enemy->punchStopDistance;
+    }
 }
 
 

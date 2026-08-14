@@ -104,16 +104,25 @@ Enemy InitBoss(float x, float y)
     enemy.retreatSpeed = 430.0f;
     enemy.retreatPauseDuration = 0.65f;
 
-    enemy.punchAttackRange = 240.0f;
-    enemy.punchStopDistance = 168.0f;
-    enemy.elbowAttackRange = 235.0f;
-    enemy.elbowStopDistance = 188.0f;
+    enemy.punchAttackRange = 190.0f;
+    enemy.punchStopDistance = 189.0f;
+    enemy.elbowAttackRange = 231.0f;
+    enemy.elbowStopDistance = 230.0f;
+    enemy.bossKneeAttackRange = 405.0f;
+    enemy.bossKneeStopDistance = 390.0f;
+    enemy.bossKneeLungeDistance = 300.0f;
     enemy.elbowLungeDistance = 75.0f;
     enemy.elbowLungeRemaining = 0.0f;
 
+    // Vargas forward-slide distances. Adjust each move separately here.
+    enemy.bossComboLungeDistance = 200.0f;
+    enemy.bossKneeLungeDistance = 450.0f;
+    enemy.bossUppercutLungeDistance = 240.0f;
+    enemy.bossLungeRemaining = 0.0f;
+
     enemy.attackDamage = 14;
     enemy.attackKnockbackSpeed = 230.0f;
-    enemy.attackHitReactionTime = 0.18f;
+    enemy.attackHitReactionTime = 0.17f;
     enemy.stageAnchorOffsetY = 220.0f;
 
     LoadBossSharedTextures();
@@ -167,12 +176,12 @@ Enemy InitBoss(float x, float y)
     enemy.deathFreezeDuration = 0.0f;
     enemy.deathDuration = 3.20f;
 
-    enemy.attackFrameTime = 0.20f;
+    enemy.attackFrameTime = 0.16f;
     // Vargas attack order:
-    // Combo -> Knee -> Uppercut -> Heavy Blow -> repeat.
+    // Punch -> Kick -> Combo -> Knee -> Uppercut -> Heavy Blow -> repeat.
     // enemy_attack.c advances the move only after the full attack finishes.
-    enemy.currentAttackMove = ENEMY_ATTACK_BOSS_COMBO;
-    enemy.nextAttackMove = ENEMY_ATTACK_BOSS_COMBO;
+    enemy.currentAttackMove = ENEMY_ATTACK_PUNCH;
+    enemy.nextAttackMove = ENEMY_ATTACK_PUNCH;
     enemy.lockAttackMove = false;
     enemy.retreatFrameTime = 0.07f;
 

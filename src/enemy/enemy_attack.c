@@ -5,22 +5,27 @@ static float GetNextEnemyAttackRange(
     const Enemy *enemy
 )
 {
-    if (enemy->nextAttackMove == ENEMY_ATTACK_ELBOW)
+    switch (enemy->nextAttackMove)
     {
-        return enemy->elbowAttackRange;
-    }
+        case ENEMY_ATTACK_ELBOW:
+            // Boss Kick / Punk Elbow
+            return enemy->elbowAttackRange;
 
-    return enemy->punchAttackRange;
+        case ENEMY_ATTACK_BOSS_KNEE:
+            return enemy->bossKneeAttackRange;
+
+        default:
+            return enemy->punchAttackRange;
+    }
 }
 
-
-static bool IsBossAttackMove(EnemyAttackMove move)
+static bool IsVargas(const Enemy *enemy)
 {
     return
-        move == ENEMY_ATTACK_BOSS_COMBO ||
-        move == ENEMY_ATTACK_BOSS_KNEE ||
-        move == ENEMY_ATTACK_BOSS_UPPERCUT ||
-        move == ENEMY_ATTACK_BOSS_HEAVY_BLOW;
+        enemy->bossComboFrameCount > 0 &&
+        enemy->bossKneeFrameCount > 0 &&
+        enemy->bossUppercutFrameCount > 0 &&
+        enemy->bossHeavyBlowFrameCount > 0;
 }
 
 
@@ -28,6 +33,10 @@ static EnemyAttackMove GetNextBossAttackMove(EnemyAttackMove move)
 {
     switch (move)
     {
+        case ENEMY_ATTACK_PUNCH:
+            return ENEMY_ATTACK_ELBOW;
+        case ENEMY_ATTACK_ELBOW:
+            return ENEMY_ATTACK_BOSS_COMBO;
         case ENEMY_ATTACK_BOSS_COMBO:
             return ENEMY_ATTACK_BOSS_KNEE;
         case ENEMY_ATTACK_BOSS_KNEE:
@@ -36,8 +45,45 @@ static EnemyAttackMove GetNextBossAttackMove(EnemyAttackMove move)
             return ENEMY_ATTACK_BOSS_HEAVY_BLOW;
         case ENEMY_ATTACK_BOSS_HEAVY_BLOW:
         default:
-            return ENEMY_ATTACK_BOSS_COMBO;
+            return ENEMY_ATTACK_PUNCH;
     }
+}
+
+
+static float GetBossLungeDistance(const Enemy *enemy)
+{
+    switch (enemy->currentAttackMove)
+    {
+        case ENEMY_ATTACK_BOSS_COMBO:
+            return enemy->bossComboLungeDistance;
+        case ENEMY_ATTACK_BOSS_KNEE:
+            return enemy->bossKneeLungeDistance;
+        case ENEMY_ATTACK_BOSS_UPPERCUT:
+            return enemy->bossUppercutLungeDistance;
+        default:
+            return 0.0f;
+    }
+}
+
+
+static bool IsBossLungeFrame(const Enemy *enemy)
+{
+    if (enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO)
+    {
+        // Visible Frames 2-4.
+        return enemy->attackFrame >= 1 && enemy->attackFrame <= 3;
+    }
+
+    if (
+        enemy->currentAttackMove == ENEMY_ATTACK_BOSS_KNEE ||
+        enemy->currentAttackMove == ENEMY_ATTACK_BOSS_UPPERCUT
+    )
+    {
+        // Visible Frames 2-3.
+        return enemy->attackFrame >= 1 && enemy->attackFrame <= 2;
+    }
+
+    return false;
 }
 
 
@@ -82,12 +128,27 @@ static float GetEnemyAttackFrameDuration(
     int frame
 )
 {
+    // Vargas Combo, Knee, and Uppercut hold visible Frame 1 for 0.90s.
+    // The forward slide begins only after this freeze finishes.
+    if (
+        frame == 0 &&
+        (
+            enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO ||
+            enemy->currentAttackMove == ENEMY_ATTACK_BOSS_KNEE ||
+            enemy->currentAttackMove == ENEMY_ATTACK_BOSS_UPPERCUT
+        )
+    )
+    {
+        return 0.70f;
+    }
+
     // Punk Elbow timing:
     // Frame 1 = wind-up
     // Frame 2 = freeze / hold (no hitbox)
     // Frame 3 = strike (yellow hitbox active)
     // Frame 4 = recovery
     if (
+        !IsVargas(enemy) &&
         enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
         frame == 1
     )
@@ -97,6 +158,7 @@ static float GetEnemyAttackFrameDuration(
 
     // Visible Frame 3 (index 2) stays held while Punk slides forward.
     if (
+        !IsVargas(enemy) &&
         enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
         frame == 2
     )
@@ -134,9 +196,11 @@ static void StartEnemyAttack(Enemy *enemy)
 
     // Prepare the elbow lunge once at attack start.
     enemy->elbowLungeRemaining =
-        (enemy->currentAttackMove == ENEMY_ATTACK_ELBOW)
+        (!IsVargas(enemy) && enemy->currentAttackMove == ENEMY_ATTACK_ELBOW)
         ? enemy->elbowLungeDistance
         : 0.0f;
+
+    enemy->bossLungeRemaining = GetBossLungeDistance(enemy);
 
     int frameCount =
         GetCurrentAttackFrameCount(enemy);
@@ -326,6 +390,7 @@ void EnemyUpdateAttack(
     // attackFrame == 2 means visible Frame 3.
     // Move the actual Punk hurtbox/body forward while Frame 3 is held.
     if (
+        !IsVargas(enemy) &&
         enemy->currentAttackMove == ENEMY_ATTACK_ELBOW &&
         enemy->attackFrame == 2 &&
         enemy->elbowLungeRemaining > 0.0f
@@ -348,10 +413,40 @@ void EnemyUpdateAttack(
         enemy->elbowLungeRemaining -= slideAmount;
     }
 
-    // Normal attacks hit once. Vargas' Combo hits separately on
-    // visible Frames 2 and 4 (indices 1 and 3).
+    // Combo slides on visible Frames 2-4.
+    // Knee and Uppercut slide on visible Frames 2-3.
+    if (IsBossLungeFrame(enemy) && enemy->bossLungeRemaining > 0.0f)
+    {
+        int slideFrameCount =
+            (enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO) ? 3 : 2;
+
+        float fullDistance = GetBossLungeDistance(enemy);
+        float slideDuration = enemy->attackFrameTime * (float)slideFrameCount;
+        float slideAmount = (fullDistance / slideDuration) * deltaTime;
+
+        if (slideAmount > enemy->bossLungeRemaining)
+        {
+            slideAmount = enemy->bossLungeRemaining;
+        }
+
+        enemy->hurtbox.x +=
+            slideAmount * (float)enemy->attackDirection;
+        enemy->bossLungeRemaining -= slideAmount;
+    }
+
+    // Default impact is visible Frame 3. This keeps Boss Kick damage
+    // on Frame 3 only. Vargas Punch is a two-hit left/right attack,
+    // so visible Frames 2 and 3 both deal damage.
     bool attackHitboxActive = (enemy->attackFrame == 2);
-    if (enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO)
+    if (
+        IsVargas(enemy) &&
+        enemy->currentAttackMove == ENEMY_ATTACK_PUNCH
+    )
+    {
+        attackHitboxActive =
+            (enemy->attackFrame == 1 || enemy->attackFrame == 2);
+    }
+    else if (enemy->currentAttackMove == ENEMY_ATTACK_BOSS_COMBO)
     {
         attackHitboxActive =
             (enemy->attackFrame == 1 || enemy->attackFrame == 3);
@@ -404,6 +499,7 @@ void EnemyUpdateAttack(
         enemy->attackFrame = 0;
         enemy->attackFrameTimer = 0.0f;
         enemy->elbowLungeRemaining = 0.0f;
+        enemy->bossLungeRemaining = 0.0f;
 
         // ========================================================
         // 0045 - RETREAT AFTER A COMPLETED ATTACK
@@ -418,9 +514,9 @@ void EnemyUpdateAttack(
         enemy->retreatFrame = 0;
         enemy->retreatFrameTimer = 0.0f;
 
-        // Vargas uses every completed special move once before repeating:
-        // Combo -> Knee -> Uppercut -> Heavy Blow -> Combo.
-        if (!enemy->lockAttackMove && IsBossAttackMove(enemy->currentAttackMove))
+        // Vargas cycle:
+        // Punch -> Kick -> Combo -> Knee -> Uppercut -> Heavy Blow -> repeat.
+        if (!enemy->lockAttackMove && IsVargas(enemy))
         {
             enemy->currentAttackMove =
                 GetNextBossAttackMove(enemy->currentAttackMove);
