@@ -1,0 +1,74 @@
+WARDOGZ II DOCUMENTATION
+0091 - STORY -> TUTORIAL -> GAMEPLAY FLOW
+
+FINAL FLOW
+--------------------------------------------------
+GAME_STATE_LOADING
+    |
+    v
+GAME_STATE_TITLE
+    |
+    ENTER
+    v
+GAME_STATE_INTRO
+    |
+    ENTER through images
+    v
+GAME_STATE_TUTORIAL
+    |
+    ENTER
+    v
+GAME_STATE_STAGE_FADE_IN
+    |
+    fade complete
+    v
+GAME_STATE_PLAYING
+--------------------------------------------------
+
+STATE TRANSITIONS
+--------------------------------------------------
+if (gameState == GAME_STATE_TITLE &&
+    IsKeyPressed(KEY_ENTER))
+{
+    introIndex = 0;
+    gameState = GAME_STATE_INTRO;
+}
+
+if (gameState == GAME_STATE_INTRO &&
+    IsKeyPressed(KEY_ENTER))
+{
+    introIndex++;
+
+    if (introIndex >= INTRO_IMAGE_COUNT)
+    {
+        introIndex = INTRO_IMAGE_COUNT - 1;
+        gameState = GAME_STATE_TUTORIAL;
+    }
+}
+
+if (gameState == GAME_STATE_TUTORIAL &&
+    IsKeyPressed(KEY_ENTER))
+{
+    fadeAlpha = 1.0f;
+    gameState = GAME_STATE_STAGE_FADE_IN;
+}
+--------------------------------------------------
+
+GAMEPLAY
+--------------------------------------------------
+if (gameState == GAME_STATE_PLAYING)
+{
+    UpdatePlayer(...);
+    UpdateEnemies(...);
+    UpdateCombat(...);
+}
+--------------------------------------------------
+
+IMPORTANT
+Do NOT call gameplay updates while:
+- TITLE
+- INTRO
+- TUTORIAL
+- FADE-IN
+
+Para walang enemy na umaatake habang cinematic pa.

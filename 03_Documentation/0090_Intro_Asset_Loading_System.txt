@@ -1,0 +1,94 @@
+WARDOGZ II DOCUMENTATION
+0090 - TWO-PHASE ASSET LOADING SYSTEM
+
+PURPOSE
+Hatiin ang loading para mas mabilis ang game startup.
+
+PHASE 1
+Load only:
+- Jamber/player
+- title screen assets
+- logo
+- basic font/sound if needed
+
+PHASE 2
+Pagkatapos ng title ENTER:
+- Punk
+- Gangster
+- Hooligan
+- Stage 1 backgrounds
+- combat sprites
+- HUD
+- tutorial
+- Stage 1 sounds/music
+
+SIMPLE IMPLEMENTATION
+--------------------------------------------------
+bool LoadStartupAssets(void)
+{
+    // player = Load...
+    // titleLogo = LoadTexture(...);
+
+    return true;
+}
+
+bool LoadStageOneAssets(void)
+{
+    // Load enemy textures
+    // Load backgrounds
+    // Load stage sounds
+    // Load HUD
+
+    return true;
+}
+--------------------------------------------------
+
+IN main()
+--------------------------------------------------
+bool startupLoaded = false;
+bool stageAssetsLoaded = false;
+--------------------------------------------------
+
+STARTUP
+--------------------------------------------------
+if (gameState == GAME_STATE_LOADING)
+{
+    if (!startupLoaded)
+    {
+        startupLoaded = LoadStartupAssets();
+    }
+
+    if (startupLoaded)
+    {
+        gameState = GAME_STATE_TITLE;
+    }
+}
+--------------------------------------------------
+
+AFTER TITLE ENTER
+--------------------------------------------------
+if (gameState == GAME_STATE_TITLE &&
+    IsKeyPressed(KEY_ENTER))
+{
+    if (!stageAssetsLoaded)
+    {
+        stageAssetsLoaded = LoadStageOneAssets();
+    }
+
+    introIndex = 0;
+    gameState = GAME_STATE_INTRO;
+}
+--------------------------------------------------
+
+NOTE
+Ito ang simple version.
+
+Kung sobrang dami ng assets at gusto ng visible loading percentage,
+puwedeng hatiin pa ang LoadStageOneAssets() into steps:
+
+stageLoadStep = 0;
+stageLoadStep = 1;
+stageLoadStep = 2;
+etc.
+
+Pero hindi kailangan kung mabilis naman ang loading.

@@ -1,0 +1,95 @@
+WARDOGZ II DOCUMENTATION
+0088 - STORY INTRO IMAGE SEQUENCE
+
+PURPOSE
+Magkaroon ng cinematic image sequence bago ang tutorial at gameplay.
+
+RECOMMENDED DATA
+--------------------------------------------------
+#define INTRO_IMAGE_COUNT 7
+
+Texture2D introImages[INTRO_IMAGE_COUNT];
+int introIndex = 0;
+--------------------------------------------------
+
+SAMPLE LOADING
+--------------------------------------------------
+introImages[0] = LoadTexture("assets/story/intro1.png");
+introImages[1] = LoadTexture("assets/story/intro2.png");
+introImages[2] = LoadTexture("assets/story/intro3.png");
+introImages[3] = LoadTexture("assets/story/intro4.png");
+introImages[4] = LoadTexture("assets/story/intro5.png");
+introImages[5] = LoadTexture("assets/story/intro6.png");
+introImages[6] = LoadTexture("assets/story/intro7.png");
+--------------------------------------------------
+
+INTRO CONTROLS
+Recommended:
+- ENTER = next image
+- Image 7 ENTER = tutorial
+
+UPDATE
+--------------------------------------------------
+if (gameState == GAME_STATE_INTRO)
+{
+    if (IsKeyPressed(KEY_ENTER))
+    {
+        introIndex++;
+
+        if (introIndex >= INTRO_IMAGE_COUNT)
+        {
+            introIndex = INTRO_IMAGE_COUNT - 1;
+            gameState = GAME_STATE_TUTORIAL;
+        }
+    }
+}
+--------------------------------------------------
+
+DRAW
+--------------------------------------------------
+if (gameState == GAME_STATE_INTRO)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    Texture2D image = introImages[introIndex];
+
+    Rectangle src = {
+        0.0f,
+        0.0f,
+        (float)image.width,
+        (float)image.height
+    };
+
+    Rectangle dst = {
+        0.0f,
+        0.0f,
+        (float)GetScreenWidth(),
+        (float)GetScreenHeight()
+    };
+
+    DrawTexturePro(
+        image,
+        src,
+        dst,
+        (Vector2){0, 0},
+        0.0f,
+        WHITE
+    );
+
+    EndDrawing();
+}
+--------------------------------------------------
+
+STORY IMAGE ORDER
+1. The Experiments / Fighters
+2. Jamber Senses His Kind
+3. Jamber Enters the Territory
+4. Facility / enemy territory progression
+5. Punk, Gangster and Hooligan preparation
+6. Jamber deeper inside the territory
+7. No One Gets Left Behind / blue smoky energy
+
+NOTE
+Title screen is separate.
+Tutorial is separate.

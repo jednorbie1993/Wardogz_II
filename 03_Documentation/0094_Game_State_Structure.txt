@@ -1,0 +1,101 @@
+WARDOGZ II DOCUMENTATION
+0094 - INTRO / GAME STATE STRUCTURE
+
+PURPOSE
+Ihiwalay ang loading, title, intro, tutorial at gameplay.
+
+ENUM
+--------------------------------------------------
+typedef enum
+{
+    GAME_STATE_LOADING = 0,
+    GAME_STATE_TITLE,
+    GAME_STATE_INTRO,
+    GAME_STATE_TUTORIAL,
+    GAME_STATE_STAGE_FADE_IN,
+    GAME_STATE_PLAYING
+} GameState;
+--------------------------------------------------
+
+MAIN UPDATE STRUCTURE
+--------------------------------------------------
+switch (gameState)
+{
+    case GAME_STATE_LOADING:
+        // startup load
+        break;
+
+    case GAME_STATE_TITLE:
+        // title input
+        break;
+
+    case GAME_STATE_INTRO:
+        // intro ENTER logic
+        break;
+
+    case GAME_STATE_TUTORIAL:
+        // tutorial ENTER logic
+        break;
+
+    case GAME_STATE_STAGE_FADE_IN:
+        // fadeAlpha update
+        break;
+
+    case GAME_STATE_PLAYING:
+        UpdatePlayer(...);
+        UpdateEnemies(...);
+        UpdateCombat(...);
+        break;
+}
+--------------------------------------------------
+
+MAIN DRAW STRUCTURE
+--------------------------------------------------
+BeginDrawing();
+ClearBackground(BLACK);
+
+switch (gameState)
+{
+    case GAME_STATE_LOADING:
+        DrawText("LOADING...", 40, 40, 30, WHITE);
+        break;
+
+    case GAME_STATE_TITLE:
+        DrawTitleScreen();
+        break;
+
+    case GAME_STATE_INTRO:
+        DrawIntroScreen(introIndex);
+        break;
+
+    case GAME_STATE_TUTORIAL:
+        DrawTutorialScreen();
+        break;
+
+    case GAME_STATE_STAGE_FADE_IN:
+    case GAME_STATE_PLAYING:
+        DrawStageOne();
+
+        if (gameState == GAME_STATE_STAGE_FADE_IN)
+        {
+            DrawRectangle(
+                0,
+                0,
+                GetScreenWidth(),
+                GetScreenHeight(),
+                Fade(BLACK, fadeAlpha)
+            );
+        }
+        break;
+}
+
+EndDrawing();
+--------------------------------------------------
+
+WHY THIS IS BETTER
+- Hindi halo-halo ang input.
+- Madaling idagdag later:
+  GAME_STATE_PAUSE
+  GAME_STATE_GAME_OVER
+  GAME_STATE_STAGE_COMPLETE
+  GAME_STATE_CUTSCENE

@@ -1,0 +1,85 @@
+WARDOGZ II DOCUMENTATION
+0087 - TITLE SCREEN & STARTUP LOADING FLOW
+
+PURPOSE
+- Unang load: player/Jamber + title assets lang muna.
+- Hindi agad ilo-load ang Punk, Gangster, Hooligan at buong Stage 1.
+- Pag ENTER sa title screen, saka magsisimula ang next loading phase.
+
+RECOMMENDED GAME STATE
+--------------------------------------------------
+typedef enum
+{
+    GAME_STATE_LOADING,
+    GAME_STATE_TITLE,
+    GAME_STATE_INTRO,
+    GAME_STATE_TUTORIAL,
+    GAME_STATE_STAGE_FADE_IN,
+    GAME_STATE_PLAYING
+} GameState;
+--------------------------------------------------
+
+SA main()
+--------------------------------------------------
+GameState gameState = GAME_STATE_LOADING;
+
+bool startupLoaded = false;
+bool stageAssetsLoaded = false;
+--------------------------------------------------
+
+INITIAL LOADING
+--------------------------------------------------
+if (gameState == GAME_STATE_LOADING)
+{
+    if (!startupLoaded)
+    {
+        // Load Jamber/player assets here.
+        // Load title logo/background here.
+        // Load only assets needed before the intro.
+
+        startupLoaded = true;
+    }
+
+    if (startupLoaded)
+    {
+        gameState = GAME_STATE_TITLE;
+    }
+}
+--------------------------------------------------
+
+TITLE INPUT
+--------------------------------------------------
+if (gameState == GAME_STATE_TITLE)
+{
+    if (IsKeyPressed(KEY_ENTER))
+    {
+        gameState = GAME_STATE_INTRO;
+    }
+}
+--------------------------------------------------
+
+DRAW TITLE SCREEN
+--------------------------------------------------
+if (gameState == GAME_STATE_TITLE)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    // DrawTexture(titleBackground, 0, 0, WHITE);
+    // DrawTexture(titleLogo, logoX, logoY, WHITE);
+    // DrawTexture(jamberTitleTexture, jamberX, jamberY, WHITE);
+
+    DrawText("PRESS ENTER TO CONTINUE",
+             120,
+             GetScreenHeight() - 100,
+             28,
+             WHITE);
+
+    EndDrawing();
+}
+--------------------------------------------------
+
+IMPORTANT
+- Alisin ang "PRESS ANY KEY TO CONTINUE".
+- ENTER lang ang gamitin para consistent ang startup flow.
+- Iwasan muna ang full Stage 1 loading sa GAME_STATE_LOADING.

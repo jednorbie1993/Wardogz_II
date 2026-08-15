@@ -1,0 +1,71 @@
+WARDOGZ II DOCUMENTATION
+0093 - INTRO / GAMEPLAY FADE TRANSITION
+
+PURPOSE
+Smooth transition mula tutorial papunta Stage 1.
+
+VARIABLES
+--------------------------------------------------
+float fadeAlpha = 1.0f;
+float fadeSpeed = 1.5f;
+--------------------------------------------------
+
+WHEN TUTORIAL ENDS
+--------------------------------------------------
+if (gameState == GAME_STATE_TUTORIAL &&
+    IsKeyPressed(KEY_ENTER))
+{
+    fadeAlpha = 1.0f;
+    gameState = GAME_STATE_STAGE_FADE_IN;
+}
+--------------------------------------------------
+
+UPDATE FADE-IN
+--------------------------------------------------
+if (gameState == GAME_STATE_STAGE_FADE_IN)
+{
+    fadeAlpha -= fadeSpeed * GetFrameTime();
+
+    if (fadeAlpha <= 0.0f)
+    {
+        fadeAlpha = 0.0f;
+        gameState = GAME_STATE_PLAYING;
+    }
+}
+--------------------------------------------------
+
+DRAW STAGE FIRST
+--------------------------------------------------
+if (gameState == GAME_STATE_STAGE_FADE_IN ||
+    gameState == GAME_STATE_PLAYING)
+{
+    BeginDrawing();
+
+    // Draw stage background
+    // Draw enemies
+    // Draw player
+    // Draw HUD
+
+    if (gameState == GAME_STATE_STAGE_FADE_IN)
+    {
+        DrawRectangle(
+            0,
+            0,
+            GetScreenWidth(),
+            GetScreenHeight(),
+            Fade(BLACK, fadeAlpha)
+        );
+    }
+
+    EndDrawing();
+}
+--------------------------------------------------
+
+IMPORTANT
+Habang GAME_STATE_STAGE_FADE_IN:
+- no player controls
+- no enemy attacks
+- no damage checks
+
+Pag fadeAlpha == 0:
+GAME_STATE_PLAYING.

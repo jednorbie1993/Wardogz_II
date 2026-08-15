@@ -1,0 +1,67 @@
+WARDOGZ II DOCUMENTATION
+0095 - BERSERKER STORY FORESHADOWING
+
+PURPOSE
+Ipakita sa intro na may hidden/advanced power si Jamber bago pa
+ito maging full gameplay mechanic.
+
+CURRENT INTRO VERSION
+- weak blue smoky energy
+- subtle blue glow
+- controlled anger
+- optional red rage accents
+- NO ONE GETS LEFT BEHIND scene
+
+NO FULL BERSERKER CODE REQUIRED YET.
+
+OPTIONAL INTRO EFFECT
+Kung gusto ng simple pulse/glow overlay:
+--------------------------------------------------
+float auraPulse = (sinf((float)GetTime() * 4.0f) + 1.0f) * 0.5f;
+float auraAlpha = 0.15f + auraPulse * 0.15f;
+
+DrawCircle(
+    jamberScreenX,
+    jamberScreenY,
+    130.0f,
+    Fade(BLUE, auraAlpha)
+);
+--------------------------------------------------
+
+NOTE
+Mas maganda kung actual blue smoke ay nasa cinematic image mismo.
+Ang code effect ay optional lang.
+
+FUTURE BERSERKER SYSTEM IDEA
+--------------------------------------------------
+typedef struct
+{
+    float value;
+    float maxValue;
+    bool active;
+    float activeTimer;
+} BerserkerMeter;
+--------------------------------------------------
+
+Possible later behavior:
+- meter increases when Jamber hits enemies
+- meter can also increase when Jamber takes damage
+- full meter enables Berserker
+- Berserker gives bonus damage
+- red/blue visual treatment
+- temporary duration
+
+DO NOT FINALIZE YET:
+- exact max meter
+- gain per hit
+- damage multiplier
+- duration
+- activation button
+
+These should be balanced after normal combat is stable.
+--------------------------------------------------
+
+DOCUMENTATION CHECKPOINT
+Previous last document: 0086
+New documents: 0087-0095
+Current last document: 0095

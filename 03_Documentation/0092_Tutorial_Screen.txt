@@ -1,0 +1,67 @@
+WARDOGZ II DOCUMENTATION
+0092 - TUTORIAL SCREEN
+
+PURPOSE
+Tutorial appears after the final story image.
+
+OPTION A - ONE TUTORIAL IMAGE
+--------------------------------------------------
+Texture2D tutorialTexture =
+    LoadTexture("assets/ui/tutorial.png");
+--------------------------------------------------
+
+DRAW
+--------------------------------------------------
+if (gameState == GAME_STATE_TUTORIAL)
+{
+    BeginDrawing();
+    ClearBackground(BLACK);
+
+    DrawTexturePro(
+        tutorialTexture,
+        (Rectangle){
+            0,
+            0,
+            (float)tutorialTexture.width,
+            (float)tutorialTexture.height
+        },
+        (Rectangle){
+            0,
+            0,
+            (float)GetScreenWidth(),
+            (float)GetScreenHeight()
+        },
+        (Vector2){0, 0},
+        0.0f,
+        WHITE
+    );
+
+    DrawText(
+        "PRESS ENTER TO START",
+        40,
+        GetScreenHeight() - 60,
+        24,
+        WHITE
+    );
+
+    EndDrawing();
+}
+--------------------------------------------------
+
+CONTROLS TO DISPLAY
+Arrow Keys = Movement
+A = Left Punch / Punch
+W = Right Punch / Punch
+S = Left Kick / Kick
+D = Right Kick / Kick
+Double Tap Direction = Dash
+
+ENTER
+--------------------------------------------------
+if (gameState == GAME_STATE_TUTORIAL &&
+    IsKeyPressed(KEY_ENTER))
+{
+    fadeAlpha = 1.0f;
+    gameState = GAME_STATE_STAGE_FADE_IN;
+}
+--------------------------------------------------

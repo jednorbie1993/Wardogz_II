@@ -1,0 +1,59 @@
+WARDOGZ II DOCUMENTATION
+0089 - STORY TEXT / CINEMATIC CAPTIONS
+
+PURPOSE
+Maglagay ng story text/caption bawat intro image.
+
+RECOMMENDED STORAGE
+--------------------------------------------------
+const char *introText[] =
+{
+    "They were not prisoners. They were experiments.",
+    "Jamber stopped. Something inside felt familiar.",
+    "Whatever was inside, he was going in.",
+    "The deeper he went, the clearer the truth became.",
+    "Punk, Gangster and Hooligan prepared for the intruder.",
+    "There was no turning back now.",
+    "NO ONE GETS LEFT BEHIND."
+};
+--------------------------------------------------
+
+DRAW TEXT BOX
+--------------------------------------------------
+void DrawIntroCaption(const char *text)
+{
+    int boxHeight = 120;
+
+    DrawRectangle(
+        0,
+        GetScreenHeight() - boxHeight,
+        GetScreenWidth(),
+        boxHeight,
+        Fade(BLACK, 0.72f)
+    );
+
+    DrawText(
+        text,
+        40,
+        GetScreenHeight() - 80,
+        28,
+        WHITE
+    );
+}
+--------------------------------------------------
+
+SA INTRO DRAW
+--------------------------------------------------
+DrawTexturePro(...);
+
+DrawIntroCaption(introText[introIndex]);
+--------------------------------------------------
+
+OPTIONAL
+Kung mahaba ang caption:
+- hatiin sa 2 lines manually
+- o gumamit ng DrawTextEx + sariling wrap function.
+
+IMPORTANT
+Core line:
+NO ONE GETS LEFT BEHIND.
