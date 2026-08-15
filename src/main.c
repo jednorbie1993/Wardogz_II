@@ -482,16 +482,90 @@ int main(void)
         0.20f);
 
     // ============================================================
-    // 0074 - PRELOAD NORMAL STAGE 1 ENEMIES
+    // OPENING TITLE SCREEN - PLAYER FIRST, ENEMIES LOAD AFTER ENTER
     // ============================================================
-    // Load Punk, Hooligan, and Gangster sprite caches now so the
-    // first wave does not pause/freeze when an enemy is spawned.
-    LoadEnemyWaveSharedTextures();
+    Texture2D introStart =
+        LoadTexture("assets/cinematic/intro/intro_start.png");
 
-    DrawStartupLoading(
-        screenWidth,
-        screenHeight,
-        0.30f);
+    bool titleAccepted = false;
+    bool titleFadingOut = false;
+    float titleFadeTimer = 0.0f;
+    float titlePulseTimer = 0.0f;
+    const float titleFadeDuration = 0.70f;
+
+    while (!WindowShouldClose() && !titleAccepted)
+    {
+        float titleDeltaTime = GetFrameTime();
+        if (titleDeltaTime > 0.10f) titleDeltaTime = 0.10f;
+        titlePulseTimer += titleDeltaTime;
+
+        if (!titleFadingOut && IsKeyPressed(KEY_ENTER))
+        {
+            titleFadingOut = true;
+            titleFadeTimer = 0.0f;
+        }
+
+        if (titleFadingOut)
+        {
+            titleFadeTimer += titleDeltaTime;
+            if (titleFadeTimer >= titleFadeDuration)
+            {
+                titleAccepted = true;
+            }
+        }
+
+        BeginDrawing();
+        ClearBackground(BLACK);
+
+        if (introStart.id != 0 && introStart.width > 0 && introStart.height > 0)
+        {
+            DrawTexturePro(
+                introStart,
+                (Rectangle){0.0f, 0.0f, (float)introStart.width, (float)introStart.height},
+                (Rectangle){0.0f, 0.0f, (float)screenWidth, (float)screenHeight},
+                (Vector2){0.0f, 0.0f},
+                0.0f,
+                WHITE);
+        }
+
+        // The prompt is code-driven so it can blink and be repositioned later.
+        if (!titleFadingOut && ((int)(titlePulseTimer * 2.0f) % 2 == 0))
+        {
+            const char *titlePrompt = "PRESS ENTER TO PLAY";
+            int promptWidth = MeasureText(titlePrompt, 26);
+            int promptX = (screenWidth - promptWidth) / 2;
+            int promptY = screenHeight - 72;
+            DrawRectangle(promptX - 22, promptY - 9, promptWidth + 44, 46, Fade(BLACK, 0.68f));
+            DrawText(titlePrompt, promptX, promptY, 26, WHITE);
+        }
+
+        if (titleFadingOut)
+        {
+            float alpha = titleFadeTimer / titleFadeDuration;
+            if (alpha > 1.0f) alpha = 1.0f;
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, alpha));
+        }
+
+        EndDrawing();
+    }
+
+    if (introStart.id != 0)
+    {
+        UnloadTexture(introStart);
+    }
+
+    if (WindowShouldClose())
+    {
+        UnloadPlayer(&player);
+        CloseAudioDevice();
+        CloseWindow();
+        return 0;
+    }
+
+    // Second loading phase begins only after the title screen is accepted.
+    DrawStartupLoading(screenWidth, screenHeight, 0.05f);
+    LoadEnemyWaveSharedTextures();
+    DrawStartupLoading(screenWidth, screenHeight, 0.15f);
 
     // 0054 - Horizontal camera for the long Stage 1 walk test.
     Camera2D camera = {0};
@@ -526,6 +600,10 @@ int main(void)
     int vargasApproachDialoguePage = 0;
     bool vargasFightStarted = false;
     float vargasEndingTimer = 0.0f;
+
+    // Opening cinematic uses intro1.png-intro7.png plus intro_tutorial.png.
+    // Its images are loaded after the player accepts the title screen.
+    OpeningCinematic opening = InitOpeningCinematic();
 
     // 0072 - Stage 1 ending cinematic.
     // The six scene textures are intentionally NOT loaded at startup.
@@ -616,9 +694,36 @@ int main(void)
         stageWorldWidth = (float)screenWidth;
     }
 
+    StartOpeningCinematic(&opening);
+    bool openingWasActive = true;
+    float gameplayFadeInTimer = 0.0f;
+    const float gameplayFadeInDuration = 0.90f;
+
     while (!WindowShouldClose())
     {
         float deltaTime = GetFrameTime();
+
+        // ========================================================
+        // OPENING STORY + TUTORIAL
+        // ========================================================
+        if (IsOpeningCinematicActive(&opening))
+        {
+            UpdateOpeningCinematic(&opening, deltaTime);
+
+            BeginDrawing();
+            ClearBackground(BLACK);
+            DrawOpeningCinematic(&opening, screenWidth, screenHeight);
+            EndDrawing();
+
+            openingWasActive = true;
+            continue;
+        }
+
+        if (openingWasActive && IsOpeningCinematicFinished(&opening))
+        {
+            openingWasActive = false;
+            gameplayFadeInTimer = 0.0f;
+        }
 
         // Wait for Vargas' 3.20-second death animation before leaving gameplay.
         // Once the cinematic starts, gameplay is no longer updated or drawn.
@@ -1148,6 +1253,16 @@ int main(void)
                 screenHeight);
         }
 
+        // Fade Stage 1 in from black after the tutorial closes.
+        if (IsOpeningCinematicFinished(&opening) &&
+            gameplayFadeInTimer < gameplayFadeInDuration)
+        {
+            gameplayFadeInTimer += deltaTime;
+            float fadeAlpha = 1.0f - (gameplayFadeInTimer / gameplayFadeInDuration);
+            if (fadeAlpha < 0.0f) fadeAlpha = 0.0f;
+            DrawRectangle(0, 0, screenWidth, screenHeight, Fade(BLACK, fadeAlpha));
+        }
+
         EndDrawing();
     }
 
@@ -1182,6 +1297,7 @@ int main(void)
         UnloadTexture(vargasIntroPortrait);
     }
 
+    UnloadOpeningCinematic(&opening);
     UnloadStage1Cinematic(&stage1Ending);
 
     UnloadPlayer(&player);
