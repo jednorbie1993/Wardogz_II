@@ -88,16 +88,22 @@ typedef struct Player
     // ============================================================
     // 0030 - PLAYER HURT / HP STATE
     // ============================================================
-    int maxHp;
-    int hp;
+    float maxHp;
+    float hp;
     bool isAlive;
+
+    // 0073 - PASSIVE HP REGENERATION
+    // Jamber restores 1.5 HP after each full second while below max HP.
+    float hpRegenTimer;
+    float hpRegenInterval;
+    float hpRegenAmount;
 
     bool isHit;
     float hitReactionTimer;
     float knockbackSpeed;
     int knockbackDirection;
 
-    // 0069 - Alternating impact sounds when an enemy actually hits the player.
+    // 0069 - Alternating player hit sounds.
     Sound enemyHitSound;
     Sound enemyHitSoundAlternate;
     bool useAlternateEnemyHitSound;
@@ -156,6 +162,7 @@ Rectangle GetPlayerAttackHitbox(const Player *player);
 int GetPlayerAttackDamage(const Player *player);
 float GetPlayerAttackKnockbackSpeed(const Player *player);
 float GetPlayerAttackHitReactionTime(const Player *player);
+void PlayPlayerAttackHitSound(Player *player);
 
 // 0030 - Player hurtbox / hit reaction
 Rectangle GetPlayerHurtbox(const Player *player);
@@ -174,6 +181,7 @@ void UpdatePlayerHitReaction(
 );
 
 void DrawPlayer(const Player *player);
+void DrawPlayerHud(const Player *player);
 void UnloadPlayer(Player *player);
 
 #endif // PLAYER_H

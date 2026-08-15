@@ -138,13 +138,15 @@ void DrawPlayer(const Player *player)
     // ============================================================
     // DRAW PLAYER
     // ============================================================
+    Color playerTint = player->isHit ? RED : WHITE;
+
     DrawTexturePro(
         currentTexture,
         source,
         destination,
         origin,
         0.0f,
-        WHITE
+        playerTint
     );
 
     // ============================================================
@@ -195,15 +197,56 @@ void DrawPlayer(const Player *player)
     );
 #endif
 
-    // ============================================================
-    // 0030 - PLAYER HP DISPLAY
-    // ============================================================
+}
+
+// ============================================================
+// 0073 - SCREEN-SPACE JAMBER HP HUD
+// ============================================================
+// Call this after EndMode2D() so it remains fixed on the screen while
+// the camera follows Jamber across the long stage.
+void DrawPlayerHud(const Player *player)
+{
+    const float startX = 24.0f;
+    const float y = 24.0f;
+    const float nameWidth = 110.0f;
+    const float barWidth = 170.0f;
+    const float barHeight = 14.0f;
+
+    float hpPercent = 0.0f;
+
+    if (player->maxHp > 0.0f)
+    {
+        hpPercent = player->hp / player->maxHp;
+    }
+
+    if (hpPercent < 0.0f) hpPercent = 0.0f;
+    if (hpPercent > 1.0f) hpPercent = 1.0f;
+
     DrawText(
-        TextFormat("Player HP: %d", player->hp),
-        30,
-        65,
-        25,
-        GREEN
+        "JAMBER",
+        (int)startX,
+        (int)(y - 4.0f),
+        20,
+        WHITE
     );
 
+    Rectangle hpBack =
+    {
+        startX + nameWidth,
+        y,
+        barWidth,
+        barHeight
+    };
+
+    Rectangle hpFill =
+    {
+        hpBack.x,
+        hpBack.y,
+        hpBack.width * hpPercent,
+        hpBack.height
+    };
+
+    DrawRectangleRec(hpBack, BLACK);
+    DrawRectangleRec(hpFill, GREEN);
+    DrawRectangleLinesEx(hpBack, 2.0f, WHITE);
 }

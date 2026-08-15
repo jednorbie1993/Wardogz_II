@@ -1,6 +1,33 @@
 #include "player_move.h"
 #include "player_attack.h"
 
+static void UpdatePlayerHpRegeneration(
+    Player *player,
+    float deltaTime
+)
+{
+    if (!player->isAlive || player->hp >= player->maxHp)
+    {
+        player->hpRegenTimer = 0.0f;
+        return;
+    }
+
+    player->hpRegenTimer += deltaTime;
+
+    while (player->hpRegenTimer >= player->hpRegenInterval)
+    {
+        player->hpRegenTimer -= player->hpRegenInterval;
+        player->hp += player->hpRegenAmount;
+
+        if (player->hp >= player->maxHp)
+        {
+            player->hp = player->maxHp;
+            player->hpRegenTimer = 0.0f;
+            break;
+        }
+    }
+}
+
 void UpdatePlayer(
     Player *player,
     float deltaTime,
@@ -8,6 +35,19 @@ void UpdatePlayer(
     float walkAreaTop,
     float walkAreaBottom)
 {
+    // 0073 - Regeneration continues during normal gameplay.
+    UpdatePlayerHpRegeneration(player, deltaTime);
+
+    // Apply the same short hit pause and light knockback used by enemies.
+    // Input is ignored until the red hit reaction finishes.
+    if (player->isHit)
+    {
+        player->isWalking = false;
+        player->isRunning = false;
+        UpdatePlayerHitReaction(player, deltaTime, screenWidth);
+        return;
+    }
+
     // ============================================================
     // CHECK MOVEMENT INPUT
     // ============================================================

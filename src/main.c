@@ -932,6 +932,9 @@ int main(void)
 
         EndMode2D();
 
+        // 0073 - Screen-fixed Jamber name and HP bar.
+        DrawPlayerHud(&player);
+
         // 0049 - Active enemy HP list. Dead rows disappear after a short delay.
         if (vargasHudVisible)
         {
@@ -953,7 +956,7 @@ int main(void)
                 stageWorldWidth,
                 stageProgress * 100.0f),
             30,
-            25,
+            65,
             22,
             YELLOW
         );

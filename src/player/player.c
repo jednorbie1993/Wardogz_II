@@ -132,9 +132,14 @@ Player InitPlayer(const char *texturePath)
     // ============================================================
     // 0030 - PLAYER HP / HURT STATE
     // ============================================================
-    player.maxHp = 900;
+    player.maxHp = 1000.0f;
     player.hp = player.maxHp;
     player.isAlive = true;
+
+    // 0073 - Restore 1.5 HP after every full second below max HP.
+    player.hpRegenTimer = 0.0f;
+    player.hpRegenInterval = 0.60f;
+    player.hpRegenAmount = 3.0f;
 
     player.isHit = false;
     player.hitReactionTimer = 0.0f;
@@ -186,6 +191,14 @@ Player InitPlayer(const char *texturePath)
     player.speed = 300.0f;
 
     return player;
+}
+
+void PlayPlayerAttackHitSound(Player *player)
+{
+    if (player->enemyHitSound.frameCount > 0)
+    {
+        PlaySound(player->enemyHitSound);
+    }
 }
 
 void UnloadPlayer(Player *player)
@@ -339,7 +352,7 @@ void DamagePlayer(
         return;
     }
 
-    player->hp -= damage;
+    player->hp -= (float)damage;
 
     // The sound is triggered here, not when the enemy merely starts attacking.
     // DamagePlayer() is called only after the enemy hitbox connects with Jamber.
@@ -358,12 +371,14 @@ void DamagePlayer(
 
     if (player->hp < 0)
     {
-        player->hp = 0;
+        player->hp = 0.0f;
     }
 
     player->isHit = true;
     player->hitReactionTimer = hitReactionTime;
-    player->knockbackSpeed = knockbackSpeed;
+    // Match the enemy's light hit movement: show impact without sending
+    // Jamber too far away from the fight.
+    player->knockbackSpeed = knockbackSpeed * 0.15f;
     player->knockbackDirection = knockbackDirection;
 
     if (player->hp <= 0)

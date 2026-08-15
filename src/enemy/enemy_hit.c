@@ -193,6 +193,10 @@ void EnemyCheckPlayerAttack(
 
     enemy->hitByCurrentAttack = true;
 
+    // 0074 - Play one impact sound for every enemy that Jamber
+    // successfully hits. Missed attacks remain silent.
+    PlayPlayerAttackHitSound(player);
+
     // ============================================================
     // HIT REACTION / KNOCKBACK
     // ============================================================
