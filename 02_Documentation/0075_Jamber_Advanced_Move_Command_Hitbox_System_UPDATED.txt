@@ -1,0 +1,201 @@
+0075 - JAMBER ADVANCED MOVE / COMMAND / HITBOX SYSTEM
+=====================================================
+
+PURPOSE
+-------
+Adds Jamber's complete advanced move set, directional commands,
+three A-W combo branches, Hold-A Punch Charge, Ctrl crouch attacks,
+per-frame image-measured hitboxes, and proportional move slides.
+
+CONTROLS
+--------
+A + W                    Hammer Punch
+Hold Back + A            Back Blow
+Back, Back + W           Elbow Dash
+Hold Back + W            Downward Fist
+Forward, Forward + S     Slide Kick
+Forward, Forward + D     Round Kick
+Forward, Forward + A+W   Hammer Charge
+Hold A                   Punch Charge
+Forward, Forward + A     Uppercut
+Forward, Forward + W     Chop
+Forward, Forward + S+D   Drop Kick
+Hold Ctrl                Sit / Crouch
+Ctrl + A                 Uppercut
+Ctrl + W                 Stationary Rising Elbow
+A + D                    Hip Check
+W + S                    Headbutt
+
+COMBOS
+------
+A, W, A                  Punch - Punch - Downward Fist
+A, W, A+W                Punch - Punch - Hammer Punch
+A, W, S                  Punch - Punch - Round Kick
+
+INPUT WINDOWS
+-------------
+Two direction taps:      maximum 0.30 second apart
+Button after second tap: maximum 0.15 second
+Two-button chord grace:  0.10 second
+Tap/hold A threshold:    0.18 second
+Combo continuation:      0.85 second
+
+The ordinary dash still starts after a double tap. If a matching attack
+button arrives inside the command window, the normal dash is cancelled and
+the special move takes over. Multi-button commands have priority over their
+single-button versions.
+
+IMPORTANT DAMAGE FRAMES
+-----------------------
+Hammer Punch:       visible Frames 2-3, one hit total
+Back Blow:          visible Frame 3
+Elbow Dash:         visible Frame 3; slide Frames 2-3
+Downward Fist:      visible Frame 3
+Slide Kick:         visible Frame 2 freeze; Frame 3 damage; slide starts Frame 3
+Round Kick:         visible Frame 3
+Hammer Charge:      visible Frames 2-3; one hit total; slide Frames 2-3
+Punch Charge:       visible Frame 2 hold; Frame 3 release/damage/slide
+Uppercut:           visible Frames 2-3, one hit total
+Chop:               visible Frame 3
+Drop Kick:          visible Frame 3; hitbox covers both feet
+Rising Elbow:       visible Frame 3; stationary
+Hip Check:          slide Frames 3-4 forward; visible Frame 4 damage
+Headbutt:           slide Frames 2-3; visible Frame 3 damage
+
+PUNCH CHARGE LEVELS
+-------------------
+Release before 1.5 sec: 18 damage, short slide
+1.5 to 2.99 sec:        32 damage, medium shake, 1-2 inch visual slide
+3.0 sec maximum:        48 damage, stronger shake, 2-3 inch visual slide
+
+The distances are not literal monitor inches. They are ratios of Jamber's
+scaled sprite canvas, so the move stays proportional at every stage depth.
+
+HITBOX SYSTEM
+-------------
+Each active image frame has its own normalized rectangle measured directly
+from the 1024 x 1024 source image. The box follows:
+
+- the fist, foot, forehead, elbow, shoulder, or hip used for impact;
+- player depth scaling;
+- left/right sprite mirroring;
+- the frame-specific move slide.
+
+Press F1 during gameplay to toggle the debug boxes:
+
+- Red: active attack hitbox
+- Green: player hurtbox
+- Purple: ground/foot marker
+
+ASSET SAFETY FIXES
+------------------
+hip_charge3.jpg was supplied with an opaque white background. player.c now
+removes only the near-white area connected to the image edges while loading.
+The outlined white face remains intact.
+
+Detached far-right specks in JLP1, JRP1, punch_charge1, and uppercut3 are
+cleared only in empty canvas space during texture loading.
+
+BALANCE / MANUAL ADJUSTMENT
+---------------------------
+Edit src/player/player_attack_data.c to adjust:
+
+- frame duration;
+- per-frame hitbox coordinates;
+- damage;
+- knockback;
+- hit reaction duration;
+- slide distance, frame range, and direction.
+
+BUILD COMPATIBILITY FIX
+-----------------------
+The first 0075 build failed because the new player_attack_data.c was already
+using the expanded per-frame PlayerAttackData format while an older
+PlayerAttackData structure was still present in the project.
+
+The old structure used fields such as:
+
+- frameTime
+- activeStartFrame
+- activeEndFrame
+- hitboxWidthScale
+- hitboxHeightScale
+- hitboxOffsetXScale
+- hitboxOffsetYScale
+
+The new 0075 system requires:
+
+- frameCount
+- frameTimes[MAX_PLAYER_ATTACK_FRAMES]
+- frameHitboxes[MAX_PLAYER_ATTACK_FRAMES]
+- damage
+- knockbackSpeed
+- hitReactionTime
+- slideDistanceScale
+- slideStartFrame
+- slideEndFrame
+- slideFacingDirection
+
+Because the compiler was reading the old structure, errors appeared such as:
+
+- PlayerAttackData has no member named 'frameCount'
+- PlayerAttackData has no member named 'frameTimes'
+- PlayerAttackData has no member named 'frameHitboxes'
+- PlayerAttackData has no member named 'slideDistanceScale'
+- PlayerAttackData has no member named 'slideStartFrame'
+- PlayerAttackData has no member named 'slideEndFrame'
+- PlayerAttackData has no member named 'slideFacingDirection'
+- array index in non-array initializer
+- excess elements in scalar initializer
+
+FIX APPLIED
+-----------
+The duplicate / old PlayerAttackData structure was removed and
+include/player/player_attack_data.h was synchronized with the new 0075
+per-frame attack system.
+
+The correct structure now contains:
+
+    int frameCount;
+    float frameTimes[MAX_PLAYER_ATTACK_FRAMES];
+    Rectangle frameHitboxes[MAX_PLAYER_ATTACK_FRAMES];
+
+    int damage;
+    float knockbackSpeed;
+    float hitReactionTime;
+
+    float slideDistanceScale;
+    int slideStartFrame;
+    int slideEndFrame;
+    int slideFacingDirection;
+
+After restoring the correct new structure and removing the old duplicate
+definition, player.c could again access attackData->frameCount and the
+project built successfully.
+
+IMPORTANT
+---------
+There must only be one active definition of:
+
+    typedef struct PlayerAttackData
+
+in the project.
+
+If the old structure is accidentally restored or another duplicate header is
+included, the same compile errors can return.
+
+FILES CHANGED
+-------------
+include/player/player.h
+include/player/player_attack_data.h
+src/player/player.c
+src/player/player_attack.c
+src/player/player_attack_data.c
+src/player/player_draw.c
+src/player/player_move.c
+
+STATUS
+------
+0075 build issue fixed.
+Project builds and runs after synchronizing PlayerAttackData with the new
+per-frame attack data system.

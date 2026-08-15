@@ -1,0 +1,96 @@
+0074 - JAMBER PER-FRAME ATTACK / HITBOX / SLIDE SYSTEM
+======================================================
+
+NOTE
+----
+This entry was reconstructed from the surviving 0075 documentation and
+current player_attack_data.c because no separate original 0074 TXT file was
+found.
+
+PURPOSE
+-------
+Upgrades Jamber's attacks to per-frame move definitions so each move can
+control its own animation timing, active hitbox, damage, knockback, hit
+reaction, and optional slide.
+
+PLAYER ATTACK DATA
+------------------
+The newer PlayerAttackData format contains:
+
+    int frameCount;
+    float frameTimes[MAX_PLAYER_ATTACK_FRAMES];
+    Rectangle frameHitboxes[MAX_PLAYER_ATTACK_FRAMES];
+
+    int damage;
+    float knockbackSpeed;
+    float hitReactionTime;
+
+    float slideDistanceScale;
+    int slideStartFrame;
+    int slideEndFrame;
+    int slideFacingDirection;
+
+HITBOX SYSTEM
+-------------
+Each active image frame can have its own normalized hitbox measured from the
+1024 x 1024 source sprite.
+
+The box follows:
+- the actual fist, foot, forehead, elbow, shoulder, or hip used for impact;
+- player depth scaling;
+- left/right sprite mirroring;
+- the move's frame-specific slide.
+
+A zero-size frame hitbox means that frame cannot damage an enemy.
+
+IMPORTANT ACTIVE FRAMES
+-----------------------
+Hammer Punch:       visible Frames 2-3, one hit total
+Back Blow:          visible Frame 3
+Elbow Dash:         visible Frame 3; slide Frames 2-3
+Downward Fist:      visible Frame 3
+Slide Kick:         Frame 2 freeze; Frame 3 damage; slide starts Frame 3
+Round Kick:         visible Frame 3
+Hammer Charge:      visible Frames 2-3; one hit total; slide Frames 2-3
+Uppercut:           visible Frames 2-3, one hit total
+Chop:               visible Frame 3
+Drop Kick:          visible Frame 3; hitbox covers both feet
+Rising Elbow:       visible Frame 3; stationary
+Hip Check:          slide Frames 3-4 forward; visible Frame 4 damage
+Headbutt:           slide Frames 2-3; visible Frame 3 damage
+
+SLIDE SYSTEM
+------------
+Slide distance is stored as a ratio of Jamber's scaled sprite canvas,
+not literal monitor inches.
+
+This keeps slide distance proportional at different stage depths.
+
+DEBUG DISPLAY
+-------------
+F1 toggles:
+- Red: active attack hitbox
+- Green: player hurtbox
+- Purple: ground / foot marker
+
+MANUAL ADJUSTMENT
+-----------------
+Edit:
+    src/player/player_attack_data.c
+
+to adjust:
+- frame duration;
+- per-frame hitbox coordinates;
+- damage;
+- knockback;
+- hit reaction duration;
+- slide distance;
+- slide frame range;
+- slide direction.
+
+STATUS
+------
+Reconstructed 0074 entry from surviving 0075/current code.
+
+END OF DOCUMENTATION 0074
+=========================

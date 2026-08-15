@@ -1,4 +1,257 @@
 #include "player.h"
+#include "player_attack_data.h"
+
+#include <stdlib.h>
+
+// ============================================================
+// 0075 - PLAYER ATTACK TEXTURE LOADING
+// ============================================================
+
+static bool IsNearWhiteBackgroundPixel(Color color)
+{
+    return
+        color.r >= 225 &&
+        color.g >= 225 &&
+        color.b >= 225;
+}
+
+static void QueueConnectedWhitePixel(
+    Color *pixels,
+    int pixelIndex,
+    int *queue,
+    int *queueTail
+)
+{
+    if (
+        pixels[pixelIndex].a != 0 &&
+        IsNearWhiteBackgroundPixel(pixels[pixelIndex])
+    )
+    {
+        // Alpha zero doubles as the flood-fill visited marker.
+        pixels[pixelIndex].a = 0;
+        queue[*queueTail] = pixelIndex;
+        (*queueTail)++;
+    }
+}
+
+// hip_charge3 was supplied as a JPG with a white background while every
+// other move frame is a transparent PNG. Remove only the near-white area
+// connected to the image edges. The white parts inside Jamber's outlined
+// face remain intact because the flood fill cannot cross the dark outline.
+static Texture2D LoadHipChargeFrame3(void)
+{
+    Image image =
+        LoadImage("assets/sprites/player/moves/hip_charge3.jpg");
+
+    if (
+        image.data == NULL ||
+        image.width <= 0 ||
+        image.height <= 0
+    )
+    {
+        TraceLog(LOG_WARNING, "PLAYER MOVE FAILED TO LOAD: hip_charge3.jpg");
+        return (Texture2D){0};
+    }
+
+    ImageFormat(
+        &image,
+        PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+    );
+
+    int pixelCount = image.width * image.height;
+    Color *pixels = (Color *)image.data;
+    int *queue = (int *)malloc((size_t)pixelCount * sizeof(int));
+
+    if (queue != NULL)
+    {
+        int queueHead = 0;
+        int queueTail = 0;
+
+        for (int x = 0; x < image.width; x++)
+        {
+            QueueConnectedWhitePixel(
+                pixels,
+                x,
+                queue,
+                &queueTail
+            );
+
+            QueueConnectedWhitePixel(
+                pixels,
+                ((image.height - 1) * image.width) + x,
+                queue,
+                &queueTail
+            );
+        }
+
+        for (int y = 1; y < image.height - 1; y++)
+        {
+            QueueConnectedWhitePixel(
+                pixels,
+                y * image.width,
+                queue,
+                &queueTail
+            );
+
+            QueueConnectedWhitePixel(
+                pixels,
+                (y * image.width) + image.width - 1,
+                queue,
+                &queueTail
+            );
+        }
+
+        while (queueHead < queueTail)
+        {
+            int pixelIndex = queue[queueHead++];
+            int x = pixelIndex % image.width;
+            int y = pixelIndex / image.width;
+
+            if (x > 0)
+            {
+                QueueConnectedWhitePixel(
+                    pixels,
+                    pixelIndex - 1,
+                    queue,
+                    &queueTail
+                );
+            }
+
+            if (x + 1 < image.width)
+            {
+                QueueConnectedWhitePixel(
+                    pixels,
+                    pixelIndex + 1,
+                    queue,
+                    &queueTail
+                );
+            }
+
+            if (y > 0)
+            {
+                QueueConnectedWhitePixel(
+                    pixels,
+                    pixelIndex - image.width,
+                    queue,
+                    &queueTail
+                );
+            }
+
+            if (y + 1 < image.height)
+            {
+                QueueConnectedWhitePixel(
+                    pixels,
+                    pixelIndex + image.width,
+                    queue,
+                    &queueTail
+                );
+            }
+        }
+
+        free(queue);
+    }
+
+    Texture2D texture = LoadTextureFromImage(image);
+    UnloadImage(image);
+
+    return texture;
+}
+
+// A few supplied frames contain a detached speck near the far-right edge
+// of the otherwise transparent canvas. Clear only that empty-canvas area;
+// the real character pixels end well before x = 900 in these frames.
+static Texture2D LoadAttackFrameWithoutRightEdgeArtifact(
+    const char *path
+)
+{
+    Image image = LoadImage(path);
+
+    if (
+        image.data == NULL ||
+        image.width <= 0 ||
+        image.height <= 0
+    )
+    {
+        return (Texture2D){0};
+    }
+
+    ImageFormat(
+        &image,
+        PIXELFORMAT_UNCOMPRESSED_R8G8B8A8
+    );
+
+    Color *pixels = (Color *)image.data;
+    int clearStartX = (image.width * 88) / 100;
+    int clearEndY = (image.height * 42) / 100;
+
+    for (int y = 0; y < clearEndY; y++)
+    {
+        for (int x = clearStartX; x < image.width; x++)
+        {
+            pixels[(y * image.width) + x].a = 0;
+        }
+    }
+
+    Texture2D texture = LoadTextureFromImage(image);
+    UnloadImage(image);
+
+    return texture;
+}
+
+static void LoadPlayerAttackFrames(
+    Player *player,
+    AttackType attack,
+    const char *pathPattern
+)
+{
+    const PlayerAttackData *attackData =
+        GetPlayerAttackData(attack);
+
+    for (int i = 0; i < attackData->frameCount; i++)
+    {
+        bool hasRightEdgeArtifact =
+            (
+                (
+                    attack == ATTACK_LEFT_PUNCH ||
+                    attack == ATTACK_RIGHT_PUNCH ||
+                    attack == ATTACK_PUNCH_CHARGE
+                ) &&
+                i == 0
+            ) ||
+            (
+                attack == ATTACK_UPPERCUT &&
+                i == 2
+            );
+
+        if (attack == ATTACK_HIP_CHECK && i == 2)
+        {
+            player->attackTextures[attack][i] =
+                LoadHipChargeFrame3();
+        }
+        else if (hasRightEdgeArtifact)
+        {
+            player->attackTextures[attack][i] =
+                LoadAttackFrameWithoutRightEdgeArtifact(
+                    TextFormat(pathPattern, i + 1)
+                );
+        }
+        else
+        {
+            player->attackTextures[attack][i] =
+                LoadTexture(TextFormat(pathPattern, i + 1));
+        }
+
+        if (player->attackTextures[attack][i].id == 0)
+        {
+            TraceLog(
+                LOG_WARNING,
+                "PLAYER ATTACK TEXTURE FAILED: attack %d frame %d",
+                attack,
+                i + 1
+            );
+        }
+    }
+}
 
 Player InitPlayer(const char *texturePath)
 {
@@ -52,52 +305,102 @@ Player InitPlayer(const char *texturePath)
     player.walkFrameTime = 0.189f;
 
     // ============================================================
-    // ATTACK TEXTURES
+    // 0075 - BASIC + ADVANCED ATTACK TEXTURES
     // ============================================================
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_LEFT_PUNCH,
+        "assets/sprites/player/battle/JLP%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_RIGHT_PUNCH,
+        "assets/sprites/player/battle/JRP%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_LEFT_KICK,
+        "assets/sprites/player/battle/JLK%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_RIGHT_KICK,
+        "assets/sprites/player/battle/JRK%d.png"
+    );
 
-    // LEFT PUNCH - A
-    player.leftPunchTextures[0] =
-        LoadTexture("assets/sprites/player/battle/JLP1.png");
-    player.leftPunchTextures[1] =
-        LoadTexture("assets/sprites/player/battle/JLP2.png");
-    player.leftPunchTextures[2] =
-        LoadTexture("assets/sprites/player/battle/JLP3.png");
-    player.leftPunchTextures[3] =
-        LoadTexture("assets/sprites/player/battle/JLP4.png");
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_HAMMER_PUNCH,
+        "assets/sprites/player/moves/hammer%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_BACK_BLOW,
+        "assets/sprites/player/moves/back_blow%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_ELBOW_DASH,
+        "assets/sprites/player/moves/elbow_slide%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_DOWNWARD_FIST,
+        "assets/sprites/player/moves/high_blow%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_SLIDE_KICK,
+        "assets/sprites/player/moves/sidekick%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_ROUND_KICK,
+        "assets/sprites/player/moves/roundkick%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_HAMMER_CHARGE,
+        "assets/sprites/player/moves/charge%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_PUNCH_CHARGE,
+        "assets/sprites/player/moves/punch_charge%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_UPPERCUT,
+        "assets/sprites/player/moves/uppercut%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_CHOP,
+        "assets/sprites/player/moves/chop%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_DROP_KICK,
+        "assets/sprites/player/moves/drop_kick%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_ELBOW_RISE,
+        "assets/sprites/player/moves/elbow_rise%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_HIP_CHECK,
+        "assets/sprites/player/moves/hip_charge%d.png"
+    );
+    LoadPlayerAttackFrames(
+        &player,
+        ATTACK_HEADBUTT,
+        "assets/sprites/player/moves/head_butt%d.png"
+    );
 
-    // RIGHT PUNCH - W
-    player.rightPunchTextures[0] =
-        LoadTexture("assets/sprites/player/battle/JRP1.png");
-    player.rightPunchTextures[1] =
-        LoadTexture("assets/sprites/player/battle/JRP2.png");
-    player.rightPunchTextures[2] =
-        LoadTexture("assets/sprites/player/battle/JRP3.png");
-    player.rightPunchTextures[3] =
-        LoadTexture("assets/sprites/player/battle/JRP4.png");
-
-    // LEFT KICK - S
-    player.leftKickTextures[0] =
-        LoadTexture("assets/sprites/player/battle/JLK1.png");
-    player.leftKickTextures[1] =
-        LoadTexture("assets/sprites/player/battle/JLK2.png");
-    player.leftKickTextures[2] =
-        LoadTexture("assets/sprites/player/battle/JLK3.png");
-    player.leftKickTextures[3] =
-        LoadTexture("assets/sprites/player/battle/JLK4.png");
-    player.leftKickTextures[4] =
-        LoadTexture("assets/sprites/player/battle/JLK5.png");
-
-    // RIGHT KICK - D
-    player.rightKickTextures[0] =
-        LoadTexture("assets/sprites/player/battle/JRK1.png");
-    player.rightKickTextures[1] =
-        LoadTexture("assets/sprites/player/battle/JRK2.png");
-    player.rightKickTextures[2] =
-        LoadTexture("assets/sprites/player/battle/JRK3.png");
-    player.rightKickTextures[3] =
-        LoadTexture("assets/sprites/player/battle/JRK4.png");
-    player.rightKickTextures[4] =
-        LoadTexture("assets/sprites/player/battle/JRK5.png");
+    player.crouchTexture =
+        LoadTexture("assets/sprites/player/moves/crouch.png");
 
     player.attackFrame = 0;
     player.attackTimer = 0.0f;
@@ -119,6 +422,7 @@ Player InitPlayer(const char *texturePath)
     player.comboStep = 0;
     player.comboTimer = 0.0f;
     player.comboFinisherActive = false;
+    player.bufferedComboFinisher = false;
 
     // 0028 - No directional command attack at startup.
     player.commandAttackActive = false;
@@ -128,6 +432,20 @@ Player InitPlayer(const char *texturePath)
     player.isRecovering = false;
     player.recoveryTimer = 0.0f;
     player.cancelWindowOpen = false;
+
+    // 0075 - Advanced input / charge / slide state.
+    player.attackButtonMask = 0;
+    player.attackButtonChordTimer = 0.0f;
+    player.aHoldPending = false;
+    player.aHoldTimer = 0.0f;
+    player.punchChargeHolding = false;
+    player.punchChargeTimer = 0.0f;
+    player.punchChargeLevel = 0;
+    player.attackSlideRemaining = 0.0f;
+    player.attackSlideSpeed = 0.0f;
+    player.attackSlideDirection = 0;
+    player.isCrouching = false;
+    player.showHitboxes = false;
 
     // ============================================================
     // 0030 - PLAYER HP / HURT STATE
@@ -165,7 +483,7 @@ Player InitPlayer(const char *texturePath)
     // 0052 - FORWARD / BACK DASH
     // ============================================================
     player.dashTapTimer = 0.0f;
-    player.dashTapWindow = 0.25f;
+    player.dashTapWindow = 0.30f;
     player.lastDashTapDirection = 0;
     player.dashTapFacingRight = player.facingRight;
     player.isDashing = false;
@@ -177,6 +495,10 @@ Player InitPlayer(const char *texturePath)
     // 900 * 0.10 = about 90 pixels.
     player.dashDuration = 0.12f;
     player.dashSpeed = 900.0f;
+    player.dashCommandTimer = 0.0f;
+    player.dashCommandWindow = 0.15f;
+    player.dashCommandDirection = 0;
+    player.dashCommandFacingRight = player.facingRight;
 
     // ============================================================
     // PLAYER POSITION / SIZE
@@ -187,6 +509,8 @@ Player InitPlayer(const char *texturePath)
         113.0f,
         180.0f
     };
+
+    player.dashCommandStartX = player.rectangle.x;
 
     player.speed = 300.0f;
 
@@ -230,20 +554,27 @@ void UnloadPlayer(Player *player)
         UnloadTexture(player->walkTextures[i]);
     }
 
-    for (int i = 0; i < LEFT_PUNCH_FRAME_COUNT; i++)
+    for (
+        int attack = ATTACK_LEFT_PUNCH;
+        attack < PLAYER_ATTACK_TYPE_COUNT;
+        attack++
+    )
     {
-        UnloadTexture(player->leftPunchTextures[i]);
+        const PlayerAttackData *attackData =
+            GetPlayerAttackData((AttackType)attack);
+
+        for (int frame = 0; frame < attackData->frameCount; frame++)
+        {
+            if (player->attackTextures[attack][frame].id != 0)
+            {
+                UnloadTexture(player->attackTextures[attack][frame]);
+            }
+        }
     }
 
-    for (int i = 0; i < ATTACK_FRAME_COUNT; i++)
+    if (player->crouchTexture.id != 0)
     {
-        UnloadTexture(player->leftKickTextures[i]);
-        UnloadTexture(player->rightKickTextures[i]);
-    }
-
-    for (int i = 0; i < RIGHT_PUNCH_FRAME_COUNT; i++)
-    {
-        UnloadTexture(player->rightPunchTextures[i]);
+        UnloadTexture(player->crouchTexture);
     }
 
     player->texture = (Texture2D){0};
@@ -295,14 +626,30 @@ Rectangle GetPlayerHurtbox(const Player *player)
         player->rectangle.height -
         scaledHeight;
 
-    // Body hurtbox inside the visible sprite.
-    Rectangle hurtbox =
+    Rectangle hurtbox;
+
+    if (player->isCrouching && !player->isAttacking)
     {
-        spriteLeft + (scaledWidth * 0.37f),   // X
-        spriteTop  + (scaledHeight * 0.26f),  // Y
-        scaledWidth  * 0.26f,                 // WIDTH
-        scaledHeight * 0.50f                  // HEIGHT
-    };
+        // The crouch art occupies a shorter, wider body area.
+        hurtbox = (Rectangle)
+        {
+            spriteLeft + (scaledWidth * 0.28f),
+            spriteTop  + (scaledHeight * 0.45f),
+            scaledWidth  * 0.38f,
+            scaledHeight * 0.31f
+        };
+    }
+    else
+    {
+        // Normal body hurtbox inside the visible sprite.
+        hurtbox = (Rectangle)
+        {
+            spriteLeft + (scaledWidth * 0.37f),
+            spriteTop  + (scaledHeight * 0.26f),
+            scaledWidth  * 0.26f,
+            scaledHeight * 0.50f
+        };
+    }
 
     return hurtbox;
 }
@@ -376,6 +723,12 @@ void DamagePlayer(
 
     player->isHit = true;
     player->hitReactionTimer = hitReactionTime;
+    player->aHoldPending = false;
+    player->aHoldTimer = 0.0f;
+    player->isCrouching = false;
+    player->isDashing = false;
+    player->dashDirection = 0;
+    player->dashTimer = 0.0f;
     // Match the enemy's light hit movement: show impact without sending
     // Jamber too far away from the fight.
     player->knockbackSpeed = knockbackSpeed * 0.15f;

@@ -22,7 +22,6 @@ typedef struct DrawActor
     int enemyIndex;
 } DrawActor;
 
-
 // ============================================================
 // 0071 - VARGAS BOSS LOADING / DIALOGUE / FIGHT START
 // ============================================================
@@ -38,8 +37,10 @@ typedef struct DrawActor
 
 static float ClampIntroValue(float value)
 {
-    if (value < 0.0f) return 0.0f;
-    if (value > 1.0f) return 1.0f;
+    if (value < 0.0f)
+        return 0.0f;
+    if (value > 1.0f)
+        return 1.0f;
     return value;
 }
 
@@ -51,8 +52,7 @@ static void DrawVargasBossIntro(
     bool fadingOut,
     float fadeTimer,
     int screenWidth,
-    int screenHeight
-)
+    int screenHeight)
 {
     float fadeIn =
         ClampIntroValue(introTimer / 0.25f);
@@ -62,8 +62,7 @@ static void DrawVargasBossIntro(
     {
         overlayAlpha *=
             1.0f - ClampIntroValue(
-                fadeTimer / VARGAS_INTRO_FADE_DURATION
-            );
+                       fadeTimer / VARGAS_INTRO_FADE_DURATION);
     }
 
     DrawRectangle(
@@ -71,8 +70,7 @@ static void DrawVargasBossIntro(
         0,
         screenWidth,
         screenHeight,
-        Fade(BLACK, 0.88f * overlayAlpha)
-    );
+        Fade(BLACK, 0.88f * overlayAlpha));
 
     // Thin scanlines keep the reveal alive while Vargas textures load.
     for (int y = 0; y < screenHeight; y += 18)
@@ -82,8 +80,7 @@ static void DrawVargasBossIntro(
             y,
             screenWidth,
             y,
-            Fade(RED, 0.07f * overlayAlpha)
-        );
+            Fade(RED, 0.07f * overlayAlpha));
     }
 
     DrawRectangle(
@@ -91,8 +88,7 @@ static void DrawVargasBossIntro(
         88,
         7,
         520,
-        Fade(RED, overlayAlpha)
-    );
+        Fade(RED, overlayAlpha));
 
     if (portrait.id != 0)
     {
@@ -103,20 +99,18 @@ static void DrawVargasBossIntro(
             (1.0f - portraitReveal) * 110.0f;
 
         Rectangle source =
-        {
-            (float)portrait.width,
-            0.0f,
-            -(float)portrait.width,
-            (float)portrait.height
-        };
+            {
+                (float)portrait.width,
+                0.0f,
+                -(float)portrait.width,
+                (float)portrait.height};
 
         Rectangle destination =
-        {
-            (float)screenWidth - 670.0f + portraitSlide,
-            35.0f,
-            650.0f,
-            650.0f
-        };
+            {
+                (float)screenWidth - 670.0f + portraitSlide,
+                35.0f,
+                650.0f,
+                650.0f};
 
         DrawTexturePro(
             portrait,
@@ -126,9 +120,7 @@ static void DrawVargasBossIntro(
             0.0f,
             Fade(
                 (Color){255, 150, 150, 255},
-                portraitReveal * overlayAlpha
-            )
-        );
+                portraitReveal * overlayAlpha));
     }
 
     if (dialoguePage == 0)
@@ -138,8 +130,7 @@ static void DrawVargasBossIntro(
             78,
             214,
             72,
-            Fade(WHITE, overlayAlpha)
-        );
+            Fade(WHITE, overlayAlpha));
     }
     else if (dialoguePage == 1)
     {
@@ -148,16 +139,14 @@ static void DrawVargasBossIntro(
             78,
             204,
             43,
-            Fade(WHITE, overlayAlpha)
-        );
+            Fade(WHITE, overlayAlpha));
 
         DrawText(
             "RUNS THIS PLACE.",
             78,
             258,
             43,
-            Fade(WHITE, overlayAlpha)
-        );
+            Fade(WHITE, overlayAlpha));
     }
     else
     {
@@ -166,8 +155,7 @@ static void DrawVargasBossIntro(
             78,
             228,
             42,
-            Fade(WHITE, overlayAlpha)
-        );
+            Fade(WHITE, overlayAlpha));
     }
 
     if (!fadingOut)
@@ -181,9 +169,7 @@ static void DrawVargasBossIntro(
             18,
             Fade(
                 loadingFinished ? WHITE : LIGHTGRAY,
-                overlayAlpha
-            )
-        );
+                overlayAlpha));
     }
 
     // Animated red pulse keeps the loading screen visually active.
@@ -195,15 +181,13 @@ static void DrawVargasBossIntro(
         565,
         pulseWidth,
         5,
-        Fade(RED, overlayAlpha)
-    );
+        Fade(RED, overlayAlpha));
 }
 
 static void DrawVargasApproachDialogue(
     int dialoguePage,
     int screenWidth,
-    int screenHeight
-)
+    int screenHeight)
 {
     int boxX = 48;
     int boxY = screenHeight - 190;
@@ -215,28 +199,23 @@ static void DrawVargasApproachDialogue(
         boxY,
         boxWidth,
         boxHeight,
-        Fade(BLACK, 0.90f)
-    );
+        Fade(BLACK, 0.90f));
 
     DrawRectangleLinesEx(
-        (Rectangle)
-        {
+        (Rectangle){
             (float)boxX,
             (float)boxY,
             (float)boxWidth,
-            (float)boxHeight
-        },
+            (float)boxHeight},
         3.0f,
-        dialoguePage == 0 ? WHITE : RED
-    );
+        dialoguePage == 0 ? WHITE : RED);
 
     DrawText(
         dialoguePage == 0 ? "PLAYER" : "VARGAS",
         boxX + 24,
         boxY + 16,
         21,
-        dialoguePage == 0 ? LIGHTGRAY : RED
-    );
+        dialoguePage == 0 ? LIGHTGRAY : RED);
 
     DrawText(
         dialoguePage == 0
@@ -245,18 +224,15 @@ static void DrawVargasApproachDialogue(
         boxX + 24,
         boxY + 49,
         32,
-        WHITE
-    );
+        WHITE);
 
     DrawText(
         "PRESS ENTER",
         boxX + boxWidth - 174,
         boxY + boxHeight - 27,
         16,
-        LIGHTGRAY
-    );
+        LIGHTGRAY);
 }
-
 
 // ============================================================
 // 0049 - DYNAMIC ENEMY HP HUD
@@ -267,8 +243,7 @@ static void UpdateEnemyHudDeathTimers(
     const Enemy *enemies,
     int enemyCount,
     float *deathTimers,
-    float deltaTime
-)
+    float deltaTime)
 {
     for (int i = 0; i < enemyCount; i++)
     {
@@ -279,7 +254,8 @@ static void UpdateEnemyHudDeathTimers(
         else if (deathTimers[i] > 0.0f)
         {
             deathTimers[i] -= deltaTime;
-            if (deathTimers[i] < 0.0f) deathTimers[i] = 0.0f;
+            if (deathTimers[i] < 0.0f)
+                deathTimers[i] = 0.0f;
         }
     }
 }
@@ -287,8 +263,7 @@ static void UpdateEnemyHudDeathTimers(
 static void DrawEnemyHud(
     const Enemy *enemies,
     int enemyCount,
-    const float *deathTimers
-)
+    const float *deathTimers)
 {
     const float startY = 24.0f;
     const float rowHeight = 34.0f;
@@ -311,8 +286,10 @@ static void DrawEnemyHud(
             !enemies[i].isAlive &&
             deathTimers[i] > 0.0f;
 
-        if (!hasStagePresence) continue;
-        if (!enemies[i].isAlive && !keepDeadRowBriefly) continue;
+        if (!hasStagePresence)
+            continue;
+        if (!enemies[i].isAlive && !keepDeadRowBriefly)
+            continue;
 
         float y = startY + (visibleRow * rowHeight);
         float hpPercent = 0.0f;
@@ -322,32 +299,31 @@ static void DrawEnemyHud(
             hpPercent = (float)enemies[i].hp / (float)enemies[i].maxHp;
         }
 
-        if (hpPercent < 0.0f) hpPercent = 0.0f;
-        if (hpPercent > 1.0f) hpPercent = 1.0f;
+        if (hpPercent < 0.0f)
+            hpPercent = 0.0f;
+        if (hpPercent > 1.0f)
+            hpPercent = 1.0f;
 
         DrawText(
             enemies[i].displayName,
             (int)startX,
             (int)(y - 4.0f),
             20,
-            WHITE
-        );
+            WHITE);
 
         Rectangle hpBack =
-        {
-            startX + nameWidth,
-            y,
-            barWidth,
-            barHeight
-        };
+            {
+                startX + nameWidth,
+                y,
+                barWidth,
+                barHeight};
 
         Rectangle hpFill =
-        {
-            hpBack.x,
-            hpBack.y,
-            hpBack.width * hpPercent,
-            hpBack.height
-        };
+            {
+                hpBack.x,
+                hpBack.y,
+                hpBack.width * hpPercent,
+                hpBack.height};
 
         DrawRectangleRec(hpBack, BLACK);
         DrawRectangleRec(hpFill, RED);
@@ -374,6 +350,70 @@ static void SortDrawActorsByDepth(DrawActor *actors, int count)
     }
 }
 
+static void DrawStartupLoading(
+    int screenWidth,
+    int screenHeight,
+    float progress)
+{
+    if (progress < 0.0f)
+        progress = 0.0f;
+    if (progress > 1.0f)
+        progress = 1.0f;
+
+    int barWidth = 500;
+    int barHeight = 24;
+    int barX = (screenWidth - barWidth) / 2;
+    int barY = (screenHeight / 2) + 45;
+
+    BeginDrawing();
+
+    ClearBackground(BLACK);
+
+    DrawText(
+        "WARDOGZ II",
+        screenWidth / 2 - MeasureText("WARDOGZ II", 50) / 2,
+        screenHeight / 2 - 80,
+        50,
+        WHITE);
+
+    DrawText(
+        TextFormat("NOW LOADING... %.0f%%", progress * 100.0f),
+        screenWidth / 2 -
+            MeasureText(
+                TextFormat("NOW LOADING... %.0f%%", progress * 100.0f),
+                24) /
+                2,
+        screenHeight / 2,
+        24,
+        LIGHTGRAY);
+
+    // Bar background
+    DrawRectangle(
+        barX,
+        barY,
+        barWidth,
+        barHeight,
+        DARKGRAY);
+
+    // RED loading progress
+    DrawRectangle(
+        barX,
+        barY,
+        (int)(barWidth * progress),
+        barHeight,
+        RED);
+
+    // Border
+    DrawRectangleLines(
+        barX,
+        barY,
+        barWidth,
+        barHeight,
+        WHITE);
+
+    EndDrawing();
+}
+
 int main(void)
 {
     const int screenWidth = 1280;
@@ -394,17 +434,49 @@ int main(void)
     InitWindow(
         screenWidth,
         screenHeight,
-        "Wardogz II"
-    );
+        "Wardogz II");
 
     // 0069 - Audio must be ready before InitPlayer() loads the hit sounds.
     InitAudioDevice();
 
     SetTargetFPS(60);
 
+    DrawStartupLoading(
+        screenWidth,
+        screenHeight,
+        0.05f);
+
+    // ============================================================
+    // STARTUP LOADING SCREEN
+    // ============================================================
+    BeginDrawing();
+
+    ClearBackground(BLACK);
+
+    DrawText(
+        "WARDOGZ II",
+        screenWidth / 2 - MeasureText("WARDOGZ II", 50) / 2,
+        screenHeight / 2 - 60,
+        50,
+        WHITE);
+
+    DrawText(
+        "NOW LOADING...",
+        screenWidth / 2 - MeasureText("NOW LOADING...", 24) / 2,
+        screenHeight / 2 + 20,
+        24,
+        LIGHTGRAY);
+
+    EndDrawing();
+
     // Load player and background
     Player player =
         InitPlayer("assets/sprites/player/player.png");
+
+    DrawStartupLoading(
+        screenWidth,
+        screenHeight,
+        0.20f);
 
     // 0054 - Horizontal camera for the long Stage 1 walk test.
     Camera2D camera = {0};
@@ -413,15 +485,15 @@ int main(void)
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
 
-    // ============================================================
-    // 0061 - VARGAS-ONLY BOSS TEST SETUP
-    // ============================================================
-    //
-    // Punk, Hooligan, and Gangster are temporarily hidden.
-    // Vargas appears by himself so his complete sprite set and
-    // normal-idle -> battle-idle transition can be tested safely.
-    //
-    #define ENEMY_COUNT 1
+// ============================================================
+// 0061 - VARGAS-ONLY BOSS TEST SETUP
+// ============================================================
+//
+// Punk, Hooligan, and Gangster are temporarily hidden.
+// Vargas appears by himself so his complete sprite set and
+// normal-idle -> battle-idle transition can be tested safely.
+//
+#define ENEMY_COUNT 1
 
     // Vargas does not exist yet. At 86% the intro covers his real loading,
     // then he becomes active at world x = 11452 (about 98% of this stage).
@@ -430,6 +502,7 @@ int main(void)
     bool vargasIntroActive = false;
     bool vargasIntroFadingOut = false;
     bool vargasLoaded = false;
+    bool vargasCameraRevealDone = false;
     float vargasIntroTimer = 0.0f;
     float vargasIntroFadeTimer = 0.0f;
     int vargasIntroDialoguePage = 0;
@@ -454,30 +527,51 @@ int main(void)
     // images are delayed until the player reaches the 86% trigger.
     Texture2D vargasIntroPortrait =
         LoadTexture(
-            "assets/sprites/enemy/stage_1/boss/boss_battle_idle1.png"
-        );
+            "assets/sprites/enemy/stage_1/boss/boss_battle_idle1.png");
+    DrawStartupLoading(
+        screenWidth,
+        screenHeight,
+        0.30f);
 
-    // ============================================================
-    // 0054 - STAGE 1 BACKGROUND SECTIONS
-    // ============================================================
-    // Final Stage 1 background sequence.
-    // Full panels keep their original aspect ratio at 720 px height.
-    // BA10 is a narrow final strip and is drawn at its proportional width.
-    #define STAGE_BACKGROUND_COUNT 10
+// ============================================================
+// 0054 - STAGE 1 BACKGROUND SECTIONS
+// ============================================================
+// Final Stage 1 background sequence.
+// Full panels keep their original aspect ratio at 720 px height.
+// BA10 is a narrow final strip and is drawn at its proportional width.
+#define STAGE_BACKGROUND_COUNT 10
 
-    Texture2D stageBackgrounds[STAGE_BACKGROUND_COUNT] =
-    {
-        LoadTexture("assets/background/B1.png"),
-        LoadTexture("assets/background/B2.png"),
-        LoadTexture("assets/background/BA3.png"),
-        LoadTexture("assets/background/BA4.png"),
-        LoadTexture("assets/background/BA5.png"),
-        LoadTexture("assets/background/BA6.png"),
-        LoadTexture("assets/background/BA7.png"),
-        LoadTexture("assets/background/BA8.png"),
-        LoadTexture("assets/background/BA9.png"),
-        LoadTexture("assets/background/BA10.png")
-    };
+    Texture2D stageBackgrounds[STAGE_BACKGROUND_COUNT] = {0};
+
+    stageBackgrounds[0] = LoadTexture("assets/background/B1.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.37f);
+
+    stageBackgrounds[1] = LoadTexture("assets/background/B2.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.44f);
+
+    stageBackgrounds[2] = LoadTexture("assets/background/BA3.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.51f);
+
+    stageBackgrounds[3] = LoadTexture("assets/background/BA4.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.58f);
+
+    stageBackgrounds[4] = LoadTexture("assets/background/BA5.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.65f);
+
+    stageBackgrounds[5] = LoadTexture("assets/background/BA6.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.72f);
+
+    stageBackgrounds[6] = LoadTexture("assets/background/BA7.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.79f);
+
+    stageBackgrounds[7] = LoadTexture("assets/background/BA8.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.86f);
+
+    stageBackgrounds[8] = LoadTexture("assets/background/BA9.png");
+    DrawStartupLoading(screenWidth, screenHeight, 0.93f);
+
+    stageBackgrounds[9] = LoadTexture("assets/background/BA10.png");
+    DrawStartupLoading(screenWidth, screenHeight, 1.00f);
 
     // Calculate the real Stage 1 width from every valid texture.
     // Each panel is scaled proportionally to the 720 px game height.
@@ -488,7 +582,7 @@ int main(void)
             stageBackgrounds[i].height <= 0)
         {
             TraceLog(LOG_WARNING,
-                "STAGE BACKGROUND FAILED TO LOAD: index %d", i);
+                     "STAGE BACKGROUND FAILED TO LOAD: index %d", i);
             continue;
         }
 
@@ -516,8 +610,7 @@ int main(void)
             enemiesEnabled &&
             vargasFightStarted &&
             vargasLoaded &&
-            !enemies[0].isAlive
-        )
+            !enemies[0].isAlive)
         {
             vargasEndingTimer += deltaTime;
 
@@ -536,8 +629,7 @@ int main(void)
             DrawStage1Cinematic(
                 &stage1Ending,
                 screenWidth,
-                screenHeight
-            );
+                screenHeight);
             EndDrawing();
 
             continue;
@@ -548,16 +640,14 @@ int main(void)
         // ========================================================
         if (
             !vargasIntroActive &&
-            !vargasApproachDialogueActive
-        )
+            !vargasApproachDialogueActive)
         {
             UpdatePlayer(
                 &player,
                 deltaTime,
                 stageWorldWidth,
                 walkAreaTop,
-                walkAreaBottom
-            );
+                walkAreaBottom);
         }
 
         float playerCenterX =
@@ -570,8 +660,7 @@ int main(void)
 
         if (
             !vargasIntroStarted &&
-            playerCenterX >= vargasTriggerX
-        )
+            playerCenterX >= vargasTriggerX)
         {
             vargasIntroStarted = true;
             vargasIntroActive = true;
@@ -596,14 +685,12 @@ int main(void)
             // InitBoss() performs the one-time loading of all Vargas textures.
             if (
                 !vargasLoaded &&
-                vargasIntroTimer >= VARGAS_INTRO_LOAD_DELAY
-            )
+                vargasIntroTimer >= VARGAS_INTRO_LOAD_DELAY)
             {
                 enemies[0] =
                     InitBoss(
                         VARGAS_WORLD_X,
-                        VARGAS_STAGE_Y
-                    );
+                        VARGAS_STAGE_Y);
 
                 vargasLoaded = true;
             }
@@ -615,8 +702,7 @@ int main(void)
             if (
                 introDialogueReady &&
                 !vargasIntroFadingOut &&
-                IsKeyPressed(KEY_ENTER)
-            )
+                IsKeyPressed(KEY_ENTER))
             {
                 if (vargasIntroDialoguePage < 2)
                 {
@@ -635,8 +721,7 @@ int main(void)
 
                 if (
                     vargasIntroFadeTimer >=
-                        VARGAS_INTRO_FADE_DURATION
-                )
+                    VARGAS_INTRO_FADE_DURATION)
                 {
                     vargasIntroActive = false;
                     enemiesEnabled = true;
@@ -656,8 +741,7 @@ int main(void)
             enemiesEnabled &&
             !vargasApproachDialogueStarted &&
             playerCenterX >=
-                (VARGAS_WORLD_X - VARGAS_DIALOGUE_TRIGGER_DISTANCE)
-        )
+                (VARGAS_WORLD_X - VARGAS_DIALOGUE_TRIGGER_DISTANCE))
         {
             vargasApproachDialogueStarted = true;
             vargasApproachDialogueActive = true;
@@ -666,8 +750,7 @@ int main(void)
 
         if (
             vargasApproachDialogueActive &&
-            IsKeyPressed(KEY_ENTER)
-        )
+            IsKeyPressed(KEY_ENTER))
         {
             if (vargasApproachDialoguePage == 0)
             {
@@ -684,22 +767,19 @@ int main(void)
             !vargasIntroActive &&
             !vargasApproachDialogueActive &&
             enemiesEnabled &&
-            vargasFightStarted
-        )
+            vargasFightStarted)
         {
             // 0042 - Keep free Punks distributed around the player.
             // Attack-slot owners still chase the player directly.
             ResolveEnemySurroundFormation(
                 enemies,
-                ENEMY_COUNT
-            );
+                ENEMY_COUNT);
 
             // 0043 - Choose/swap the two active attackers dynamically.
             ResolveEnemyAttackSlot(
                 enemies,
                 ENEMY_COUNT,
-                &player
-            );
+                &player);
 
             // 0044 - Stagger attack starts so the two active Punks do not
             // punch/elbow at the same instant.
@@ -707,8 +787,7 @@ int main(void)
                 enemies,
                 ENEMY_COUNT,
                 &player,
-                deltaTime
-            );
+                deltaTime);
 
             // 0046 - If an active attacker is blocked behind another Punk,
             // side-step to an upper/lower lane before continuing the approach.
@@ -717,8 +796,7 @@ int main(void)
                 ENEMY_COUNT,
                 &player,
                 walkAreaTop,
-                walkAreaBottom
-            );
+                walkAreaBottom);
 
             // Update each Punk independently.
             for (int i = 0; i < ENEMY_COUNT; i++)
@@ -729,8 +807,7 @@ int main(void)
                     deltaTime,
                     stageWorldWidth,
                     walkAreaTop,
-                    walkAreaBottom
-                );
+                    walkAreaBottom);
             }
 
             // 0049 - Keep a dead enemy's HUD row visible for a short moment.
@@ -738,8 +815,7 @@ int main(void)
                 enemies,
                 ENEMY_COUNT,
                 enemyHudDeathTimers,
-                deltaTime
-            );
+                deltaTime);
 
             // 0040 - Push nearby Punks apart so they do not stack.
             ResolveEnemySpacing(
@@ -748,8 +824,7 @@ int main(void)
                 deltaTime,
                 stageWorldWidth,
                 walkAreaTop,
-                walkAreaBottom
-            );
+                walkAreaBottom);
 
             // 0048 - Give the player and Punks physical body presence.
             // Same-depth actors softly separate instead of passing through.
@@ -759,42 +834,77 @@ int main(void)
                 ENEMY_COUNT,
                 stageWorldWidth,
                 walkAreaTop,
-                walkAreaBottom
-            );
+                walkAreaBottom);
 
             // 0043 - Refresh after attacks/cancellations so a nearby waiting
             // Punk can take over a released attack slot immediately.
             ResolveEnemyAttackSlot(
                 enemies,
                 ENEMY_COUNT,
-                &player
-            );
-
+                &player);
         }
 
         // ========================================================
-        // 0054 - CAMERA FOLLOW / WORLD CLAMP
+        // CAMERA FOLLOW / 25%-75% DEAD ZONE + VARGAS REVEAL
         // ========================================================
-        // Follow the player's horizontal position, but do not show
-        // anything before x=0 or after the Stage 1 background end.
-        float cameraTargetX = playerCenterX;
+
         float halfScreenWidth = screenWidth * 0.5f;
 
-        if (cameraTargetX < halfScreenWidth)
+        float leftScreenLimit = screenWidth * 0.25f;
+        float rightScreenLimit = screenWidth * 0.75f;
+
+        float cameraWorldLeft =
+            camera.target.x - halfScreenWidth + leftScreenLimit;
+
+        float cameraWorldRight =
+            camera.target.x - halfScreenWidth + rightScreenLimit;
+
+        // Vargas special reveal starts at 93% of the map.
+        float cameraRevealTriggerX = stageWorldWidth * 0.93f;
+
+        if (
+            !vargasCameraRevealDone &&
+            vargasLoaded &&
+            playerCenterX >= cameraRevealTriggerX)
         {
-            cameraTargetX = halfScreenWidth;
+            // Pan toward the end of the stage.
+            float revealTargetX = stageWorldWidth * 0.99f;
+
+            camera.target.x +=
+                (revealTargetX - camera.target.x) * 3.0f * deltaTime;
+
+            // Once close enough, mark the reveal as finished.
+            if (camera.target.x >= revealTargetX - 10.0f)
+            {
+                camera.target.x = revealTargetX;
+                vargasCameraRevealDone = true;
+            }
+        }
+        else
+        {
+            // Normal 25%-75% screen dead zone.
+            if (playerCenterX < cameraWorldLeft)
+            {
+                camera.target.x -= cameraWorldLeft - playerCenterX;
+            }
+            else if (playerCenterX > cameraWorldRight)
+            {
+                camera.target.x += playerCenterX - cameraWorldRight;
+            }
         }
 
-        if (cameraTargetX > stageWorldWidth - halfScreenWidth)
+        // Keep camera inside Stage 1.
+        if (camera.target.x < halfScreenWidth)
         {
-            cameraTargetX = stageWorldWidth - halfScreenWidth;
+            camera.target.x = halfScreenWidth;
         }
 
-        camera.target = (Vector2)
+        if (camera.target.x > stageWorldWidth - halfScreenWidth)
         {
-            cameraTargetX,
-            screenHeight * 0.5f
-        };
+            camera.target.x = stageWorldWidth - halfScreenWidth;
+        }
+
+        camera.target.y = screenHeight * 0.5f;
 
         // ========================================================
         // DRAW
@@ -831,20 +941,18 @@ int main(void)
                 (float)currentBackground.width * backgroundScale;
 
             Rectangle source =
-            {
-                0.0f,
-                0.0f,
-                (float)currentBackground.width,
-                (float)currentBackground.height
-            };
+                {
+                    0.0f,
+                    0.0f,
+                    (float)currentBackground.width,
+                    (float)currentBackground.height};
 
             Rectangle destination =
-            {
-                backgroundX,
-                0.0f,
-                backgroundWidth,
-                (float)screenHeight
-            };
+                {
+                    backgroundX,
+                    0.0f,
+                    backgroundWidth,
+                    (float)screenHeight};
 
             DrawTexturePro(
                 currentBackground,
@@ -852,8 +960,7 @@ int main(void)
                 destination,
                 (Vector2){0.0f, 0.0f},
                 0.0f,
-                WHITE
-            );
+                WHITE);
 
             backgroundX += backgroundWidth;
         }
@@ -863,16 +970,14 @@ int main(void)
             (Vector2){stageWorldWidth - 8.0f, 0.0f},
             (Vector2){stageWorldWidth - 8.0f, (float)screenHeight},
             8.0f,
-            RED
-        );
+            RED);
 
         DrawText(
             "STAGE 1 END",
             (int)stageWorldWidth - 430,
             80,
             30,
-            RED
-        );
+            RED);
 
         // ====================================================
         // 0047 - Y-DEPTH DRAW SORTING
@@ -886,12 +991,10 @@ int main(void)
         // the center Y of each actor's foot marker.
         Rectangle playerFeet = GetPlayerFootMarker(&player);
 
-        drawActors[drawActorCount++] = (DrawActor)
-        {
+        drawActors[drawActorCount++] = (DrawActor){
             DRAW_ACTOR_PLAYER,
             playerFeet.y + (playerFeet.height * 0.5f),
-            -1
-        };
+            -1};
 
         // Screen-space HUD: once combat begins, it follows the screen and
         // never gets left behind in the world when the camera moves.
@@ -907,12 +1010,10 @@ int main(void)
             {
                 Rectangle enemyFeet = GetEnemyFootMarker(&enemies[i]);
 
-                drawActors[drawActorCount++] = (DrawActor)
-                {
+                drawActors[drawActorCount++] = (DrawActor){
                     DRAW_ACTOR_ENEMY,
                     enemyFeet.y + (enemyFeet.height * 0.5f),
-                    i
-                };
+                    i};
             }
         }
 
@@ -941,25 +1042,25 @@ int main(void)
             DrawEnemyHud(
                 enemies,
                 ENEMY_COUNT,
-                enemyHudDeathTimers
-            );
+                enemyHudDeathTimers);
         }
 
         // 0054 - Walk-test progress HUD (screen-space, not affected by camera).
         float stageProgress = playerCenterX / stageWorldWidth;
-        if (stageProgress < 0.0f) stageProgress = 0.0f;
-        if (stageProgress > 1.0f) stageProgress = 1.0f;
+        if (stageProgress < 0.0f)
+            stageProgress = 0.0f;
+        if (stageProgress > 1.0f)
+            stageProgress = 1.0f;
 
         DrawText(
             TextFormat("Stage X: %.0f / %.0f px  (%.0f%%)",
-                playerCenterX,
-                stageWorldWidth,
-                stageProgress * 100.0f),
+                       playerCenterX,
+                       stageWorldWidth,
+                       stageProgress * 100.0f),
             30,
             65,
             22,
-            YELLOW
-        );
+            YELLOW);
 
         // Controls stay at the bottom; enemy HUD is now at the top-right.
         DrawText(
@@ -967,8 +1068,7 @@ int main(void)
             30,
             screenHeight - 42,
             22,
-            WHITE
-        );
+            WHITE);
 
         if (vargasIntroActive)
         {
@@ -981,8 +1081,7 @@ int main(void)
                 vargasIntroFadingOut,
                 vargasIntroFadeTimer,
                 screenWidth,
-                screenHeight
-            );
+                screenHeight);
         }
 
         if (vargasApproachDialogueActive)
@@ -990,8 +1089,7 @@ int main(void)
             DrawVargasApproachDialogue(
                 vargasApproachDialoguePage,
                 screenWidth,
-                screenHeight
-            );
+                screenHeight);
         }
 
         EndDrawing();

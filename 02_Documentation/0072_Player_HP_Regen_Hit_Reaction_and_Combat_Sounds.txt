@@ -1,0 +1,308 @@
+WARDOGZ II
+DOCUMENTATION 0072
+PLAYER HP, REGENERATION, HIT REACTION, KNOCKBACK, AND COMBAT SOUNDS
+Date: 2026-08-15
+
+============================================================
+1. OVERVIEW
+============================================================
+
+This update improves Jamber's player feedback and survivability system.
+
+Added or updated:
+
+- Screen-fixed JAMBER HP bar
+- Maximum HP increased to 1000
+- Passive HP regeneration
+- Red player tint when hit
+- Small player knockback when hit
+- Proper player hit-reaction update
+- Enemy-to-Jamber alternating hit sounds
+- Jamber-to-enemy sound on every successful hit
+
+
+============================================================
+2. PLAYER HP
+============================================================
+
+File:
+include/player/player.h
+src/player/player.c
+
+Jamber's HP now uses float values so regeneration can add exactly 1.5 HP.
+
+Initial values:
+
+    player.maxHp = 1000.0f;
+    player.hp = player.maxHp;
+
+Result:
+
+- Jamber starts with 1000 HP.
+- HP cannot regenerate above 1000.
+- HP is clamped to 0 when damage reduces it below 0.
+
+
+============================================================
+3. PASSIVE HP REGENERATION
+============================================================
+
+Files:
+include/player/player.h
+src/player/player.c
+src/player/player_move.c
+
+Settings:
+
+    player.hpRegenTimer = 0.0f;
+    player.hpRegenInterval = 1.0f;
+    player.hpRegenAmount = 1.5f;
+
+Meaning:
+
+- hpRegenTimer tracks elapsed regeneration time.
+- hpRegenInterval = 1.0f means regeneration happens every 1 second.
+- hpRegenAmount = 1.5f means Jamber restores 1.5 HP each interval.
+
+Behavior:
+
+- Regeneration starts only when Jamber is alive and below maximum HP.
+- The timer resets while HP is already full.
+- Regeneration stops and clamps HP when it reaches 1000.
+- The while loop safely handles a long frame without losing regen ticks.
+
+Manual adjustment examples:
+
+Restore 5 HP every 2 seconds:
+
+    player.hpRegenInterval = 2.0f;
+    player.hpRegenAmount = 5.0f;
+
+
+============================================================
+4. SCREEN-FIXED JAMBER HP BAR
+============================================================
+
+Files:
+include/player/player.h
+src/player/player_draw.c
+src/main.c
+
+New function:
+
+    void DrawPlayerHud(const Player *player);
+
+The old world-space text display was removed from DrawPlayer().
+DrawPlayerHud() is called after EndMode2D() in main.c.
+
+Result:
+
+- The HP display remains fixed at the upper-left corner.
+- The HUD does not move when the camera follows Jamber.
+- The name displayed is JAMBER.
+- The bar background is black.
+- The remaining HP is green.
+- The border is white.
+- The enemy/Vargas HP remains at the upper-right corner.
+
+The Stage progress text was moved lower to avoid overlapping the HP bar.
+
+
+============================================================
+5. RED HIT REACTION
+============================================================
+
+File:
+src/player/player_draw.c
+
+Tint selection:
+
+    Color playerTint = player->isHit ? RED : WHITE;
+
+Result:
+
+- Jamber becomes red only during the active hit reaction.
+- Jamber returns to normal white tint when the reaction ends.
+- A missed enemy attack does not turn Jamber red.
+
+
+============================================================
+6. SMALL PLAYER KNOCKBACK
+============================================================
+
+Files:
+src/player/player.c
+src/player/player_move.c
+
+DamagePlayer() applies only 15 percent of the enemy's configured
+attack knockback speed:
+
+    player->knockbackSpeed = knockbackSpeed * 0.15f;
+
+This matches the light knockback style used when an enemy receives
+a normal non-lethal hit.
+
+UpdatePlayer() now calls UpdatePlayerHitReaction() while Jamber is hit.
+Normal movement input is temporarily ignored until the short reaction ends.
+
+Important fix:
+
+Before this update, DamagePlayer() could set player->isHit to true,
+but the regular player update did not call UpdatePlayerHitReaction().
+That could leave the hit state active and prevent real knockback recovery.
+
+
+============================================================
+7. ENEMY ATTACK HITS JAMBER - ALTERNATING SOUND
+============================================================
+
+Files:
+src/enemy/enemy_attack.c
+src/player/player.c
+
+enemy_attack.c checks the actual collision and calls DamagePlayer().
+DamagePlayer() plays the sound only after the attack connects.
+
+Loaded sounds:
+
+    player.enemyHitSound =
+        LoadSound("assets/music/punch.wav");
+
+    player.enemyHitSoundAlternate =
+        LoadSound("assets/music/punch1.wav");
+
+Behavior:
+
+- First successful enemy hit: punch.wav
+- Next successful enemy hit: punch1.wav
+- The two sounds continue alternating on later successful hits.
+- A missed enemy attack remains silent.
+
+The alternation happens inside DamagePlayer(), not inside enemy_attack.c.
+enemy_attack.c only detects the hit and sends the damage information.
+
+
+============================================================
+8. JAMBER ATTACK HITS AN ENEMY - SINGLE SOUND
+============================================================
+
+Files:
+include/player/player.h
+src/player/player.c
+src/enemy/enemy_hit.c
+
+Public function:
+
+    void PlayPlayerAttackHitSound(Player *player);
+
+EnemyCheckPlayerAttack() calls this function immediately after a
+successful collision and after hitByCurrentAttack becomes true.
+
+Result:
+
+- Sound plays only when Jamber's attack actually hits an enemy.
+- A missed attack remains silent.
+- One successful hit produces one sound.
+- If one attack successfully hits multiple enemies, each enemy hit
+  can produce one impact sound.
+- Jamber's attack sound does not need to alternate.
+
+Recommended separate Jamber sound field:
+
+    Sound jamberAttackHitSound;
+
+Recommended loading code inside InitPlayer():
+
+    player.jamberAttackHitSound =
+        LoadSound("assets/music/jamber_attack.wav");
+
+Recommended player attack sound function:
+
+    void PlayPlayerAttackHitSound(Player *player)
+    {
+        if (player->jamberAttackHitSound.frameCount > 0)
+        {
+            PlaySound(player->jamberAttackHitSound);
+        }
+    }
+
+Recommended unloading code inside UnloadPlayer():
+
+    if (player->jamberAttackHitSound.frameCount > 0)
+    {
+        UnloadSound(player->jamberAttackHitSound);
+    }
+
+Required sound path:
+
+    assets/music/jamber_attack.wav
+
+This keeps the two sound systems independent:
+
+- Enemy -> Jamber: punch.wav and punch1.wav alternate.
+- Jamber -> Enemy: jamber_attack.wav only.
+
+
+============================================================
+9. FILES INVOLVED
+============================================================
+
+include/player/player.h
+- Float HP and maximum HP
+- Regeneration state
+- Combat sound fields
+- DrawPlayerHud() declaration
+- PlayPlayerAttackHitSound() declaration
+
+src/player/player.c
+- 1000 maximum HP
+- Regen settings
+- Player damage sound
+- Jamber attack hit sound function
+- Small knockback multiplier
+- Sound loading and unloading
+
+src/player/player_move.c
+- Regeneration update
+- Player hit-reaction update
+- Temporary movement lock during hit reaction
+
+src/player/player_draw.c
+- Red hit tint
+- JAMBER screen-space HP bar
+- Removal of the old moving HP text
+
+src/main.c
+- DrawPlayerHud() call after EndMode2D()
+- Stage progress HUD moved lower
+
+src/enemy/enemy_attack.c
+- Detects enemy attacks that successfully hit Jamber
+- Calls DamagePlayer()
+
+src/enemy/enemy_hit.c
+- Detects Jamber attacks that successfully hit an enemy
+- Calls PlayPlayerAttackHitSound()
+
+
+============================================================
+10. TEST CHECKLIST
+============================================================
+
+[ ] Jamber starts with 1000 HP.
+[ ] JAMBER HP bar stays fixed at the upper-left while walking.
+[ ] Vargas HP stays fixed at the upper-right.
+[ ] Jamber restores 1.5 HP after every full second below max HP.
+[ ] Regeneration stops at exactly 1000 HP.
+[ ] Jamber turns red only after a successful enemy hit.
+[ ] Jamber moves backward only a small distance when hit.
+[ ] Jamber returns to normal movement after the hit reaction.
+[ ] Enemy hits alternate between punch.wav and punch1.wav.
+[ ] Jamber's successful attacks play jamber_attack.wav once per enemy hit.
+[ ] Missed attacks do not play impact sounds.
+[ ] All loaded sounds are unloaded when the game closes.
+
+
+============================================================
+END OF DOCUMENTATION 0072
+============================================================

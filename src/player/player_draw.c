@@ -1,8 +1,7 @@
 #include "player_draw.h"
 #include "player_attack.h"
 
-// Set to 1 when you want to see combat debug boxes again.
-#define SHOW_HITBOXES 0
+#include <math.h>
 
 void DrawPlayer(const Player *player)
 {
@@ -39,31 +38,19 @@ void DrawPlayer(const Player *player)
     // ============================================================
     // CHOOSE TEXTURE
     // ============================================================
-    Texture2D currentTexture;
+    Texture2D currentTexture = player->texture;
 
     // Attack has highest drawing priority.
     if (player->isAttacking)
     {
-        if (player->currentAttack == ATTACK_LEFT_PUNCH)
-        {
-            currentTexture =
-                player->leftPunchTextures[player->attackFrame];
-        }
-        else if (player->currentAttack == ATTACK_RIGHT_PUNCH)
-        {
-            currentTexture =
-                player->rightPunchTextures[player->attackFrame];
-        }
-        else if (player->currentAttack == ATTACK_LEFT_KICK)
-        {
-            currentTexture =
-                player->leftKickTextures[player->attackFrame];
-        }
-        else
-        {
-            currentTexture =
-                player->rightKickTextures[player->attackFrame];
-        }
+        currentTexture =
+            player->attackTextures
+                [player->currentAttack]
+                [player->attackFrame];
+    }
+    else if (player->isCrouching)
+    {
+        currentTexture = player->crouchTexture;
     }
     else if (player->isWalking)
     {
@@ -119,9 +106,32 @@ void DrawPlayer(const Player *player)
         scaledHeight
     };
 
+    // Hold-A Punch Charge feedback. Frame 2 stays frozen while the
+    // character shake becomes stronger at the 1.5 and 3.0 sec levels.
+    if (
+        player->isAttacking &&
+        player->currentAttack == ATTACK_PUNCH_CHARGE &&
+        player->punchChargeHolding &&
+        player->attackFrame == 1 &&
+        player->punchChargeLevel > 0
+    )
+    {
+        float shakeAmount =
+            player->punchChargeLevel >= 2
+            ? 4.0f
+            : 2.0f;
+
+        destination.x +=
+            sinf(player->punchChargeTimer * 52.0f) * shakeAmount;
+
+        destination.y +=
+            sinf(player->punchChargeTimer * 37.0f) * (shakeAmount * 0.45f);
+    }
+
     // Adjust idle breath position only
     if (!player->isAttacking &&
         !player->isWalking &&
+        !player->isCrouching &&
         !player->battleIdleActive)
     {
         destination.y += 20.0f;
@@ -152,50 +162,51 @@ void DrawPlayer(const Player *player)
     // ============================================================
     // COMBAT DEBUG BOXES - HIDDEN BY DEFAULT
     // ============================================================
-#if SHOW_HITBOXES
-    // 0017 - ATTACK HITBOX DEBUG DRAW
-    if (IsPlayerAttackHitboxActive(player))
+    if (player->showHitboxes)
     {
-        Rectangle attackHitbox =
-            GetPlayerAttackHitbox(player);
+        // 0017 - ATTACK HITBOX DEBUG DRAW
+        if (IsPlayerAttackHitboxActive(player))
+        {
+            Rectangle attackHitbox =
+                GetPlayerAttackHitbox(player);
+
+            DrawRectangleRec(
+                attackHitbox,
+                Fade(RED, 0.35f)
+            );
+
+            DrawRectangleLinesEx(
+                attackHitbox,
+                4.0f,
+                RED
+            );
+        }
+
+        // 0030 - PLAYER HURTBOX DEBUG
+        Rectangle playerHurtbox =
+            GetPlayerHurtbox(player);
+
+        DrawRectangleLinesEx(
+            playerHurtbox,
+            3.0f,
+            GREEN
+        );
+
+        // 0030 FIX 3 - PLAYER FOOT MARKER DEBUG
+        Rectangle playerFeet =
+            GetPlayerFootMarker(player);
 
         DrawRectangleRec(
-            attackHitbox,
-            Fade(RED, 0.35f)
+            playerFeet,
+            Fade(PURPLE, 0.35f)
         );
 
         DrawRectangleLinesEx(
-            attackHitbox,
-            4.0f,
-            RED
+            playerFeet,
+            3.0f,
+            PURPLE
         );
     }
-
-    // 0030 - PLAYER HURTBOX DEBUG
-    Rectangle playerHurtbox =
-        GetPlayerHurtbox(player);
-
-    DrawRectangleLinesEx(
-        playerHurtbox,
-        3.0f,
-        GREEN
-    );
-
-    // 0030 FIX 3 - PLAYER FOOT MARKER DEBUG
-    Rectangle playerFeet =
-        GetPlayerFootMarker(player);
-
-    DrawRectangleRec(
-        playerFeet,
-        Fade(PURPLE, 0.35f)
-    );
-
-    DrawRectangleLinesEx(
-        playerFeet,
-        3.0f,
-        PURPLE
-    );
-#endif
 
 }
 

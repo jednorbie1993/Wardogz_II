@@ -6,9 +6,7 @@
 #define IDLE_BREATH_FRAME_COUNT 4
 #define IDLE_BATTLE_FRAME_COUNT 8
 #define WALK_FRAME_COUNT 11
-#define ATTACK_FRAME_COUNT 5
-#define LEFT_PUNCH_FRAME_COUNT 4
-#define RIGHT_PUNCH_FRAME_COUNT 4
+#define MAX_PLAYER_ATTACK_FRAMES 6
 
 // ============================================================
 // ATTACK TYPES
@@ -19,7 +17,25 @@ typedef enum
     ATTACK_LEFT_PUNCH,
     ATTACK_RIGHT_PUNCH,
     ATTACK_LEFT_KICK,
-    ATTACK_RIGHT_KICK
+    ATTACK_RIGHT_KICK,
+
+    // 0075 - JAMBER ADVANCED MOVE SET
+    ATTACK_HAMMER_PUNCH,
+    ATTACK_BACK_BLOW,
+    ATTACK_ELBOW_DASH,
+    ATTACK_DOWNWARD_FIST,
+    ATTACK_SLIDE_KICK,
+    ATTACK_ROUND_KICK,
+    ATTACK_HAMMER_CHARGE,
+    ATTACK_PUNCH_CHARGE,
+    ATTACK_UPPERCUT,
+    ATTACK_CHOP,
+    ATTACK_DROP_KICK,
+    ATTACK_ELBOW_RISE,
+    ATTACK_HIP_CHECK,
+    ATTACK_HEADBUTT,
+
+    PLAYER_ATTACK_TYPE_COUNT
 } AttackType;
 
 // ============================================================
@@ -51,10 +67,11 @@ typedef struct Player
     float walkFrameTime;
 
     // ATTACK ANIMATIONS
-    Texture2D leftPunchTextures[LEFT_PUNCH_FRAME_COUNT];
-    Texture2D rightPunchTextures[RIGHT_PUNCH_FRAME_COUNT];
-    Texture2D leftKickTextures[ATTACK_FRAME_COUNT];
-    Texture2D rightKickTextures[ATTACK_FRAME_COUNT];
+    // Every basic and advanced move uses the same indexed storage.
+    Texture2D attackTextures
+        [PLAYER_ATTACK_TYPE_COUNT]
+        [MAX_PLAYER_ATTACK_FRAMES];
+    Texture2D crouchTexture;
 
     int attackFrame;
     float attackTimer;
@@ -74,7 +91,8 @@ typedef struct Player
     // 0027 - BASIC COMBO CHAIN STATE
     int comboStep;              // Current step in A -> W -> D
     float comboTimer;           // Time left to continue the combo
-    bool comboFinisherActive;   // True when A -> W -> D reaches D
+    bool comboFinisherActive;   // True only while a combo finisher is playing
+    bool bufferedComboFinisher; // Finisher waiting behind the current attack
 
     // 0028 - DIRECTION + ATTACK COMMAND STATE
     bool commandAttackActive;   // True when a directional command starts
@@ -84,6 +102,26 @@ typedef struct Player
     bool isRecovering;          // True during post-attack recovery
     float recoveryTimer;        // Remaining recovery time
     bool cancelWindowOpen;      // True when next attack may be buffered/cancelled
+
+    // 0075 - Input chord / tap-versus-hold state.
+    unsigned int attackButtonMask;
+    float attackButtonChordTimer;
+    bool aHoldPending;
+    float aHoldTimer;
+
+    // Hold-A Punch Charge. Frame 2 remains frozen until A is released.
+    bool punchChargeHolding;
+    float punchChargeTimer;
+    int punchChargeLevel;       // 0 = weak, 1 = 1.5 sec, 2 = 3 sec
+
+    // Per-move forward/backward slide, measured from scaled sprite width.
+    float attackSlideRemaining;
+    float attackSlideSpeed;
+    int attackSlideDirection;
+
+    // Hold Ctrl to stay in the one-frame crouch pose.
+    bool isCrouching;
+    bool showHitboxes;          // F1 debug toggle, off by default
 
     // ============================================================
     // 0030 - PLAYER HURT / HP STATE
@@ -134,6 +172,15 @@ typedef struct Player
     float dashTimer;
     float dashDuration;
     float dashSpeed;
+
+    // A just-completed double tap remains available briefly for an
+    // F,F+button or B,B+button command. A recognized command cancels
+    // the ordinary dash before the special move takes over.
+    float dashCommandTimer;
+    float dashCommandWindow;
+    int dashCommandDirection;
+    bool dashCommandFacingRight;
+    float dashCommandStartX;
 
 } Player;
 

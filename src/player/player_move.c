@@ -79,7 +79,27 @@ void UpdatePlayer(
         }
     }
 
-    if (!player->isAttacking && !player->isDashing)
+    if (player->dashCommandTimer > 0.0f)
+    {
+        player->dashCommandTimer -= deltaTime;
+
+        if (player->dashCommandTimer <= 0.0f)
+        {
+            player->dashCommandTimer = 0.0f;
+            player->dashCommandDirection = 0;
+        }
+    }
+
+    bool controlHeld =
+        IsKeyDown(KEY_LEFT_CONTROL) ||
+        IsKeyDown(KEY_RIGHT_CONTROL);
+
+    if (
+        !player->isAttacking &&
+        !player->isDashing &&
+        !player->isCrouching &&
+        !controlHeld
+    )
     {
         int pressedDashDirection = 0;
 
@@ -100,6 +120,13 @@ void UpdatePlayer(
 
             if (sameSecondTap)
             {
+                // Keep the completed motion briefly for F,F+button or
+                // B,B+button recognition in UpdatePlayerAttack().
+                player->dashCommandDirection = pressedDashDirection;
+                player->dashCommandFacingRight = player->dashTapFacingRight;
+                player->dashCommandTimer = player->dashCommandWindow;
+                player->dashCommandStartX = player->rectangle.x;
+
                 player->isDashing = true;
                 player->dashDirection = pressedDashDirection;
                 player->dashTimer = player->dashDuration;
@@ -154,6 +181,7 @@ void UpdatePlayer(
     // Walking only works when the player is not attacking.
     player->isWalking =
         !player->isAttacking &&
+        !player->isCrouching &&
         (movingLeft || movingRight || movingUp || movingDown || player->isDashing);
 
     // 0051 - Hold Shift while moving to run.
@@ -173,7 +201,11 @@ void UpdatePlayer(
     Vector2 movement = {0.0f, 0.0f};
 
     // Habang uma-attack o nagba-back-dash, naka-lock muna ang normal movement.
-    if (!player->isAttacking && !player->isDashing)
+    if (
+        !player->isAttacking &&
+        !player->isDashing &&
+        !player->isCrouching
+    )
     {
         if (movingLeft)
         {

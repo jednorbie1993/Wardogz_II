@@ -1,0 +1,69 @@
+0073 - JAMBER SPECIAL MOVE COMMAND INPUT SYSTEM
+================================================
+
+NOTE
+----
+This entry was reconstructed from the surviving 0075 documentation and
+current player attack data because no separate original 0073 TXT file was
+found.
+
+PURPOSE
+-------
+Extends Jamber's basic A/W/S/D combat into directional and multi-button
+special-move commands while keeping normal movement and dash behavior usable.
+
+COMMAND INPUTS
+--------------
+A + W                    Hammer Punch
+Hold Back + A            Back Blow
+Back, Back + W           Elbow Dash
+Hold Back + W            Downward Fist
+Forward, Forward + S     Slide Kick
+Forward, Forward + D     Round Kick
+Forward, Forward + A+W   Hammer Charge
+Forward, Forward + A     Uppercut
+Forward, Forward + W     Chop
+Forward, Forward + S+D   Drop Kick
+
+CROUCH / CLOSE COMMANDS
+-----------------------
+Hold Ctrl                Sit / Crouch
+Ctrl + A                 Uppercut
+Ctrl + W                 Stationary Rising Elbow
+A + D                    Hip Check
+W + S                    Headbutt
+
+COMBO BRANCHES
+--------------
+A, W, A                  Punch - Punch - Downward Fist
+A, W, A+W                Punch - Punch - Hammer Punch
+A, W, S                  Punch - Punch - Round Kick
+
+INPUT WINDOWS
+-------------
+Two direction taps:      maximum 0.30 second apart
+Button after second tap: maximum 0.15 second
+Two-button chord grace:  0.10 second
+Tap/hold A threshold:    0.18 second
+Combo continuation:      0.85 second
+
+COMMAND PRIORITY
+----------------
+The ordinary dash can still begin after a double direction tap.
+
+If a matching attack button arrives inside the command window, the normal
+dash is cancelled and the special move takes over.
+
+Multi-button commands have priority over single-button commands.
+
+DESIGN GOAL
+-----------
+Input decides which AttackType starts. Move timing, damage, hitbox,
+knockback, and slide values are handled separately by the attack-data system.
+
+STATUS
+------
+Reconstructed 0073 entry from surviving 0075/current code.
+
+END OF DOCUMENTATION 0073
+=========================

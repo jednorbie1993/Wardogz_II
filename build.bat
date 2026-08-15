@@ -150,6 +150,7 @@ src\enemy\enemy_attack.c ^
 src\enemy\enemy_hit.c ^
 src\enemy\enemy_collision.c ^
 src\enemy\enemy_draw.c ^
+src\enemy\enemy_wave.c ^
 src\enemy\stage_1\punk.c ^
 src\enemy\stage_1\hooligan.c ^
 src\enemy\stage_1\gangster.c ^

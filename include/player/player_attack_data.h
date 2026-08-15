@@ -13,24 +13,21 @@
 
 typedef struct PlayerAttackData
 {
-    // Animation / active timing
-    float frameTime;
-    int activeStartFrame;
-    int activeEndFrame;
+    int frameCount;
+    float frameTimes[MAX_PLAYER_ATTACK_FRAMES];
 
-    // Hitbox dimensions as percentages of the scaled player sprite.
-    float hitboxWidthScale;
-    float hitboxHeightScale;
-    float hitboxOffsetXScale;
-    float hitboxOffsetYScale;
+    Rectangle frameHitboxes[MAX_PLAYER_ATTACK_FRAMES];
 
-    // Combat values. For 0023 these preserve the old behavior.
     int damage;
     float knockbackSpeed;
     float hitReactionTime;
 
-} PlayerAttackData;
+    float slideDistanceScale;
+    int slideStartFrame;
+    int slideEndFrame;
+    int slideFacingDirection;
 
+} PlayerAttackData;
 // Returns the move definition for an AttackType.
 // ATTACK_NONE returns a harmless zero-value definition.
 const PlayerAttackData *GetPlayerAttackData(AttackType attackType);
