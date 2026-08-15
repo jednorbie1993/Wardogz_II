@@ -1,0 +1,69 @@
+WARDOGZ II
+DOCUMENT 0081 - ENEMY WAVE PROGRESSION
+=======================================
+
+PURPOSE
+-------
+This document records the planned Stage 1 enemy-wave structure for Wardogz II.
+
+GENERAL WAVE DESIGN
+-------------------
+- Stage progress is used to trigger enemy waves.
+- The first discussed trigger points include:
+  * 9% stage progress
+  * 18% stage progress
+  * 27% stage progress
+- Later waves continue as the player advances toward the Vargas section.
+- Vargas' intro sequence begins around 86% stage progress.
+- Vargas' actual active position is later in the stage, around world X = 11452
+  (approximately 98% of the stage in the current test implementation).
+
+ENEMY TYPES USED
+----------------
+- Punk
+- Hooligan
+- Gangster
+
+EARLY WAVE PLAN
+---------------
+9%:
+- 1 Hooligan
+
+18%:
+- 2 Hooligans
+- 1 additional reinforcement is planned after the initial enemies enter.
+
+27%:
+- This is the next mixed-enemy wave.
+- Punk begins to be included in the progression.
+- Exact final composition can be tuned in code without changing the wave system.
+
+PACING RULE
+-----------
+- Do not dump every enemy on-screen at the same instant.
+- Use an initial group plus delayed reinforcements.
+- Keep the fight readable and arcade-like rather than overcrowded.
+- The working target discussed is roughly 3-4 active normal enemies at a time.
+- New enemies should enter naturally after room becomes available.
+
+TECHNICAL SLOT PLAN
+-------------------
+Current wave-test structure provides six enemy slots:
+- Slots 0-4: normal Stage 1 enemies and reinforcements
+- Slot 5: reserved for Vargas
+
+DESIGN GOAL
+-----------
+The player should feel that enemy pressure increases as the stage advances:
+1. Simple opening encounter
+2. Larger same-type encounter
+3. Mixed enemy waves
+4. Reinforcement pressure
+5. Stronger pre-boss encounters
+6. Vargas transition
+
+NOTES
+-----
+- Enemy composition and percentages should remain easy to tune manually.
+- Wave triggers should be based on world/stage progress, not the visible progress-map UI.
+- The camera system and enemy-wave system should remain independent.

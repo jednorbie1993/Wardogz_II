@@ -89,6 +89,7 @@ Enemy InitPunk(float x, float y)
 
     enemy.maxHp = 150;
     enemy.hp = enemy.maxHp;
+    enemy.attackDamage = 28;
 
     // ============================================================
     // 0031 - PUNK FACING + CHASE AI

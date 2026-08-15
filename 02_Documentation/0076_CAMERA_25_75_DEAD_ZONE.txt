@@ -1,0 +1,34 @@
+WARDOGZ II - DOCUMENTATION 0076
+CAMERA 25%-75% SCREEN DEAD ZONE
+
+PURPOSE
+- Palitan ang old camera behavior na laging naka-center kay Jamber.
+- Camera movement is based on the visible game screen, not stage/map percentage.
+
+BEHAVIOR
+- 0%-25% screen area: camera can move left when Jamber reaches/passes the left threshold.
+- 25%-75% screen area: camera remains steady.
+- 75%-100% screen area: camera moves right when Jamber reaches/passes the right threshold.
+- Jamber is no longer forced to remain around the 50% center of the screen.
+
+MAIN SETTINGS
+float leftScreenLimit = screenWidth * 0.25f;
+float rightScreenLimit = screenWidth * 0.75f;
+
+ADJUSTMENT
+- 0.20f / 0.80f = wider free movement area.
+- 0.30f / 0.70f = camera follows sooner.
+- Current target = 0.25f / 0.75f.
+
+WORLD CLAMP
+- Camera must still stay inside Stage 1.
+- Minimum camera target X = half screen width.
+- Maximum camera target X = stageWorldWidth - half screen width.
+- Prevents black/empty area from appearing before or after the background.
+
+FILES
+- src/main.c
+
+NOTES
+- Horizontal camera only was changed.
+- Y camera behavior remains fixed to the stage view.

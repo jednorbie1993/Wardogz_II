@@ -3,20 +3,17 @@
 #include "punk.h"
 #include "gangster.h"
 
-// ============================================================
-// 0074 - STAGE 1 ENEMY WAVE MANAGER
-// ============================================================
+#define WAVE_1_TRIGGER_PROGRESS 0.06f
+#define WAVE_1_BARRIER_PROGRESS 0.18f
+#define WAVE_2_TRIGGER_PROGRESS 0.26f
+#define WAVE_2_BARRIER_PROGRESS 0.38f
+#define WAVE_3_TRIGGER_PROGRESS 0.46f
+#define WAVE_3_BARRIER_PROGRESS 0.59f
+#define WAVE_4_TRIGGER_PROGRESS 0.66f
+#define WAVE_4_BARRIER_PROGRESS 0.81f
 
-// First test encounter.
-#define WAVE_1_TRIGGER_PROGRESS 0.09f
-
-// Keep the spawn fully outside the visible camera.
-// Positive value = farther beyond the screen edge.
+#define REINFORCEMENT_THRESHOLD 2
 #define ENEMY_OFFSCREEN_MARGIN 180.0f
-
-// Do not let Jamber walk beyond the fight trigger while the wave is active.
-#define FIGHT_LOCK_FORWARD_PADDING 35.0f
-
 
 static float ClampWaveValue(float value, float minimum, float maximum)
 {
@@ -25,66 +22,221 @@ static float ClampWaveValue(float value, float minimum, float maximum)
     return value;
 }
 
-
 static float GetPlayerCenterX(const Player *player)
 {
     return player->rectangle.x + player->rectangle.width * 0.5f;
 }
 
-
-static bool AreWaveEnemiesDefeated(
-    const Enemy *enemies,
-    int startIndex,
-    int count
-)
+static int CountLivingWaveEnemies(const Enemy *enemies, int startIndex, int count)
 {
-    if (enemies == 0 || count <= 0)
-    {
-        return true;
-    }
+    if (enemies == 0 || count <= 0) return 0;
 
+    int living = 0;
     for (int i = 0; i < count; i++)
     {
-        const Enemy *enemy = &enemies[startIndex + i];
-
-        if (enemy->isAlive)
-        {
-            return false;
-        }
+        if (enemies[startIndex + i].isAlive)
+            living++;
     }
-
-    return true;
+    return living;
 }
 
-
-static void LockPlayerForward(
-    Player *player,
-    float boundaryX
-)
+static void ClearNormalEnemySlots(Enemy *enemies, int enemyCapacity)
 {
-    if (player == 0)
-    {
-        return;
-    }
+    if (enemies == 0) return;
+
+    for (int i = 0; i < enemyCapacity; i++)
+        enemies[i] = (Enemy){0};
+}
+
+static void LockPlayerForward(Player *player, float boundaryX)
+{
+    if (player == 0) return;
 
     float playerCenterX = GetPlayerCenterX(player);
-
-    if (playerCenterX <= boundaryX)
+    if (playerCenterX > boundaryX)
     {
-        return;
+        player->rectangle.x =
+            boundaryX - player->rectangle.width * 0.5f;
     }
-
-    // Move the player's rectangle back just enough so its CENTER cannot
-    // pass the encounter boundary. Vertical movement remains untouched.
-    player->rectangle.x =
-        boundaryX - player->rectangle.width * 0.5f;
 }
 
+static float GetLaneTop(float walkAreaTop, float walkAreaBottom)
+{
+    return walkAreaTop + (walkAreaBottom - walkAreaTop) * 0.18f;
+}
+
+static float GetLaneMiddle(float walkAreaTop, float walkAreaBottom)
+{
+    return walkAreaTop + (walkAreaBottom - walkAreaTop) * 0.50f;
+}
+
+static float GetLaneBottom(float walkAreaTop, float walkAreaBottom)
+{
+    return walkAreaTop + (walkAreaBottom - walkAreaTop) * 0.82f;
+}
+
+static float CameraLeftWorld(const Camera2D *camera, int screenWidth)
+{
+    return camera->target.x -
+           ((float)screenWidth * 0.5f) / camera->zoom;
+}
+
+static void StartBehindEntrance(
+    Enemy *enemy,
+    const Camera2D *camera,
+    int screenWidth,
+    float stageWorldWidth,
+    float stageY,
+    float speed
+)
+{
+    float cameraLeft = CameraLeftWorld(camera, screenWidth);
+
+    float spawnX = ClampWaveValue(
+        cameraLeft - ENEMY_OFFSCREEN_MARGIN,
+        20.0f,
+        stageWorldWidth - 160.0f
+    );
+
+    enemy->hurtbox.x = spawnX;
+
+    float targetX = ClampWaveValue(
+        cameraLeft + 130.0f,
+        20.0f,
+        stageWorldWidth - 160.0f
+    );
+
+    StartEnemyEntrance(enemy, targetX, stageY, speed);
+}
 
 static void SpawnWave1(
     EnemyWaveSystem *waves,
     Enemy *enemies,
     int enemyCapacity,
+    float stageWorldWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    if (enemyCapacity < 3) return;
+
+    ClearNormalEnemySlots(enemies, enemyCapacity);
+
+    float topY = GetLaneTop(walkAreaTop, walkAreaBottom);
+    float midY = GetLaneMiddle(walkAreaTop, walkAreaBottom);
+    float bottomY = GetLaneBottom(walkAreaTop, walkAreaBottom);
+
+    enemies[0] = InitHooligan(stageWorldWidth * 0.145f, midY);
+    StartEnemyEntrance(
+        &enemies[0],
+        stageWorldWidth * 0.095f,
+        midY,
+        230.0f
+    );
+
+    enemies[1] = InitPunk(stageWorldWidth * 0.155f, topY);
+    enemies[2] = InitPunk(stageWorldWidth * 0.165f, bottomY);
+
+    waves->activeEnemyStartIndex = 0;
+    waves->activeEnemyCount = 3;
+    waves->reinforcementSpawned = true;
+    waves->waveActive = true;
+    waves->waveFinished = false;
+    waves->fightBoundaryX = stageWorldWidth * WAVE_1_BARRIER_PROGRESS;
+}
+
+static void SpawnWave2(
+    EnemyWaveSystem *waves,
+    Enemy *enemies,
+    int enemyCapacity,
+    float stageWorldWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    if (enemyCapacity < 4) return;
+
+    ClearNormalEnemySlots(enemies, enemyCapacity);
+
+    float topY = GetLaneTop(walkAreaTop, walkAreaBottom);
+    float midY = GetLaneMiddle(walkAreaTop, walkAreaBottom);
+    float bottomY = GetLaneBottom(walkAreaTop, walkAreaBottom);
+
+    enemies[0] = InitPunk(stageWorldWidth * 0.335f, topY);
+    enemies[1] = InitGangster(stageWorldWidth * 0.350f, midY);
+    enemies[2] = InitPunk(stageWorldWidth * 0.365f, bottomY);
+
+    waves->activeEnemyStartIndex = 0;
+    waves->activeEnemyCount = 3;
+    waves->reinforcementSpawned = false;
+    waves->waveActive = true;
+    waves->waveFinished = false;
+    waves->fightBoundaryX = stageWorldWidth * WAVE_2_BARRIER_PROGRESS;
+}
+
+static void SpawnWave3(
+    EnemyWaveSystem *waves,
+    Enemy *enemies,
+    int enemyCapacity,
+    float stageWorldWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    if (enemyCapacity < 5) return;
+
+    ClearNormalEnemySlots(enemies, enemyCapacity);
+
+    float topY = GetLaneTop(walkAreaTop, walkAreaBottom);
+    float midY = GetLaneMiddle(walkAreaTop, walkAreaBottom);
+    float bottomY = GetLaneBottom(walkAreaTop, walkAreaBottom);
+
+    enemies[0] = InitHooligan(stageWorldWidth * 0.525f, topY);
+    enemies[1] = InitGangster(stageWorldWidth * 0.545f, midY);
+    enemies[2] = InitPunk(stageWorldWidth * 0.560f, bottomY);
+
+    waves->activeEnemyStartIndex = 0;
+    waves->activeEnemyCount = 3;
+    waves->reinforcementSpawned = false;
+    waves->waveActive = true;
+    waves->waveFinished = false;
+    waves->fightBoundaryX = stageWorldWidth * WAVE_3_BARRIER_PROGRESS;
+}
+
+static void SpawnWave4(
+    EnemyWaveSystem *waves,
+    Enemy *enemies,
+    int enemyCapacity,
+    float stageWorldWidth,
+    float walkAreaTop,
+    float walkAreaBottom
+)
+{
+    if (enemyCapacity < 5) return;
+
+    ClearNormalEnemySlots(enemies, enemyCapacity);
+
+    float topY = GetLaneTop(walkAreaTop, walkAreaBottom);
+    float midY = GetLaneMiddle(walkAreaTop, walkAreaBottom);
+    float bottomY = GetLaneBottom(walkAreaTop, walkAreaBottom);
+
+    enemies[0] = InitHooligan(stageWorldWidth * 0.745f, topY);
+    enemies[1] = InitGangster(stageWorldWidth * 0.765f, midY);
+    enemies[2] = InitHooligan(stageWorldWidth * 0.785f, bottomY);
+
+    waves->activeEnemyStartIndex = 0;
+    waves->activeEnemyCount = 3;
+    waves->reinforcementSpawned = false;
+    waves->waveActive = true;
+    waves->waveFinished = false;
+    waves->fightBoundaryX = stageWorldWidth * WAVE_4_BARRIER_PROGRESS;
+}
+
+static void SpawnReinforcement(
+    EnemyWaveSystem *waves,
+    Enemy *enemies,
+    int enemyCapacity,
+    int waveNumber,
     float stageWorldWidth,
     const Camera2D *camera,
     int screenWidth,
@@ -92,78 +244,62 @@ static void SpawnWave1(
     float walkAreaBottom
 )
 {
-    if (
-        waves == 0 ||
-        enemies == 0 ||
-        enemyCapacity < 1 ||
-        camera == 0
-    )
+    if (waves == 0 || enemies == 0 || camera == 0) return;
+
+    float topY = GetLaneTop(walkAreaTop, walkAreaBottom);
+    float midY = GetLaneMiddle(walkAreaTop, walkAreaBottom);
+    float bottomY = GetLaneBottom(walkAreaTop, walkAreaBottom);
+
+    if (waveNumber == 2 && enemyCapacity >= 4)
     {
-        return;
+        enemies[3] = InitHooligan(0.0f, midY);
+        StartBehindEntrance(
+            &enemies[3], camera, screenWidth,
+            stageWorldWidth, midY, 245.0f
+        );
+        waves->activeEnemyCount = 4;
     }
+    else if (waveNumber == 3 && enemyCapacity >= 5)
+    {
+        enemies[3] = InitHooligan(0.0f, topY);
+        enemies[4] = InitGangster(0.0f, bottomY);
 
-    // Visible right edge in world coordinates.
-    float cameraRight =
-        camera->target.x +
-        ((float)screenWidth * 0.5f) / camera->zoom;
-
-    float spawnX =
-        cameraRight + ENEMY_OFFSCREEN_MARGIN;
-
-    // Never create the enemy outside the real Stage 1 world.
-    spawnX = ClampWaveValue(
-        spawnX,
-        0.0f,
-        stageWorldWidth - 160.0f
-    );
-
-    // Middle lane for the first tutorial encounter.
-    float spawnStageY =
-        (walkAreaTop + walkAreaBottom) * 0.5f;
-
-    enemies[0] =
-        InitHooligan(
-            spawnX,
-            spawnStageY
+        StartBehindEntrance(
+            &enemies[3], camera, screenWidth,
+            stageWorldWidth, topY, 250.0f
+        );
+        StartBehindEntrance(
+            &enemies[4], camera, screenWidth,
+            stageWorldWidth, bottomY, 235.0f
         );
 
-    // The Hooligan exists off-screen first, then runs into the visible area.
-    float entranceTargetX =
-        cameraRight - 180.0f;
-
-    if (entranceTargetX < 0.0f)
+        waves->activeEnemyCount = 5;
+    }
+    else if (waveNumber == 4 && enemyCapacity >= 5)
     {
-        entranceTargetX = 0.0f;
+        enemies[3] = InitGangster(0.0f, topY);
+        enemies[4] = InitPunk(0.0f, bottomY);
+
+        StartBehindEntrance(
+            &enemies[3], camera, screenWidth,
+            stageWorldWidth, topY, 240.0f
+        );
+        StartBehindEntrance(
+            &enemies[4], camera, screenWidth,
+            stageWorldWidth, bottomY, 255.0f
+        );
+
+        waves->activeEnemyCount = 5;
     }
 
-    StartEnemyEntrance(
-        &enemies[0],
-        entranceTargetX,
-        spawnStageY,
-        230.0f
-    );
-
-    waves->activeEnemyStartIndex = 0;
-    waves->activeEnemyCount = 1;
-    waves->waveActive = true;
-    waves->waveFinished = false;
+    waves->reinforcementSpawned = true;
 }
-
 
 EnemyWaveSystem InitEnemyWaveSystem(void)
 {
     EnemyWaveSystem waves = {0};
-
-    waves.currentWave = 0;
-    waves.waveActive = false;
-    waves.waveFinished = false;
-    waves.fightBoundaryX = 0.0f;
-    waves.activeEnemyCount = 0;
-    waves.activeEnemyStartIndex = 0;
-
     return waves;
 }
-
 
 void UpdateEnemyWaveSystem(
     EnemyWaveSystem *waves,
@@ -189,25 +325,72 @@ void UpdateEnemyWaveSystem(
         return;
     }
 
-    float playerCenterX =
-        GetPlayerCenterX(player);
+    float playerCenterX = GetPlayerCenterX(player);
+    float progress = playerCenterX / stageWorldWidth;
 
-    // ========================================================
-    // WAVE 1 - 9% - ONE HOOLIGAN
-    // ========================================================
+    if (!waves->waveActive)
+    {
+        if (waves->currentWave == 0 &&
+            progress >= WAVE_1_TRIGGER_PROGRESS)
+        {
+            SpawnWave1(
+                waves, enemies, enemyCapacity,
+                stageWorldWidth, walkAreaTop, walkAreaBottom
+            );
+            waves->currentWave = 1;
+        }
+        else if (waves->currentWave == 1 &&
+                 progress >= WAVE_2_TRIGGER_PROGRESS)
+        {
+            SpawnWave2(
+                waves, enemies, enemyCapacity,
+                stageWorldWidth, walkAreaTop, walkAreaBottom
+            );
+            waves->currentWave = 2;
+        }
+        else if (waves->currentWave == 2 &&
+                 progress >= WAVE_3_TRIGGER_PROGRESS)
+        {
+            SpawnWave3(
+                waves, enemies, enemyCapacity,
+                stageWorldWidth, walkAreaTop, walkAreaBottom
+            );
+            waves->currentWave = 3;
+        }
+        else if (waves->currentWave == 3 &&
+                 progress >= WAVE_4_TRIGGER_PROGRESS)
+        {
+            SpawnWave4(
+                waves, enemies, enemyCapacity,
+                stageWorldWidth, walkAreaTop, walkAreaBottom
+            );
+            waves->currentWave = 4;
+        }
+    }
+
+    if (!waves->waveActive) return;
+
+    LockPlayerForward(player, waves->fightBoundaryX);
+
+    int livingEnemies =
+        CountLivingWaveEnemies(
+            enemies,
+            waves->activeEnemyStartIndex,
+            waves->activeEnemyCount
+        );
+
     if (
-        waves->currentWave == 0 &&
-        !waves->waveActive &&
-        playerCenterX >= stageWorldWidth * WAVE_1_TRIGGER_PROGRESS
+        waves->currentWave >= 2 &&
+        waves->currentWave <= 4 &&
+        !waves->reinforcementSpawned &&
+        livingEnemies <= REINFORCEMENT_THRESHOLD
     )
     {
-        waves->fightBoundaryX =
-            playerCenterX + FIGHT_LOCK_FORWARD_PADDING;
-
-        SpawnWave1(
+        SpawnReinforcement(
             waves,
             enemies,
             enemyCapacity,
+            waves->currentWave,
             stageWorldWidth,
             camera,
             screenWidth,
@@ -215,58 +398,49 @@ void UpdateEnemyWaveSystem(
             walkAreaBottom
         );
 
-        waves->currentWave = 1;
-    }
-
-    // ========================================================
-    // ACTIVE FIGHT LOCK
-    // ========================================================
-    if (waves->waveActive)
-    {
-        LockPlayerForward(
-            player,
-            waves->fightBoundaryX
-        );
-
-        if (
-            AreWaveEnemiesDefeated(
+        livingEnemies =
+            CountLivingWaveEnemies(
                 enemies,
                 waves->activeEnemyStartIndex,
                 waves->activeEnemyCount
-            )
-        )
-        {
-            waves->waveActive = false;
-            waves->waveFinished = true;
-            waves->activeEnemyCount = 0;
-        }
+            );
+    }
+
+    if (waves->reinforcementSpawned && livingEnemies == 0)
+    {
+        waves->waveActive = false;
+        waves->waveFinished = true;
+        waves->activeEnemyCount = 0;
     }
 }
-
 
 int GetEnemyWaveActiveCount(const EnemyWaveSystem *waves)
 {
-    if (waves == 0)
-    {
-        return 0;
-    }
-
+    if (waves == 0) return 0;
     return waves->activeEnemyCount;
 }
 
-
 int GetEnemyWaveStartIndex(const EnemyWaveSystem *waves)
 {
-    if (waves == 0)
-    {
-        return 0;
-    }
-
+    if (waves == 0) return 0;
     return waves->activeEnemyStartIndex;
 }
-
 
 bool IsEnemyWaveActive(const EnemyWaveSystem *waves)
 {
     return waves != 0 && waves->waveActive;
+}
+
+void LoadEnemyWaveSharedTextures(void)
+{
+    LoadPunkSharedTextures();
+    LoadHooliganSharedTextures();
+    LoadGangsterSharedTextures();
+}
+
+void UnloadEnemyWaveSharedTextures(void)
+{
+    UnloadPunkSharedTextures();
+    UnloadHooliganSharedTextures();
+    UnloadGangsterSharedTextures();
 }

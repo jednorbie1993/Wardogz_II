@@ -61,6 +61,7 @@ Enemy InitGangster(float x, float y)
     enemy.hurtbox = (Rectangle){x, y - 200.0f, 148.0f, 276.0f};
     enemy.maxHp = 200;
     enemy.hp = enemy.maxHp;
+    enemy.attackDamage = 30;
 
     enemy.facingRight = false;
     enemy.chaseSpeed = 175.0f;

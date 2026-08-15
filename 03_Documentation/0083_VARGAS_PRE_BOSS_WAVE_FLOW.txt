@@ -1,0 +1,82 @@
+WARDOGZ II
+DOCUMENT 0083 - VARGAS PRE-BOSS WAVE FLOW
+==========================================
+
+PURPOSE
+-------
+This document records the transition from the final normal Stage 1 enemy waves
+into the Vargas boss section.
+
+VARGAS RESERVATION
+------------------
+Current enemy-slot plan:
+- Slots 0-4 = normal enemies / reinforcements
+- Slot 5 = Vargas
+
+Vargas should not consume a normal reinforcement slot.
+
+PRE-BOSS SECTION
+----------------
+As the player approaches the late part of Stage 1:
+- Normal enemy pressure should increase.
+- Mixed Punk / Hooligan / Gangster encounters can be used.
+- Reinforcements should still enter from off-screen.
+- Do not overcrowd the arena immediately before the boss.
+
+86% TRIGGER
+-----------
+Around 86% stage progress:
+- Begin the Vargas transition / intro section.
+- Stop starting unnecessary new normal waves.
+- Allow remaining active normal enemies to be resolved as required by the final
+  boss-transition logic.
+- Prepare the camera/scene for Vargas.
+
+VARGAS ACTIVE POSITION
+----------------------
+Current test implementation places Vargas activation later in the stage:
+- world X approximately 11452
+- approximately 98% of the current stage length
+
+This means:
+- 86% = boss-intro / pre-boss transition point
+- later position near 98% = Vargas becomes the active encounter
+
+INTENDED FLOW
+-------------
+1. Player clears the late normal wave.
+2. Player advances toward approximately 86%.
+3. Vargas intro/transition begins.
+4. Normal reinforcement spawning is disabled for the boss section.
+5. Player proceeds into the boss area.
+6. Vargas activates.
+7. Boss battle begins.
+
+SPAWN SAFETY
+------------
+Once the Vargas transition has started:
+- Do not spawn a new Punk/Hooligan/Gangster wave behind the player unless it is
+  intentionally part of the boss design.
+- Vargas remains reserved in his dedicated slot.
+- Normal enemies should not accidentally overwrite or initialize Vargas' slot.
+
+LOADING
+-------
+Vargas assets should be ready before the player reaches the boss activation area.
+
+The story/loading/title system may later be used to preload general Stage 1
+assets, but the gameplay must still guarantee that Vargas is loaded before his
+intro/activation.
+
+DESIGN GOAL
+-----------
+The end of Stage 1 should feel deliberate:
+
+normal street fight
+    -> stronger late wave
+    -> short breathing/transition space
+    -> Vargas introduction
+    -> boss battle
+
+This prevents the boss from feeling like just another enemy spawned inside a
+normal wave.

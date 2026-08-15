@@ -1,0 +1,129 @@
+WARDOGZ II - DOCUMENT 0074
+STORY IMAGES AND LOADING PLAN
+Date: 2026-08-15
+
+PURPOSE
+This document defines the 7 story images shown after the title screen and how they can also serve as a loading period for Stage 1 assets.
+
+==================================================
+1. STORY IMAGE 1 - THE CITY AT NIGHT
+==================================================
+
+Scene:
+- Dark city street / alley at night
+- Smoke, streetlights, damaged or neglected surroundings
+- Quiet but dangerous atmosphere
+
+Purpose:
+- Establish the world and mood before the enemies appear.
+
+==================================================
+2. STORY IMAGE 2 - TROUBLE IN THE STREETS
+==================================================
+
+Scene:
+- Punk, Gangster, and Hooligan presence in the streets
+- They should look like the local threat controlling the area
+- Civilians may be absent, distant, or intimidated
+
+Purpose:
+- Introduce the Stage 1 enemy threat.
+
+==================================================
+3. STORY IMAGE 3 - JAMBER ARRIVES
+==================================================
+
+Scene:
+- Jamber enters the area
+- Serious / focused expression
+- Medium or wide cinematic shot
+
+Purpose:
+- Give Jamber a clear hero entrance.
+
+==================================================
+4. STORY IMAGE 4 - NO MORE RUNNING
+==================================================
+
+Scene:
+- Closer shot of Jamber
+- Determined expression
+- He has made the decision to fight
+
+Purpose:
+- Show Jamber's resolve before combat.
+
+==================================================
+5. STORY IMAGE 5 - THE FIRST WAVE
+==================================================
+
+Scene:
+- Jamber faces the first group of enemies
+- Punk, Gangster, and Hooligan are ready to fight
+- Strong confrontation composition
+
+Purpose:
+- Transition the story toward direct combat.
+
+==================================================
+6. STORY IMAGE 6 - BERSERKER POWER AWAKENS
+==================================================
+
+Scene:
+- Jamber begins releasing stored energy
+- Blue aura builds around him
+- Red rage accents begin appearing
+- His expression becomes more aggressive
+
+Purpose:
+- Foreshadow the Berserker system that will later become a gameplay mechanic.
+
+Current Berserker concept:
+- Jamber has HP plus a separate blue energy meter.
+- The energy meter increases through combat activity such as dealing damage and/or receiving damage.
+- When the meter becomes full, Berserker Mode can activate.
+- Berserker Mode gives Jamber increased damage.
+- Jamber may gain a slightly red-tinted rage appearance during the mode.
+
+NOTE:
+The exact gameplay values, duration, activation button, damage multiplier, and meter rules are NOT finalized in this document.
+
+==================================================
+7. STORY IMAGE 7 - MARCH TOWARD BATTLE
+==================================================
+
+Scene:
+- Jamber moves forward toward the combat area
+- Dark alley / stage entrance remains visible
+- Strong final pre-gameplay composition
+
+Purpose:
+- Final story transition before the tutorial and Stage 1.
+
+==================================================
+8. LOADING DURING STORY
+==================================================
+
+The story sequence can hide or reduce perceived loading time.
+
+Possible assets to load while the player is reading the story:
+- Punk textures / animations
+- Hooligan textures / animations
+- Gangster textures / animations
+- Stage 1 backgrounds
+- Enemy sounds
+- Stage music
+- Combat sound effects
+- Enemy data / attack assets
+- Tutorial assets
+- Other Stage 1 resources not required on the title screen
+
+Recommended behavior:
+- Do not load everything on the title screen if it causes a long initial wait.
+- Load only what is required to show the title screen first.
+- Begin loading Stage 1 content after ENTER is pressed.
+- Continue loading while story images are being viewed.
+- Before leaving the final story/tutorial sequence, confirm required Stage 1 assets are ready.
+
+IMPORTANT:
+The loading implementation will be coded later. This document defines the intended flow only.

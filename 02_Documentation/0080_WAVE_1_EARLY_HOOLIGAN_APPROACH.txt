@@ -1,0 +1,87 @@
+WARDOGZ II - DOCUMENTATION 0080
+WAVE 1 - EARLY HOOLIGAN APPROACH + 17% FORWARD GATE
+
+PURPOSE
+- Avoid the enemy suddenly appearing only when Jamber reaches a fight trigger.
+- Enemy should already be farther ahead in the map and visibly run toward the player.
+- The forward gate is separate from the enemy activation/spawn position.
+
+CURRENT WAVE 1 FLOW
+1. Jamber reaches about 2% of Stage 1.
+2. Wave 1 activates.
+3. Hooligan starts at about 9% of the map.
+4. Hooligan runs left toward about 5.5%.
+5. Jamber can continue moving/fighting.
+6. Jamber cannot pass 17% while the Hooligan is alive.
+7. Kill the Hooligan.
+8. 17% gate unlocks.
+9. Jamber can continue through the stage.
+
+TUNING VALUES
+#define WAVE_1_ACTIVATE_PROGRESS 0.02f
+#define WAVE_1_SPAWN_PROGRESS 0.09f
+#define WAVE_1_ENTRANCE_TARGET_PROGRESS 0.055f
+#define WAVE_1_FIGHT_BOUNDARY_PROGRESS 0.17f
+
+MEANING
+- ACTIVATE_PROGRESS
+  When the wave becomes active based on Jamber's map progress.
+
+- SPAWN_PROGRESS
+  Where the enemy begins in the stage.
+
+- ENTRANCE_TARGET_PROGRESS
+  Where the enemy initially runs toward before normal AI/chase takes over.
+
+- FIGHT_BOUNDARY_PROGRESS
+  Maximum forward progress allowed while the wave is alive.
+
+ENTRANCE SPEED
+StartEnemyEntrance(
+    &enemies[0],
+    entranceTargetX,
+    spawnStageY,
+    230.0f
+);
+
+Current:
+- 230.0f = entrance/run speed.
+
+Examples:
+- 180.0f = slower.
+- 230.0f = current.
+- 300.0f = faster.
+
+ENEMY TYPE
+Current:
+InitHooligan(...)
+
+Can later be changed to:
+- InitPunk(...)
+- InitGangster(...)
+
+MULTIPLE ENEMIES
+For another enemy:
+- Use a different enemy slot, e.g. enemies[1].
+- Initialize its type and position.
+- Call StartEnemyEntrance() for that slot.
+- Increase:
+  waves->activeEnemyCount
+
+Example:
+waves->activeEnemyCount = 2;
+
+SPAWN Y / LANE
+Current Wave 1 uses the middle of:
+walkAreaTop and walkAreaBottom.
+
+Future waves can spawn enemies in upper, middle, or lower lanes to avoid stacking and make entrances look more natural.
+
+DESIGN RULE GOING FORWARD
+- Enemy should usually appear/approach before the forward gate becomes relevant.
+- Avoid obvious teleport spawning inside the visible screen.
+- Reinforcements should use off-screen or ahead-of-player entrances whenever possible.
+
+FILES
+- src/enemy/enemy_wave.c
+- include/enemy/enemy_wave.h

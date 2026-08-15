@@ -1,0 +1,69 @@
+WARDOGZ II - DOCUMENTATION 0079
+STAGE 1 ENEMY WAVE MANAGER
+
+PURPOSE
+- Keep Stage 1 enemy encounter logic outside main.c.
+- Handle normal enemy waves before Vargas.
+- Support future wave triggers, reinforcements, stage gates, and reusable enemy slots.
+
+NEW FILES
+- include/enemy/enemy_wave.h
+- src/enemy/enemy_wave.c
+
+MAIN SYSTEM
+EnemyWaveSystem
+
+Tracks:
+- currentWave
+- waveActive
+- waveFinished
+- fightBoundaryX
+- activeEnemyCount
+- activeEnemyStartIndex
+
+MAIN FUNCTIONS
+InitEnemyWaveSystem()
+- Creates/clears the wave manager state.
+
+UpdateEnemyWaveSystem(...)
+- Checks player progress.
+- Starts the correct wave.
+- Controls fight boundary.
+- Detects when the active wave enemies are defeated.
+
+GetEnemyWaveActiveCount(...)
+- Returns the current number of wave enemy slots in use.
+
+IsEnemyWaveActive(...)
+- Returns whether a normal encounter is currently active.
+
+LoadEnemyWaveSharedTextures()
+- Preloads Punk, Hooligan, and Gangster shared textures.
+
+UnloadEnemyWaveSharedTextures()
+- Releases normal enemy shared texture caches at shutdown.
+
+ENEMY ARRAY PLAN
+#define ENEMY_COUNT 6
+#define VARGAS_ENEMY_INDEX 5
+
+Slots:
+- 0-4 = normal Stage 1 enemies/reinforcements.
+- 5 = reserved for Vargas.
+
+IMPORTANT
+- Normal enemies and Vargas must not overwrite the same Enemy slot.
+- Vargas references should use:
+  enemies[VARGAS_ENEMY_INDEX]
+
+BUILD REQUIREMENT
+Add:
+src\enemy\enemy_wave.c
+
+to the GCC/build source list.
+
+FILES
+- src/main.c
+- include/enemy/enemy_wave.h
+- src/enemy/enemy_wave.c
+- build.bat / build_and_run.bat

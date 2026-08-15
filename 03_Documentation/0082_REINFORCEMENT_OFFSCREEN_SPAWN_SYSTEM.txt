@@ -1,0 +1,87 @@
+WARDOGZ II
+DOCUMENT 0082 - REINFORCEMENT / OFF-SCREEN SPAWN SYSTEM
+========================================================
+
+PURPOSE
+-------
+This document defines how Stage 1 reinforcements should appear without visibly
+popping or teleporting onto the player's screen.
+
+CORE RULE
+---------
+Reinforcement enemies must spawn OUTSIDE the visible camera area.
+
+They then move into the playable area naturally.
+
+WHY
+---
+This makes the encounter feel like enemies are arriving from another part of the
+street instead of being created directly in front of the player.
+
+SPAWN BEHAVIOR
+--------------
+- Determine the current camera-visible area.
+- Spawn the reinforcement beyond the left or right camera edge.
+- Do not use a fixed screen-space position that can become visible when the
+  camera moves.
+- The enemy's spawn location must be based on world coordinates relative to
+  the current camera/player area.
+
+ENTRANCE
+--------
+After spawning:
+1. Enemy starts off-screen.
+2. Enemy receives an entrance target.
+3. Enemy runs/walks toward the target X and stage Y.
+4. Normal enemy AI begins after the entrance is completed.
+
+The current enemy system already supports an entrance concept using values such
+as:
+- targetX
+- targetStageY
+- entranceSpeed
+- StartEnemyEntrance(...)
+
+Existing examples include off-screen style starting coordinates such as:
+- Right-side entrance around X = 1380
+- Left-side entrance around X = -180
+
+These are examples only; future spawning should preferably follow the current
+camera/world position rather than relying only on fixed coordinates.
+
+REINFORCEMENT DELAY
+-------------------
+- Reinforcements should not appear at exactly the same moment as the initial wave.
+- A short delay can be used before spawning/starting the reinforcement.
+- Discussed target: approximately 0.5 to 1.0 second.
+- Keep this value easy to tune.
+
+ACTIVE ENEMY LIMIT / PACING
+---------------------------
+- Avoid overcrowding the player.
+- Working target: about 3-4 active normal enemies at one time.
+- A reinforcement may wait until an enemy is defeated or room becomes available,
+  depending on the final wave logic.
+
+PRELOADING
+----------
+Punk, Hooligan, and Gangster textures/assets should be preloaded before the
+relevant wave starts.
+
+Reason:
+- Prevent a pause or freeze when an enemy type appears for the first time.
+- Enemy spawning should only activate an already loaded enemy setup.
+
+IMPORTANT
+---------
+"Off-screen" means outside the CURRENT GAME CAMERA VIEW.
+
+It does not mean:
+- outside the stage-progress bar
+- outside a static 0-100% map graphic
+- an arbitrary fixed position that may already be visible after the camera moves
+
+DESIGN GOAL
+-----------
+The player sees enemies RUN INTO the fight.
+The player should never notice an obvious spawn/pop-in.

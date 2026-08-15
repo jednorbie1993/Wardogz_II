@@ -1,0 +1,60 @@
+WARDOGZ II - DOCUMENTATION 0078
+STARTUP LOADING SCREEN + NORMAL ENEMY PRELOAD
+
+PURPOSE
+- Avoid the game appearing white/blank while startup assets load.
+- Show a visible WARDOGZ II loading screen with a red progress bar.
+- Preload Punk, Hooligan, and Gangster textures before gameplay so spawning them later does not cause a noticeable freeze/hang.
+
+STARTUP LOADING SCREEN
+Display:
+- WARDOGZ II
+- NOW LOADING... XX%
+- Dark loading bar background.
+- Red progress fill.
+- White border.
+
+HELPER
+DrawStartupLoading(
+    screenWidth,
+    screenHeight,
+    progress
+);
+
+PROGRESS
+- Progress is represented from 0.0f to 1.0f.
+- Example:
+  0.20f = 20%
+  0.50f = 50%
+  1.00f = 100%
+
+BACKGROUND LOADING
+- Stage backgrounds are loaded one by one.
+- DrawStartupLoading() is called after each major asset/group load.
+- This makes the red bar reflect real asset loading checkpoints instead of a fake timer.
+
+NORMAL ENEMY PRELOAD
+Function:
+LoadEnemyWaveSharedTextures();
+
+Loads shared sprite caches for:
+- Punk
+- Hooligan
+- Gangster
+
+WHY THIS IS IMPORTANT
+- InitPunk(), InitHooligan(), and InitGangster() use shared texture caches.
+- Without preload, the first appearance of an enemy type can cause a short loading pause.
+- With preload, later enemy instances mostly initialize state only and reuse existing textures.
+
+FUTURE PLAN
+- Current version preloads normal enemies before gameplay.
+- Later, when Intro -> Press Start -> Story Mode is implemented, move the normal enemy preload to the Story Mode start/loading phase.
+
+FILES
+- src/main.c
+- include/enemy/enemy_wave.h
+- src/enemy/enemy_wave.c
+- src/enemy/stage_1/punk.c
+- src/enemy/stage_1/hooligan.c
+- src/enemy/stage_1/gangster.c

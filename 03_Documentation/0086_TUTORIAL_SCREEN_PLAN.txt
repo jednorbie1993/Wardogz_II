@@ -1,0 +1,88 @@
+WARDOGZ II - DOCUMENT 0075
+TUTORIAL SCREEN PLAN
+Date: 2026-08-15
+
+PURPOSE
+This document defines the tutorial image shown after the 7 story images and before Stage 1 gameplay.
+
+==================================================
+1. POSITION IN OPENING FLOW
+==================================================
+
+Image 1   = Title Screen
+Images 2-8 = 7 Story Images
+Image 9   = Tutorial Screen
+
+Tutorial is the final page before normal gameplay begins.
+
+==================================================
+2. TUTORIAL VISUAL STYLE
+==================================================
+
+- Dark theme matching the Wardogz II title/story presentation
+- Clean and readable layout
+- Controls should be easy to understand at a glance
+- Jamber can appear as a small character illustration or pose reference
+- Avoid overly crowded text
+- Important inputs should be larger than descriptions
+
+==================================================
+3. CURRENT CONTROL INFORMATION
+==================================================
+
+Known/current core controls from the project:
+- Arrow Keys = Player movement
+- A = Left Punch
+- W = Right Punch
+- S = Left Kick
+- D = Right Kick
+- Double-tap directional input = Dash / quick movement depending on direction and facing
+
+Additional planned/mentioned controls:
+- Shift
+- Right Ctrl
+- Crouch input
+
+IMPORTANT:
+Shift, Right Ctrl, and the final crouch input must be confirmed against the actual game code before they are printed permanently on the tutorial image.
+
+==================================================
+4. DASH EXPLANATION
+==================================================
+
+The tutorial should make the double-tap system visually clear.
+
+Example concept:
+- Double tap toward facing direction = Forward Dash
+- Double tap opposite facing direction = Back Dash
+
+Use arrow icons or a simple double-arrow graphic where possible instead of long text.
+
+==================================================
+5. TUTORIAL FLOW
+==================================================
+
+Story Image 7 finished
+    -> Tutorial screen appears
+    -> Player reads controls
+    -> Player presses the continue/start input
+    -> Stage 1 begins
+
+Possible future option:
+- Allow tutorial to be skipped after the player has already seen it once.
+
+==================================================
+6. FINAL IMAGE COUNT REFERENCE
+==================================================
+
+1. Title Screen
+2. The City at Night
+3. Trouble in the Streets
+4. Jamber Arrives
+5. No More Running
+6. The First Wave
+7. Berserker Power Awakens
+8. March Toward Battle
+9. Tutorial Screen
+
+This is the current approved opening-image structure.

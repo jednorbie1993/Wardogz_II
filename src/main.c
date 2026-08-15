@@ -3,6 +3,7 @@
 #include "enemy.h"
 #include "boss.h"
 #include "cinematic.h"
+#include "enemy_wave.h"
 
 // ============================================================
 // 0047 - Y-DEPTH DRAW SORTING
@@ -318,6 +319,8 @@ static void DrawEnemyHud(
                 barWidth,
                 barHeight};
 
+        const float nameBarGap = 12.0f;
+
         Rectangle hpFill =
             {
                 hpBack.x,
@@ -478,6 +481,18 @@ int main(void)
         screenHeight,
         0.20f);
 
+    // ============================================================
+    // 0074 - PRELOAD NORMAL STAGE 1 ENEMIES
+    // ============================================================
+    // Load Punk, Hooligan, and Gangster sprite caches now so the
+    // first wave does not pause/freeze when an enemy is spawned.
+    LoadEnemyWaveSharedTextures();
+
+    DrawStartupLoading(
+        screenWidth,
+        screenHeight,
+        0.30f);
+
     // 0054 - Horizontal camera for the long Stage 1 walk test.
     Camera2D camera = {0};
     camera.offset = (Vector2){screenWidth * 0.5f, screenHeight * 0.5f};
@@ -486,14 +501,13 @@ int main(void)
     camera.zoom = 1.0f;
 
 // ============================================================
-// 0061 - VARGAS-ONLY BOSS TEST SETUP
+// 0074 - STAGE 1 NORMAL ENEMY WAVES + VARGAS BOSS SLOT
 // ============================================================
-//
-// Punk, Hooligan, and Gangster are temporarily hidden.
-// Vargas appears by himself so his complete sprite set and
-// normal-idle -> battle-idle transition can be tested safely.
-//
-#define ENEMY_COUNT 1
+// Slots 0-4 are reserved for normal Stage 1 enemies/reinforcements.
+// Slot 5 is reserved for Vargas so normal-wave enemies never collide
+// with the boss instance in the shared Enemy array.
+#define ENEMY_COUNT 6
+#define VARGAS_ENEMY_INDEX 5
 
     // Vargas does not exist yet. At 86% the intro covers his real loading,
     // then he becomes active at world x = 11452 (about 98% of this stage).
@@ -520,6 +534,9 @@ int main(void)
 
     Enemy enemies[ENEMY_COUNT] = {0};
 
+    // 0074 - Stage 1 normal-enemy wave manager.
+    EnemyWaveSystem enemyWaves = InitEnemyWaveSystem();
+
     // 0049 - Each enemy HUD row remains briefly after HP reaches zero.
     float enemyHudDeathTimers[ENEMY_COUNT] = {0};
 
@@ -544,16 +561,16 @@ int main(void)
     Texture2D stageBackgrounds[STAGE_BACKGROUND_COUNT] = {0};
 
     stageBackgrounds[0] = LoadTexture("assets/background/B1.png");
-    DrawStartupLoading(screenWidth, screenHeight, 0.37f);
+    DrawStartupLoading(screenWidth, screenHeight, 0.41f);
 
     stageBackgrounds[1] = LoadTexture("assets/background/B2.png");
-    DrawStartupLoading(screenWidth, screenHeight, 0.44f);
+    DrawStartupLoading(screenWidth, screenHeight, 0.47f);
 
     stageBackgrounds[2] = LoadTexture("assets/background/BA3.png");
-    DrawStartupLoading(screenWidth, screenHeight, 0.51f);
+    DrawStartupLoading(screenWidth, screenHeight, 0.53f);
 
     stageBackgrounds[3] = LoadTexture("assets/background/BA4.png");
-    DrawStartupLoading(screenWidth, screenHeight, 0.58f);
+    DrawStartupLoading(screenWidth, screenHeight, 0.59f);
 
     stageBackgrounds[4] = LoadTexture("assets/background/BA5.png");
     DrawStartupLoading(screenWidth, screenHeight, 0.65f);
@@ -610,7 +627,7 @@ int main(void)
             enemiesEnabled &&
             vargasFightStarted &&
             vargasLoaded &&
-            !enemies[0].isAlive)
+            !enemies[VARGAS_ENEMY_INDEX].isAlive)
         {
             vargasEndingTimer += deltaTime;
 
@@ -654,6 +671,35 @@ int main(void)
             player.rectangle.x +
             (player.rectangle.width * 0.5f);
 
+        // ========================================================
+        // 0074 - NORMAL ENEMY WAVE UPDATE
+        // ========================================================
+        // Wave 1 currently triggers at 15% and spawns one Hooligan
+        // off-screen ahead of Jamber. Forward progress stays locked
+        // until that encounter is defeated.
+        if (
+            !vargasIntroActive &&
+            !vargasApproachDialogueActive &&
+            !vargasFightStarted)
+        {
+            UpdateEnemyWaveSystem(
+                &enemyWaves,
+                &player,
+                enemies,
+                ENEMY_COUNT - 1,
+                stageWorldWidth,
+                &camera,
+                screenWidth,
+                walkAreaTop,
+                walkAreaBottom);
+
+            // The wave manager may clamp Jamber to the fight boundary,
+            // so refresh his center before camera and boss trigger checks.
+            playerCenterX =
+                player.rectangle.x +
+                (player.rectangle.width * 0.5f);
+        }
+
         float vargasTriggerX =
             stageWorldWidth *
             VARGAS_TRIGGER_PROGRESS;
@@ -687,7 +733,7 @@ int main(void)
                 !vargasLoaded &&
                 vargasIntroTimer >= VARGAS_INTRO_LOAD_DELAY)
             {
-                enemies[0] =
+                enemies[VARGAS_ENEMY_INDEX] =
                     InitBoss(
                         VARGAS_WORLD_X,
                         VARGAS_STAGE_Y);
@@ -763,11 +809,17 @@ int main(void)
             }
         }
 
+        bool normalWavePresent =
+            GetEnemyWaveActiveCount(&enemyWaves) > 0;
+
+        bool bossCombatActive =
+            enemiesEnabled &&
+            vargasFightStarted;
+
         if (
             !vargasIntroActive &&
             !vargasApproachDialogueActive &&
-            enemiesEnabled &&
-            vargasFightStarted)
+            (normalWavePresent || bossCombatActive))
         {
             // 0042 - Keep free Punks distributed around the player.
             // Attack-slot owners still chase the player directly.
@@ -798,7 +850,7 @@ int main(void)
                 walkAreaTop,
                 walkAreaBottom);
 
-            // Update each Punk independently.
+            // Update every active/shared enemy slot independently.
             for (int i = 0; i < ENEMY_COUNT; i++)
             {
                 UpdateEnemyHit(
@@ -996,15 +1048,19 @@ int main(void)
             playerFeet.y + (playerFeet.height * 0.5f),
             -1};
 
-        // Screen-space HUD: once combat begins, it follows the screen and
-        // never gets left behind in the world when the camera moves.
-        bool vargasHudVisible =
-            enemiesEnabled &&
-            vargasFightStarted;
+        // Screen-space enemy HUD follows the screen during normal waves
+        // and during the Vargas fight.
+        bool enemyHudVisible =
+            normalWavePresent ||
+            (enemiesEnabled && vargasFightStarted);
 
-        // Once the reveal is accepted, Vargas stays drawable permanently.
-        // Only the HP bar below still depends on player proximity.
-        if (enemiesEnabled)
+        // Draw normal-wave enemies before Vargas, then keep Vargas drawable
+        // after his reveal has been accepted.
+        bool anyEnemyDrawable =
+            normalWavePresent ||
+            enemiesEnabled;
+
+        if (anyEnemyDrawable)
         {
             for (int i = 0; i < ENEMY_COUNT; i++)
             {
@@ -1037,7 +1093,7 @@ int main(void)
         DrawPlayerHud(&player);
 
         // 0049 - Active enemy HP list. Dead rows disappear after a short delay.
-        if (vargasHudVisible)
+        if (enemyHudVisible)
         {
             DrawEnemyHud(
                 enemies,
@@ -1113,6 +1169,10 @@ int main(void)
             UnloadEnemy(&enemies[i]);
         }
     }
+
+    // 0074 - Normal enemy sprite caches are shared across clones.
+    // Safe to call even when a type was never loaded.
+    UnloadEnemyWaveSharedTextures();
 
     // Vargas' shared textures are released exactly once.
     UnloadBossSharedTextures();

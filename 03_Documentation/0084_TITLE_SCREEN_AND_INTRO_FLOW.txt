@@ -1,0 +1,71 @@
+WARDOGZ II - DOCUMENT 0073
+TITLE SCREEN AND INTRO FLOW
+Date: 2026-08-15
+
+PURPOSE
+This document defines the front/title screen and the complete 9-image opening flow before Stage 1 gameplay.
+
+==================================================
+1. TOTAL OPENING IMAGES
+==================================================
+
+Total: 9 images
+
+1. Title Screen
+2. Story 1 - The City at Night
+3. Story 2 - Trouble in the Streets
+4. Story 3 - Jamber Arrives
+5. Story 4 - No More Running
+6. Story 5 - The First Wave
+7. Story 6 - Berserker Power Awakens
+8. Story 7 - March Toward Battle
+9. Tutorial Screen
+
+==================================================
+2. TITLE SCREEN
+==================================================
+
+Main elements:
+- WARDOGZ II logo
+- Jamber in a 3/4 side-view pose
+- Jamber is screaming / powering up
+- Berserker awakening feeling
+- Blue energy aura
+- Red rage accents
+- Dark alley / smoky street background
+- PRESS ENTER TO CONTINUE
+
+Composition direction:
+- Jamber should NOT be literally centered.
+- Jamber should occupy one side of the screen, preferably the left or left-center area.
+- The WARDOGZ II logo should have enough clear space to remain readable.
+- PRESS ENTER TO CONTINUE should be placed in the lower area and remain easy to see.
+
+Visual identity:
+- The title image should feel like a fighting-game power-up moment.
+- Blue represents stored energy / Berserker meter.
+- Red represents rage, aggression, and the damage-boost state.
+- The image also acts as visual foreshadowing for Jamber's future Berserker mechanic.
+
+==================================================
+3. INPUT FLOW
+==================================================
+
+Game launch
+    -> Title screen appears
+    -> Player assets needed for the title screen are ready
+    -> Wait for ENTER
+    -> ENTER pressed
+    -> Story sequence begins
+    -> Story pages advance
+    -> Remaining Stage 1 assets can load during the story
+    -> Tutorial screen appears
+    -> Player confirms / continues
+    -> Stage 1 begins
+
+==================================================
+4. DESIGN RULE
+==================================================
+
+The opening must feel cinematic but should not delay the player too much.
+The 7-story-image format is the current target because it provides enough story while keeping the intro short.

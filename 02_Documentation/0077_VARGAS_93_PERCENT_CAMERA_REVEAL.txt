@@ -1,0 +1,39 @@
+WARDOGZ II - DOCUMENTATION 0077
+VARGAS 93% ONE-TIME CAMERA REVEAL
+
+PURPOSE
+- Vargas is already loaded before the player reaches the final area.
+- At 93% stage progress, move the camera forward so Vargas can be seen before the fight.
+- After the reveal, return to the normal 25%-75% camera behavior.
+
+CURRENT VARGAS FLOW
+- 86% map progress: Vargas intro/loading sequence starts.
+- Vargas textures are loaded during this intro.
+- 93% map progress: one-time special camera reveal starts.
+- Camera pans toward the far-right/end section of the stage.
+- After the reveal is completed, normal 25%-75% dead-zone camera resumes.
+
+STATE
+bool vargasCameraRevealDone = false;
+
+TRIGGER
+float cameraRevealTriggerX = stageWorldWidth * 0.93f;
+
+CAMERA PAN
+- Target is near the end of the stage.
+- Pan uses smooth movement rather than instant teleport.
+- Current pan speed tuning value:
+  3.0f
+
+SPEED TUNING
+- 2.0f = slower.
+- 3.0f = current.
+- 5.0f = faster.
+
+IMPORTANT
+- Camera still obeys the Stage 1 world clamp.
+- The camera cannot expose space beyond the real background.
+- Reveal happens only once.
+
+FILES
+- src/main.c

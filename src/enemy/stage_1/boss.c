@@ -127,7 +127,7 @@ Enemy InitBoss(float x, float y)
     enemy.bossUppercutLungeDistance = 240.0f;
     enemy.bossLungeRemaining = 0.0f;
 
-    enemy.attackDamage = 14;
+    enemy.attackDamage = 40;
     enemy.attackKnockbackSpeed = 230.0f;
     enemy.attackHitReactionTime = 0.17f;
     enemy.stageAnchorOffsetY = 220.0f;
