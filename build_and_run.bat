@@ -8,6 +8,19 @@ echo.
 
 if not exist build mkdir build
 
+windres resource.rc -O coff -o build\resource.res
+
+if errorlevel 1 (
+    echo.
+    echo ==========================================
+    echo Resource Compile Failed!
+    echo Check resource.rc and your .ico path.
+    echo ==========================================
+    echo.
+    pause
+    exit /b 1
+)
+
 gcc src\main.c ^
 src\cinematic.c ^
 src\player\player.c ^
@@ -27,7 +40,8 @@ src\enemy\stage_1\punk.c ^
 src\enemy\stage_1\hooligan.c ^
 src\enemy\stage_1\gangster.c ^
 src\enemy\stage_1\boss.c ^
--o build\Wardogz_II.exe ^
+build\resource.res ^
+-o Wardogz_II.exe ^
 -Iinclude ^
 -Iinclude\player ^
 -Iinclude\enemy ^
@@ -57,4 +71,4 @@ echo Starting Game...
 echo ==========================================
 echo.
 
-build\Wardogz_II.exe
+Wardogz_II.exe
