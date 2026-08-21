@@ -5,6 +5,9 @@
 #include "cinematic.h"
 #include "enemy_wave.h"
 
+// Debug/testing switch: 1 = skip title + opening cinematic, 0 = normal flow.
+#define DEBUG_SKIP_OPENING 0
+
 // ============================================================
 // 0047 - Y-DEPTH DRAW SORTING
 // ============================================================
@@ -484,10 +487,14 @@ int main(void)
     // ============================================================
     // OPENING TITLE SCREEN - PLAYER FIRST, ENEMIES LOAD AFTER ENTER
     // ============================================================
-    Texture2D introStart =
-        LoadTexture("assets/cinematic/intro/intro_start.png");
+    Texture2D introStart = (Texture2D){0};
+    if (!DEBUG_SKIP_OPENING)
+    {
+        introStart =
+            LoadTexture("assets/cinematic/intro/intro_start.png");
+    }
 
-    bool titleAccepted = false;
+    bool titleAccepted = DEBUG_SKIP_OPENING;
     bool titleFadingOut = false;
     float titleFadeTimer = 0.0f;
     float titlePulseTimer = 0.0f;
@@ -603,7 +610,11 @@ int main(void)
 
     // Opening cinematic uses intro1.png-intro7.png plus intro_tutorial.png.
     // Its images are loaded after the player accepts the title screen.
-    OpeningCinematic opening = InitOpeningCinematic();
+    OpeningCinematic opening = (OpeningCinematic){0};
+    if (!DEBUG_SKIP_OPENING)
+    {
+        opening = InitOpeningCinematic();
+    }
 
     // 0072 - Stage 1 ending cinematic.
     // The six scene textures are intentionally NOT loaded at startup.
@@ -694,10 +705,16 @@ int main(void)
         stageWorldWidth = (float)screenWidth;
     }
 
-    StartOpeningCinematic(&opening);
-    bool openingWasActive = true;
-    float gameplayFadeInTimer = 0.0f;
     const float gameplayFadeInDuration = 0.90f;
+
+    if (!DEBUG_SKIP_OPENING)
+    {
+        StartOpeningCinematic(&opening);
+    }
+
+    bool openingWasActive = !DEBUG_SKIP_OPENING;
+    float gameplayFadeInTimer =
+        DEBUG_SKIP_OPENING ? gameplayFadeInDuration : 0.0f;
 
     while (!WindowShouldClose())
     {
@@ -706,7 +723,7 @@ int main(void)
         // ========================================================
         // OPENING STORY + TUTORIAL
         // ========================================================
-        if (IsOpeningCinematicActive(&opening))
+        if (!DEBUG_SKIP_OPENING && IsOpeningCinematicActive(&opening))
         {
             UpdateOpeningCinematic(&opening, deltaTime);
 
@@ -719,7 +736,9 @@ int main(void)
             continue;
         }
 
-        if (openingWasActive && IsOpeningCinematicFinished(&opening))
+        if (!DEBUG_SKIP_OPENING &&
+            openingWasActive &&
+            IsOpeningCinematicFinished(&opening))
         {
             openingWasActive = false;
             gameplayFadeInTimer = 0.0f;
@@ -1254,7 +1273,8 @@ int main(void)
         }
 
         // Fade Stage 1 in from black after the tutorial closes.
-        if (IsOpeningCinematicFinished(&opening) &&
+        if (!DEBUG_SKIP_OPENING &&
+            IsOpeningCinematicFinished(&opening) &&
             gameplayFadeInTimer < gameplayFadeInDuration)
         {
             gameplayFadeInTimer += deltaTime;
@@ -1297,7 +1317,10 @@ int main(void)
         UnloadTexture(vargasIntroPortrait);
     }
 
-    UnloadOpeningCinematic(&opening);
+    if (!DEBUG_SKIP_OPENING)
+    {
+        UnloadOpeningCinematic(&opening);
+    }
     UnloadStage1Cinematic(&stage1Ending);
 
     UnloadPlayer(&player);
