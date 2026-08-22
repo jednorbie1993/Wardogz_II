@@ -305,6 +305,21 @@ Player InitPlayer(const char *texturePath)
     player.walkFrameTime = 0.189f;
 
     // ============================================================
+    // 0076 - 12 RUN TEXTURES - run1 to run12
+    // Hold Shift + Arrow to use this animation and faster movement.
+    // ============================================================
+    for (int i = 0; i < RUN_FRAME_COUNT; i++)
+    {
+        player.runTextures[i] = LoadTexture(
+            TextFormat("assets/sprites/player/walk/run%d.png", i + 1)
+        );
+    }
+
+    player.runFrame = 0;
+    player.runTimer = 0.0f;
+    player.runFrameTime = 0.075f;
+
+    // ============================================================
     // 0075 - BASIC + ADVANCED ATTACK TEXTURES
     // ============================================================
     LoadPlayerAttackFrames(
@@ -552,6 +567,14 @@ void UnloadPlayer(Player *player)
     for (int i = 0; i < WALK_FRAME_COUNT; i++)
     {
         UnloadTexture(player->walkTextures[i]);
+    }
+
+    for (int i = 0; i < RUN_FRAME_COUNT; i++)
+    {
+        if (player->runTextures[i].id != 0)
+        {
+            UnloadTexture(player->runTextures[i]);
+        }
     }
 
     for (

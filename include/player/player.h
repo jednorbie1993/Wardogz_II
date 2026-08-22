@@ -6,6 +6,7 @@
 #define IDLE_BREATH_FRAME_COUNT 4
 #define IDLE_BATTLE_FRAME_COUNT 8
 #define WALK_FRAME_COUNT 11
+#define RUN_FRAME_COUNT 12
 #define MAX_PLAYER_ATTACK_FRAMES 6
 
 // ============================================================
@@ -65,6 +66,12 @@ typedef struct Player
     int walkFrame;
     float walkTimer;
     float walkFrameTime;
+
+    // 0076 - RUNNING ANIMATION - run1.png to run12.png
+    Texture2D runTextures[RUN_FRAME_COUNT];
+    int runFrame;
+    float runTimer;
+    float runFrameTime;
 
     // ATTACK ANIMATIONS
     // Every basic and advanced move uses the same indexed storage.
